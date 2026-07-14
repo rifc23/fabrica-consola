@@ -26,8 +26,8 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 - 2026-07-14: proyecto arrancado con la Fábrica (`/fabrica`). Esqueleto andante: Next.js 16
   (App Router, TypeScript) + Vitest, endpoint `/api/proyectos` funcional (lee repos por topic
   `fabrica-agentes` vía GitHub API server-side) con 6 tests unitarios sobre `src/lib/github.ts`.
-  Gate en verde local (lint + test:run + build). CI en `.github/workflows/gate.yml`. Deploy a
-  Vercel: pendiente de conexión (ver TAREAS-MANUALES.md — requiere que el repo exista en GitHub).
+  Gate en verde local (lint + test:run + build). CI en `.github/workflows/gate.yml`. Pusheado a
+  `main` (commit `cafebd9`). Deploy a Vercel: pendiente de conexión (ver TAREAS-MANUALES.md).
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 
