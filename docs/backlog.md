@@ -1,4 +1,4 @@
-# Backlog — <NOMBRE-PROYECTO>
+# Backlog — fabrica-consola
 
 Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `auditor-seguridad`,
 `qa-funcional`, `producto`) y la routine orquestadora. La memoria del proyecto ES este archivo +
@@ -23,26 +23,74 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 
 ## Estado general
 
-- <fecha>: proyecto arrancado con la Fábrica; esqueleto andante desplegado en <URL>; gate: <comandos> en verde.
+- 2026-07-14: proyecto arrancado con la Fábrica (`/fabrica`). Esqueleto andante: Next.js 16
+  (App Router, TypeScript) + Vitest, endpoint `/api/proyectos` funcional (lee repos por topic
+  `fabrica-agentes` vía GitHub API server-side) con 6 tests unitarios sobre `src/lib/github.ts`.
+  Gate en verde local (lint + test:run + build). CI en `.github/workflows/gate.yml`. Deploy a
+  Vercel: pendiente de conexión (ver TAREAS-MANUALES.md — requiere que el repo exista en GitHub).
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 
-- [ ] **<Feature 1>.** Criterios de aceptación: <dado X, cuando Y, entonces Z>. Archivos previstos: <...>.
-- [ ] **<Feature 2>.** ...
+- [ ] **Formulario "Nuevo proyecto".** Página con los 12 campos de `docs/diseno-consola-web.md`
+  §1 (nombre, objetivo, features MVP repetibles, qué NO es v1, criterios de aceptación opcionales,
+  stack, presupuesto, decisiones reservadas, visibilidad, cadencia de routine, autoridad inicial
+  informativa, notificaciones opcionales). Al enviar, un API route server-side: (1) crea el repo
+  desde `rifc23/fabrica-agentes-template` vía `POST /repos/{owner}/{template}/generate` +
+  agrega el topic `fabrica-agentes`; (2) commitea `.fabrica.json` inicial (`peldano: 3`,
+  `estado: "iterando"`) y `docs/SPECS.md` con las respuestas del form; (3) siembra
+  `docs/backlog.md` del repo nuevo con las features MVP como paquetes P0.
+  **Criterios de aceptación:** dado un usuario que llena el formulario con nombre+objetivo+≥1
+  feature MVP, cuando lo envía, entonces existe un repo nuevo en GitHub con el topic
+  `fabrica-agentes`, `.fabrica.json` válido y `docs/SPECS.md` commiteado, y la consola redirige a
+  la "pantalla de arranque" con el prompt de routine pre-rellenado.
+  **Archivos previstos:** `src/app/nuevo-proyecto/page.tsx`, `src/app/api/crear-proyecto/route.ts`,
+  `src/lib/github.ts` (extender con `crearDesdeTemplate`, `commitearArchivo`), tests en
+  `src/lib/github.test.ts`.
+
+- [ ] **Dropdown de proyectos existentes.** Usa `GET /api/proyectos` (ya implementado en el
+  esqueleto — `src/app/api/proyectos/route.ts` + `src/lib/github.ts::obtenerProyectos`) para
+  listar repos por topic con nombre desde el manifest. Selector en el header que navega al
+  dashboard del proyecto elegido.
+  **Criterios de aceptación:** dado que existen N repos con el topic `fabrica-agentes`, cuando se
+  carga la consola, entonces el dropdown muestra los N proyectos por su `nombre` de manifest (o el
+  nombre del repo si el manifest falta) y seleccionar uno navega a `/proyectos/<id>`.
+  **Archivos previstos:** `src/app/layout.tsx` o un `src/components/SelectorProyectos.tsx`,
+  `src/app/proyectos/[id]/page.tsx` (ruta destino).
+
+- [ ] **Dashboard read-only por proyecto.** Página `/proyectos/[id]` que lee (vía Contents API)
+  y renderiza: progreso desde checkboxes de `docs/backlog.md` (barra + lista ✅/⏳), el reporte
+  más reciente de `docs/reportes/` (markdown renderizado, sanitizado), decisiones `[USUARIO]`
+  visibles del backlog, link al repo y a `preview_url` del manifest.
+  **Criterios de aceptación:** dado un proyecto con backlog y al menos un reporte, cuando se abre
+  su dashboard, entonces se ve la barra de progreso con el conteo real de checkboxes, el reporte
+  más reciente renderizado, y la lista de decisiones estacionadas (vacía si no hay ninguna).
+  **Archivos previstos:** `src/app/proyectos/[id]/page.tsx`, `src/lib/backlog.ts` (parser de
+  checkboxes y sección `[USUARIO]`, con tests), `src/lib/markdown.ts` (render sanitizado).
 
 ## P1 — Siguientes
 
-- [ ] ...
+- [ ] Commitear decisiones/tareas desde la web (v2 del roadmap, §5 de diseno-consola-web.md).
+- [ ] Botón "Disparar routine ahora" (deep-link a `claude.ai/code/routines/<trigger_id>`).
+- [ ] Botón "＋ Nueva tarea" que commitea al backlog como tarea con spec.
 
 ## P2 — Deuda / mejoras
 
-- [ ] ...
+- [ ] Playwright E2E del flujo completo (crear proyecto → verlo en dropdown → dashboard) una vez
+  exista el formulario real contra un repo de prueba.
+- [ ] Motor B (GitHub Actions + Agent SDK) — instalación 100% automática, ver §4 de
+  diseno-consola-web.md. No es v1.
 
 ## Decisiones estacionadas [USUARIO]
 
-- <pregunta exacta pendiente de decisión humana>
+- **Diseño visual**: la UI actual del esqueleto es intencionalmente mínima (sin sistema de diseño,
+  sin librería de componentes). ¿Quieres que el `disenador-ui` proponga 2-3 direcciones antes de
+  construir el formulario y el dashboard, o prefieres iterar sobre lo mínimo primero y refinar
+  después?
+- **Nombre del producto**: el repo y el `package.json` usan el nombre técnico "fabrica-consola".
+  ¿Hay un nombre de producto distinto que prefieras mostrar en la UI (título, `<title>`, etc.)?
 
 ## Registro de trabajo
 
 | Fecha | Tarea | Rama | Commits | Gate | Estado |
 |-------|-------|------|---------|------|--------|
+| 2026-07-14 | Fase 0-1: kit, esqueleto andante, gate | main | (inicial) | lint ✅ test:run 6/6 ✅ build ✅ | Completado |
