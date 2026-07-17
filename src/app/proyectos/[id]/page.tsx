@@ -4,7 +4,7 @@ import { calcularProgreso, extraerDecisiones } from "@/lib/backlog";
 import { derivarBrief, esperaEstimadaTicks } from "@/lib/brief";
 import { renderMarkdownSanitizado } from "@/lib/markdown";
 import { parametrizarPromptRoutine } from "@/lib/routine-prompt";
-import { obtenerEstadoDeploy } from "@/lib/vercel";
+import { obtenerEstadoDeploy, obtenerDominioProduccion } from "@/lib/vercel";
 import BotonActualizar from "@/components/BotonActualizar";
 import NuevaTarea from "@/components/NuevaTarea";
 import EliminarProyecto from "@/components/EliminarProyecto";
@@ -75,8 +75,11 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
   const creadoBanner = sp.creado === "1";
   const previewDesdeQuery = typeof sp.preview === "string" ? sp.preview : undefined;
   const degradadoVercelQuery = sp.degradado === "1";
-  const previewUrl = manifest?.preview_url || previewDesdeQuery;
   const vercelToken = process.env.VERCEL_TOKEN;
+  // El dominio REAL de Vercel manda sobre el manifest/query: los .vercel.app son un namespace
+  // global y una URL adivinada puede apuntar a la app de un tercero (bug "calculadora").
+  const dominioReal = vercelToken ? await obtenerDominioProduccion(vercelToken, repo) : null;
+  const previewUrl = dominioReal || manifest?.preview_url || previewDesdeQuery;
   const estadoDeploy =
     previewUrl && vercelToken ? await obtenerEstadoDeploy(vercelToken, repo) : null;
   const badgeDeploy =

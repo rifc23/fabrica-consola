@@ -50,6 +50,30 @@ export async function crearProyectoVercelConectado(
   return { id: data.id, nombre: data.name, urlProduccion: `https://${data.name}.vercel.app` };
 }
 
+/**
+ * Dominio de producción REAL del proyecto (`GET /v9/projects/{name}/domains`). NUNCA construir
+ * `<nombre>.vercel.app` a mano: ese espacio de nombres es GLOBAL y si el nombre ya estaba tomado
+ * por un tercero, Vercel asigna otro dominio — el link adivinado mostraría la app de un extraño
+ * (bug real detectado con el proyecto "calculadora", 2026-07-17). Devuelve null si no se puede
+ * resolver (el caller degrada o omite el link).
+ */
+export async function obtenerDominioProduccion(
+  token: string,
+  nombreProyecto: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<string | null> {
+  const res = await fetchImpl(
+    `https://api.vercel.com/v9/projects/${encodeURIComponent(nombreProyecto)}/domains`,
+    { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" } as RequestInit,
+  );
+  if (!res.ok) return null;
+  const data = (await res.json()) as { domains?: { name: string; verified?: boolean }[] };
+  const dominios = data.domains ?? [];
+  if (dominios.length === 0) return null;
+  const elegido = dominios.find((d) => d.verified !== false) ?? dominios[0];
+  return `https://${elegido.name}`;
+}
+
 export type EstadoDeploy = "listo" | "desplegando" | "error" | "sin-deploys";
 
 /**
