@@ -36,6 +36,8 @@ madre de todos los demás.
        "creado": "2026-07-14",
        "peldano": 3,
        "trigger_id": "trig_...",          // la routine cloud (para deep-link a claude.ai/code/routines/<id>)
+       "cadencia_cron": "0 */2 * * *",    // cadencia de la routine — la consola calcula el próximo tick sin APIs
+       "ultimo_tick": "2026-07-17T06:00:00Z", // lo actualiza la routine al INICIAR cada tick con trabajo
        "preview_url": "https://...",
        "estado": "iterando|esperando-decisiones|completado"
      }
@@ -76,6 +78,7 @@ Secciones (todas se LEEN de archivos del repo — la consola no tiene base de da
 | Sección | Fuente | Render |
 |---|---|---|
 | **📊 Progreso** | checkboxes del backlog (`- [ ]`/`- [x]` en P0/P1) | barra de progreso + lista de features con ✅/⏳ |
+| **🕐 Cola y tiempos** | orden del backlog + marcador `🔄` + `cadencia_cron`/`ultimo_tick` del manifest | cola numerada de pendientes en su orden real, badge "🔄 trabajando ahora", countdown al próximo tick y espera estimada por posición (ver §2.2) |
 | **🔔 Decisiones que te esperan** | sección `[USUARIO]`/estacionadas del backlog | **la killer feature**: cada decisión como card con la pregunta + un `input text`/botones → al responder, la consola COMMITEA la respuesta al backlog (vía GitHub API) → la routine la ejecuta en su próximo tick. Cero terminal. |
 | **📝 Último reporte** | `docs/reportes/` más reciente | markdown renderizado (qué se hizo, gate, estacionado) |
 | **🧑 Tus tareas manuales** | `docs/TAREAS-MANUALES.md` | lista con checkbox → marcar = commit del ✅ |
@@ -108,6 +111,25 @@ con la suscripción). Trade-off aceptado: el wording mejorado se ve en el siguie
 instante. **Mejora opcional futura (P2):** refinado instantáneo con preview editable llamando a
 la API de Claude desde el API route (`ANTHROPIC_API_KEY` server-side) — solo UX; el triaje del
 cron sigue siendo la única autoridad.
+
+## 2.2 Cola por proyecto y tiempos de espera (decisión del usuario, 2026-07-17)
+
+Todo se deriva de archivos del repo — cero estado nuevo, cero APIs extra:
+
+- **El backlog ES la cola.** El orden del archivo (P0 arriba→abajo, luego P1) es el orden en que
+  la routine toma tareas (regla 6 del protocolo del backlog). La consola numera los pendientes:
+  "#1 entra en el próximo tick". Repriorizar = el triaje reordena el archivo.
+- **"Trabajando ahora" con el marcador `🔄`.** Al iniciar un tick con trabajo, la routine
+  commitea el backlog anteponiendo `🔄` a las tareas del lote y actualiza `ultimo_tick` en
+  `.fabrica.json`; al cerrar el lote los retira (`[x]` si completó). Si la consola ve tareas `🔄`,
+  muestra el badge "🏭 trabajando ahora (desde <ultimo_tick>)".
+- **Countdown al próximo tick.** `cadencia_cron` en el manifest → la consola calcula el próximo
+  disparo de la expresión cron en el cliente y muestra "próximo tick en ~Xm".
+- **Espera estimada por tarea.** posición en la cola y lotes de 2-6 por tick →
+  `ceil(posición / 4) × cadencia` como estimado grueso, mostrado junto a cada tarea pendiente.
+- **Burn-down ("cuándo se empieza a rebajar").** Historial de commits de `docs/backlog.md`
+  (GitHub Commits API, muestreado) → conteo de checkboxes pendientes por fecha → gráfica SVG
+  ligera de pendientes vs tiempo en el dashboard.
 
 ## 3. Arquitectura mínima (principio de menor costo)
 

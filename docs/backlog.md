@@ -20,6 +20,12 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 5. **Serialización por archivos compartidos** — nunca dos tareas en paralelo que toquen los mismos
    archivos fuente; van en serie (o el mismo agente vía SendMessage). Un agente que detecte solape
    no contemplado lo reporta y NO toma la tarea.
+6. **El orden es la cola** — dentro de P0 y luego P1, el orquestador toma tareas de ARRIBA hacia
+   ABAJO: reordenar el backlog = repriorizar la cola (solo el orquestador/triaje reordena). Al
+   iniciar un lote, el orquestador marca cada tarea tomada anteponiendo `🔄` a su título y
+   actualiza `ultimo_tick` en `.fabrica.json` (commit + push de inicio de tick); al cerrar el
+   lote, las completadas pasan a `[x]` y las no terminadas pierden el `🔄`. La consola lee estos
+   marcadores para mostrar cola, "trabajando ahora" y tiempos de espera.
 
 ## Estado general
 
@@ -42,7 +48,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   `/api/proyectos` responde 200 con `[]`. Las features P0 quedan totalmente desbloqueadas,
   incluida la prueba end-to-end contra la API real de GitHub.
 - 2026-07-17: routine orquestadora instalada (`routine-fabrica-consola`,
-  `trig_01QeEmanoFZmaQD4xzhLMt1M`, cron cada 2h, peldaño 3). En su primer disparo mergeará a main
+  `trig_019pWyj5wGgc5WNLZMEvzjSx`, cron cada 2h, peldaño 3). En su primer disparo mergeará a main
   la rama `claude/factory-console-backlog-7jafgw` (solo documentación — autorizado por el usuario)
   y empezará a trabajar este backlog. Apagado automático por candado
   `docs/reportes/CAMPANA-*-FINAL.md` cuando no queden ítems delegables; entradas nuevas en el
@@ -104,6 +110,28 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 
 ## P1 — Siguientes
 
+- [ ] **Vista de cola y tiempos en el dashboard** (decisión del usuario, 2026-07-17; requiere el
+  dashboard P0). Renderiza los pendientes del backlog como cola numerada en su orden real (el
+  orden del archivo ES la cola — regla 6 del protocolo del template); badge "🏭 trabajando ahora"
+  cuando hay tareas marcadas `🔄` (con `ultimo_tick` del manifest como inicio); countdown al
+  próximo tick calculado desde `cadencia_cron` del manifest (sin APIs extra); espera estimada por
+  posición: `ceil(posición/4) × cadencia`. Ver diseño en `docs/diseno-consola-web.md` §2.2.
+  **Criterios de aceptación:** dado un proyecto cuyo manifest tiene `cadencia_cron` y un backlog
+  con N pendientes (alguno marcado `🔄`), cuando se abre su dashboard, entonces se ve la cola
+  numerada en el orden del archivo, el badge de trabajo en curso, el countdown correcto al
+  próximo disparo del cron y la espera estimada junto a cada pendiente.
+  **Archivos previstos:** `src/lib/backlog.ts` (extender parser: orden + marcador `🔄`, tests),
+  `src/lib/cron.ts` (próximo disparo de una expresión cron de 5 campos, tests),
+  `src/components/ColaProyecto.tsx`.
+- [ ] **Burn-down del backlog** (decisión del usuario, 2026-07-17). Gráfica de tareas pendientes
+  vs tiempo para ver desde cuándo "se rebaja" el backlog: historial de commits de
+  `docs/backlog.md` (GitHub Commits API, muestreado — máx ~30 puntos), conteo de checkboxes
+  pendientes por versión, render SVG propio sin librería de gráficas.
+  **Criterios de aceptación:** dado un proyecto con ≥2 commits que cambian checkboxes del
+  backlog, cuando se abre su dashboard, entonces la gráfica muestra la serie de pendientes por
+  fecha con al menos esos puntos.
+  **Archivos previstos:** `src/lib/burndown.ts` (con tests), `src/components/Burndown.tsx`,
+  `src/lib/github.ts` (extender: historial de commits de un archivo).
 - [ ] Cards de decisiones `[USUARIO]` respondibles desde la web (input/botones → commit de la
   respuesta al backlog; v2 del roadmap, §5 de diseno-consola-web.md).
 - [ ] Botón "Disparar routine ahora" (deep-link a `claude.ai/code/routines/<trigger_id>`).

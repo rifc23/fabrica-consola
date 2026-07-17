@@ -102,10 +102,15 @@ No hay base de datos. "Modelo de datos" = contrato de archivos leídos/escritos 
 proyectos vía GitHub Contents API:
 
 - **`.fabrica.json`** (raíz de cada repo hijo): `{ id, nombre, creado, peldano, trigger_id,
-  preview_url, estado }` — ver esquema completo en `docs/diseno-consola-web.md` §"Conceptos clave".
+  cadencia_cron, ultimo_tick, preview_url, estado }` — ver esquema completo en
+  `docs/diseno-consola-web.md` §"Conceptos clave". `cadencia_cron` permite calcular el countdown
+  al próximo tick sin APIs; `ultimo_tick` lo actualiza la routine al iniciar cada tick con trabajo.
 - **`docs/backlog.md`**: fuente de progreso (checkboxes `- [ ]`/`- [x]` en P0/P1), de decisiones
   estacionadas (sección `[USUARIO]`) y buzón de entradas del usuario (sección `📥 Inbox` — la
-  ÚNICA parte del backlog donde la consola escribe; la routine la vacía en cada triaje).
+  ÚNICA parte del backlog donde la consola escribe; la routine la vacía en cada triaje). Además,
+  **el orden del archivo ES la cola de la routine** (arriba = siguiente) y el marcador `🔄`
+  antepuesto al título de una tarea significa "en el lote del tick actual" — la consola deriva de
+  ahí la cola numerada, el "trabajando ahora" y las esperas estimadas (diseño en §2.2).
 - **`docs/reportes/*.md`**: reportes de cada corrida de la routine/orquestador; la consola lee el
   más reciente por nombre de archivo (`<fecha>-<...>.md`).
 - **`docs/TAREAS-MANUALES.md`**: tareas pendientes del humano, mostradas en el dashboard.
