@@ -6,6 +6,7 @@ import { renderMarkdownSanitizado } from "@/lib/markdown";
 import { parametrizarPromptRoutine } from "@/lib/routine-prompt";
 import BotonActualizar from "@/components/BotonActualizar";
 import NuevaTarea from "@/components/NuevaTarea";
+import EliminarProyecto from "@/components/EliminarProyecto";
 import DecisionCard from "@/components/DecisionCard";
 import CopiarBoton from "@/components/CopiarBoton";
 import styles from "./dashboard.module.css";
@@ -228,6 +229,8 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
         <h2 id="titulo-inbox">＋ Nueva tarea / feedback</h2>
         <NuevaTarea owner={owner} repo={repo} />
       </section>
+
+      <EliminarProyecto owner={owner} repo={repo} />
     </div>
   );
 }
