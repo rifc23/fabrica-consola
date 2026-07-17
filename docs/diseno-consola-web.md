@@ -230,6 +230,18 @@ Mientras tanto, v1 mantiene la pantalla de arranque (prompt pre-rellenado + copi
 
 ### Motor B — GitHub Actions + Claude Agent SDK (instalación 100% automática) ⭐ para la consola
 
+**Arquitectura de secreto único (decisión del usuario, 2026-07-17): la `ANTHROPIC_API_KEY`
+NUNCA se distribuye a los repos de proyectos.** La versión original de esta sección ("la consola
+setea el secret ANTHROPIC_API_KEY vía la API de GitHub" en cada repo nuevo) queda DESCARTADA:
+N repos donde escriben agentes = N copias del secreto × N superficies de exfiltración (los
+workflows de un repo pueden leer sus secrets, y el Inbox acepta texto libre — vector de prompt
+injection). Diseño correcto: **un runner central** — UN solo repo (`fabrica-runner`, intocable
+para las routines, solo el usuario lo modifica) guarda la única copia de la key + el PAT; su
+workflow recibe `workflow_dispatch` con el proyecto objetivo, clona ese repo, corre Claude
+headless contra él y pushea las ramas al repo del proyecto. Los repos de proyectos no llevan
+ningún secret jamás. Complementos obligatorios: workspace dedicado de Anthropic con límite de
+gasto mensual (hard cap) + key propia revocable + alertas de uso.
+
 **Hallazgo verificado (2026-07-17): Motor B SIN API key no es viable.** Existe la vía oficial
 Pro/Max (`claude setup-token` → `CLAUDE_CODE_OAUTH_TOKEN` en el workflow, consumo por
 suscripción), PERO el token OAuth expira en ~1 día y su renovación exige navegador humano —
