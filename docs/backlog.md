@@ -239,18 +239,28 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   textarea "Rol del bot" y las features MVP manuales se sustituyen por el blueprint Gem de
   `docs/diseno-consola-web.md` §1.1 (CRUD de Gems, chat streaming con el rol SIEMPRE como
   parámetro `system` fuera del historial, "✨ Mejorar rol" con preview, localStorage sin BD; el
-  usuario puede agregar features extra). Al crear: `docs/SPECS.md` del repo nuevo se genera desde
+  usuario puede agregar features extra). El blueprint incluye OBLIGATORIAMENTE la **capa de
+  abstracción de IA** (decisión del usuario, 2026-07-17): interfaz `ProveedorIA` server-side con
+  un adaptador por proveedor (`src/lib/ia/` en el repo nuevo), proveedor activo por env var
+  `IA_PROVEEDOR` (`gemini` | `anthropic`, **default `gemini`** con su capa gratuita de Google AI
+  Studio); ningún componente/endpoint llama a un proveedor directamente, y agregar una IA futura
+  = escribir UN adaptador nuevo. Al crear: `docs/SPECS.md` del repo nuevo se genera desde
   el blueprint con el rol del usuario TAL CUAL (sección "Rol inicial"), el backlog se siembra con
-  las P0 del blueprint, `.fabrica.json` lleva `tipo: "gem"`, y el `TAREAS-MANUALES.md` del repo
-  nuevo incluye la tarea 🔴 de configurar su `ANTHROPIC_API_KEY` en Vercel. El refinado del rol
-  es trabajo del primer tick de la routine del proyecto (la consola no llama a LLM).
+  las P0 del blueprint (incluida la capa de IA como P0), `.fabrica.json` lleva `tipo: "gem"`, y
+  el `TAREAS-MANUALES.md` del repo nuevo incluye la tarea 🔴 de crear la `GEMINI_API_KEY`
+  gratuita (aistudio.google.com) y configurarla en Vercel — o la key del proveedor elegido si
+  cambia `IA_PROVEEDOR`. El refinado del rol es trabajo del primer tick de la routine del
+  proyecto (la consola no llama a LLM).
   **Criterios de aceptación:** dado el checkbox marcado y un rol escrito, cuando se crea el
-  proyecto, entonces el repo nuevo tiene SPECS.md tipo Gem con el rol textual íntegro, backlog
-  sembrado con las P0 del blueprint y `tipo:"gem"` en el manifest; dado el checkbox sin marcar,
-  el formulario se comporta exactamente como hoy (cero campos de rol); todo usable en móvil.
+  proyecto, entonces el repo nuevo tiene SPECS.md tipo Gem con el rol textual íntegro (y la capa
+  de abstracción de IA especificada), backlog sembrado con las P0 del blueprint y `tipo:"gem"` en
+  el manifest; dado el checkbox sin marcar, el formulario se comporta exactamente como hoy (cero
+  campos de rol); todo usable en móvil.
   **Archivos previstos:** `src/app/nuevo-proyecto/page.tsx` (checkbox+textarea),
   `src/lib/formulario-proyecto.ts` (blueprint Gem + generación de SPECS/backlog, con tests),
-  `src/lib/github.test.ts`/`formulario-proyecto.test.ts` (casos gem y no-gem).
+  `src/lib/github.test.ts`/`formulario-proyecto.test.ts` (casos gem y no-gem); en el repo Gem
+  sembrado: `src/lib/ia/proveedor.ts` (interfaz), `src/lib/ia/gemini.ts`, `src/lib/ia/anthropic.ts`
+  (adaptadores — los construye la routine del proyecto siguiendo el blueprint).
 
 - [ ] **Vista de cola y tiempos en el dashboard** (decisión del usuario, 2026-07-17; requiere el
   dashboard P0). Renderiza los pendientes del backlog como cola numerada en su orden real (el
