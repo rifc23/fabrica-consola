@@ -48,7 +48,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   `/api/proyectos` responde 200 con `[]`. Las features P0 quedan totalmente desbloqueadas,
   incluida la prueba end-to-end contra la API real de GitHub.
 - 2026-07-17: routine orquestadora instalada (`routine-fabrica-consola`,
-  `trig_01PwHzgz3RGxF82XPhN3hszo`, cron cada 2h con offset :15, peldaño 3). En su primer disparo mergeará a main
+  `trig_01Ws7hZWK63THnZnPNdCRyPZ`, cron cada 2h con offset :15, peldaño 3). En su primer disparo mergeará a main
   la rama `claude/factory-console-backlog-7jafgw` (solo documentación — autorizado por el usuario)
   y empezará a trabajar este backlog. Apagado automático por candado
   `docs/reportes/CAMPANA-*-FINAL.md` cuando no queden ítems delegables; entradas nuevas en el
@@ -65,6 +65,11 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 - 2026-07-17: decisión del usuario — regla **Multiplataforma SIEMPRE** (mobile-first/responsive,
   E2E en viewport móvil) agregada a las REGLAS NO NEGOCIABLES de la consola Y del template: toda
   UI de la fábrica funciona en celular. Aplica a TODAS las tareas P0/P1 con UI de este backlog.
+- 2026-07-17: decisión del usuario — regla **Primer tick = producto funcional** en la plantilla
+  de routine del template y en la routine de la consola: el primer disparo de un proyecto no
+  entrega un lote incremental sino la idea principal funcionando de punta a punta (las P0 que
+  constituyen el corazón, en serie donde compartan archivos); al backlog solo queda lo no
+  esencial. Para la consola: las 4 P0 son UN producto y van juntas en el primer tick.
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 

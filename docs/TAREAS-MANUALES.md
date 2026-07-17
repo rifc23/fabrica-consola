@@ -67,7 +67,7 @@ si quieres iterar sobre lo mínimo o invertir en un sistema de diseño antes del
 ## ✅ 4. Instalar la routine cloud (Motor A) — una vez, cuando quieras autonomía continua
 
 **Completada 2026-07-17:** routine `routine-fabrica-consola` instalada (trigger
-`trig_01PwHzgz3RGxF82XPhN3hszo`), cron cada 2 horas con offset escalonado (`15 */2 * * *`), sesión fresca por disparo,
+`trig_01Ws7hZWK63THnZnPNdCRyPZ`), cron cada 2 horas con offset escalonado (`15 */2 * * *`), sesión fresca por disparo,
 peldaño 3 (deja ramas listas, el usuario aprueba merges; la documentación sí se pushea a main).
 **Apagado automático:** cuando no quede ningún ítem delegable, la routine escribe
 `docs/reportes/CAMPANA-<fecha>-FINAL.md` en main — ese archivo es el candado: los disparos
