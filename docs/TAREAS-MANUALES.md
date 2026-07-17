@@ -67,7 +67,7 @@ si quieres iterar sobre lo mínimo o invertir en un sistema de diseño antes del
 ## ✅ 4. Instalar la routine cloud (Motor A) — una vez, cuando quieras autonomía continua
 
 **Completada 2026-07-17:** routine `routine-fabrica-consola` instalada (trigger
-`trig_019pWyj5wGgc5WNLZMEvzjSx`), cron cada 2 horas (`0 */2 * * *`), sesión fresca por disparo,
+`trig_01PwHzgz3RGxF82XPhN3hszo`), cron cada 2 horas con offset escalonado (`15 */2 * * *`), sesión fresca por disparo,
 peldaño 3 (deja ramas listas, el usuario aprueba merges; la documentación sí se pushea a main).
 **Apagado automático:** cuando no quede ningún ítem delegable, la routine escribe
 `docs/reportes/CAMPANA-<fecha>-FINAL.md` en main — ese archivo es el candado: los disparos
@@ -78,7 +78,14 @@ routines de claude.ai.
 **Qué:** el prompt parametrizado (peldaño 3, sin push de merges) para que la fábrica itere el
 backlog sola cada N horas; regenerable desde `docs/plantilla-routine-prompt.md`.
 
-## 🟡 6. Crear la routine madre desde la UI de routines (experimento — instalación autónoma)
+## ✅ 6. Crear la routine madre desde la UI de routines (experimento — instalación autónoma)
+
+**Completada 2026-07-17:** `routine-madre-fabrica` creada desde la UI (trigger
+`trig_01GKMxZGYkU5TqkS3pPcC5Mc`, cron `50 * * * *`, modelo Sonnet 5). Confirmado que conserva el
+conector Claude_Code_Remote (el que trae `create_trigger`) — buen augurio para el experimento.
+**Verificación pendiente:** su primer tick (a las :50) debe terminar "sin candidatos" y NO dejar
+`docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md`; la prueba definitiva será el primer
+proyecto creado desde el formulario.
 
 **Qué:** una routine que detecta proyectos nuevos sin `trigger_id` en su `.fabrica.json` y les
 instala su routine orquestadora automáticamente (elimina el paso manual de la pantalla de
