@@ -172,6 +172,23 @@ del formulario); N proyectos = N routines independientes en paralelo, cada una t
   superan lo que la suscripción aguanta (ticks que se encolan, cuota agotada), ese es el
   disparador para migrar esos proyectos a Motor B (abajo) — por token, sin límite de sesiones.
 
+**¿Instalación autónoma de la routine al crear el proyecto? (análisis 2026-07-17)** La consola
+NO puede crear routines de claude.ai desde sus API routes (no hay API pública — la limitación
+honesta de §3). Dos caminos:
+1. **"Routine madre" (experimento, costo cero):** una única routine creada UNA vez por el usuario
+   desde la UI de routines de claude.ai (las creadas desde la UI pueden conservar las
+   herramientas de gestión de triggers; las creadas programáticamente nacen sin ellas —
+   verificado 2026-07-17). En cada tick: busca repos con topic `fabrica-agentes` cuyo
+   `.fabrica.json` no tenga `trigger_id`, crea la routine del proyecto desde la plantilla (con
+   offset escalonado) y escribe el `trigger_id` de vuelta en el manifest. Su PRIMER tick debe
+   verificar si realmente dispone de la herramienta create_trigger: si no, reportarlo y
+   autodeshabilitarse — el experimento se descarta sin daño.
+2. **Motor B (garantizado):** la instalación 100% automática sin depender de internals de
+   claude.ai — el workflow viaja en el template y la consola solo setea el secret por API de
+   GitHub. Por token (v3 del roadmap).
+Mientras tanto, v1 mantiene la pantalla de arranque (prompt pre-rellenado + copiar/pegar en
+/schedule, ~1 min por proyecto, una vez).
+
 ### Motor B — GitHub Actions + Claude Agent SDK (instalación 100% automática) ⭐ para la consola
 El template incluye .github/workflows/fabrica.yml: corre Claude headless (claude -p / Agent SDK)
 leyendo el prompt orquestador desde .fabrica/prompt-orquestador.md del propio repo.
