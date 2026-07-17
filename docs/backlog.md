@@ -37,6 +37,10 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   LLM en v1: commitea el feedback crudo al Inbox y el refinado completo lo hace la routine en el
   cron (triaje). El refinado instantáneo con preview (`ANTHROPIC_API_KEY`) baja a P2 como mejora
   opcional de UX; se retiró la tarea manual de la key.
+- 2026-07-17: tareas manuales 1 y 2 completadas por el usuario — `GITHUB_PAT` fine-grained en
+  Vercel y repo conectado (deploy automático por push activo). Verificado en producción:
+  `/api/proyectos` responde 200 con `[]`. Las features P0 quedan totalmente desbloqueadas,
+  incluida la prueba end-to-end contra la API real de GitHub.
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 

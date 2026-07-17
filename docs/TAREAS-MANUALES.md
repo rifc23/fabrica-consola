@@ -19,7 +19,11 @@ Al completar una: marcarla ✅ con fecha y el resultado (el orquestador la usa p
 ✅ Repo remoto ya existía (`rifc23/fabrica-consola`, nacido de "Use this template") y el esqueleto
 andante quedó pusheado a `main` el 2026-07-14 (commit `cafebd9`).
 
-## 🔴 1. Crear el `GITHUB_PAT` fine-grained y configurarlo en Vercel
+## ✅ 1. Crear el `GITHUB_PAT` fine-grained y configurarlo en Vercel
+
+**Completada 2026-07-17:** PAT fine-grained creado (Contents R/W + Administration R/W + Metadata,
+All repositories) y configurado como env var `GITHUB_PAT` en Vercel. Verificado: `/api/proyectos`
+en producción responde 200 con lista vacía (aún no hay repos con el topic `fabrica-agentes`).
 
 **Qué:** la consola necesita un Personal Access Token server-side para leer/crear repos vía la API
 de GitHub (listar por topic, leer `.fabrica.json`, crear-desde-template). Nunca debe vivir en el
@@ -37,7 +41,11 @@ cliente ni en el repo — solo el NOMBRE del secreto va en código/docs.
    scope "Production" (y "Preview"/"Development" si quieres probar en esos entornos).
 **Tiempo:** 5 min.
 
-## 🟠 2. Conectar el repo a Vercel (deploy automático por push)
+## ✅ 2. Conectar el repo a Vercel (deploy automático por push)
+
+**Completada 2026-07-17:** `rifc23/fabrica-consola` importado en Vercel con preset Next.js y
+deploy en verde. Desde ahora cada push a `main` despliega a producción y cada PR genera su
+preview URL.
 
 **Qué:** sin esto, los push a `main` no despliegan nada — el "esqueleto andante" queda solo local.
 **Cómo:**
