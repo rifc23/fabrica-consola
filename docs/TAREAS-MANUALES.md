@@ -96,7 +96,11 @@ Cadencia: `50 * * * *`. Si el primer tick deja `EXPERIMENTO-ROUTINE-MADRE-FALLID
 `docs/reportes/`, borrar la routine de la UI — el flujo manual sigue funcionando igual.
 **Tiempo:** 3 min + verificar el primer tick.
 
-## 🟠 5. `VERCEL_TOKEN` en Vercel (deploy autónomo de proyectos nuevos — subida de ⚪ a 🟠)
+## ✅ 5. `VERCEL_TOKEN` en Vercel (deploy autónomo de proyectos nuevos — subida de ⚪ a 🟠)
+
+**Completada 2026-07-17:** `VERCEL_TOKEN` configurado como env var server-side en el proyecto
+Vercel de la consola. El formulario "Nuevo proyecto" (P0) puede crear proyectos Vercel conectados
+vía API — deploy autónomo de punta a punta habilitado.
 
 **Qué:** con este token, el formulario "Nuevo proyecto" deja cada repo recién creado YA conectado
 a Vercel vía API (deploy automático por push + preview URL en el manifest, §4.5 del diseño) — sin

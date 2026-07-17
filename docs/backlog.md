@@ -57,6 +57,11 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   vivo y un "📋 Brief" hecho/pendiente derivado por parsing (sin LLM), ambos con botón
   "↻ Actualizar" que re-lee del repo sin caché. Ampliada la spec del dashboard P0 y §2 del
   diseño.
+- 2026-07-17: tareas manuales 5 y 6 completadas — `VERCEL_TOKEN` configurado (deploy autónomo de
+  proyectos nuevos habilitado para la P0 del formulario) y routine madre activa
+  (`trig_01GKMxZGYkU5TqkS3pPcC5Mc`, cron `50 * * * *`). TODAS las tareas manuales bloqueantes o
+  habilitadoras están cerradas: la P0 del formulario puede implementarse y probarse end-to-end
+  (repo + Vercel + routine) sin intervención del usuario.
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 
