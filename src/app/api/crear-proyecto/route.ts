@@ -11,7 +11,7 @@ import {
   obtenerUsuarioAutenticado,
   type FabricaManifest,
 } from "@/lib/github";
-import { crearProyectoVercelConectado } from "@/lib/vercel";
+import { crearProyectoVercelConectado, obtenerDominioProduccion } from "@/lib/vercel";
 import { sembrarBacklogNuevoProyecto } from "@/lib/backlog";
 import { generarCadenciaEscalonada } from "@/lib/cron";
 import {
@@ -156,7 +156,9 @@ async function ejecutarCreacion(
         repoFullName: `${owner}/${repo}`,
         framework: frameworkVercel(body.stack),
       });
-      previewUrl = proyectoVercel.urlProduccion;
+      // Dominio REAL asignado por Vercel — nunca adivinar <nombre>.vercel.app (espacio global:
+      // si el nombre estaba tomado, el link llevaría a la app de un tercero).
+      previewUrl = (await obtenerDominioProduccion(vercelToken, proyectoVercel.nombre)) ?? proyectoVercel.urlProduccion;
       emitir({ tipo: "paso", paso: "vercel", estado: "ok", detalle: { previewUrl } });
     } catch (err) {
       degradadoVercel = true;

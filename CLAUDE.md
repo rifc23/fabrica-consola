@@ -144,6 +144,15 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   otro stack, el arquitecto-stack lo reemplaza en Fase 1 (y ajusta el framework de Vercel como
   tarea manual).
 
+- **(2026-07-17) El link de preview mostraba la app de un TERCERO.** Síntoma: el proyecto
+  "calculadora" recién creado mostraba una calculadora funcional que no era nuestra. Causa: la
+  consola construía `https://<nombre>.vercel.app` a mano — ese espacio de nombres es GLOBAL; el
+  nombre estaba tomado por otra persona y Vercel asignó a nuestro proyecto un dominio distinto.
+  Solución: `obtenerDominioProduccion` consulta `GET /v9/projects/{name}/domains` y tanto el
+  crear-proyecto como el dashboard usan el dominio REAL (el dashboard lo prioriza sobre el
+  manifest, auto-corrigiendo proyectos ya creados). Regla: NUNCA construir URLs de Vercel por
+  concatenación — siempre preguntarle a la API.
+
 ## Modelo de datos
 
 No hay base de datos. "Modelo de datos" = contrato de archivos leídos/escritos en los repos de

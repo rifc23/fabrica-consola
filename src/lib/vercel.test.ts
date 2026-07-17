@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { crearProyectoVercelConectado, eliminarProyectoVercel, obtenerEstadoDeploy } from "./vercel";
+import { crearProyectoVercelConectado, eliminarProyectoVercel, obtenerEstadoDeploy, obtenerDominioProduccion } from "./vercel";
 
 function jsonResponse(body: unknown, ok = true, status = 200) {
   return { ok, status, json: async () => body, text: async () => JSON.stringify(body) } as Response;
@@ -79,5 +79,31 @@ describe("obtenerEstadoDeploy", () => {
   it("devuelve null si la API falla (degradación sin badge)", async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}, false, 500));
     await expect(obtenerEstadoDeploy("tok", "x", fetchMock)).resolves.toBeNull();
+  });
+});
+
+describe("obtenerDominioProduccion", () => {
+  it("devuelve el dominio real asignado por Vercel (nunca adivina <nombre>.vercel.app)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ domains: [{ name: "calculadora-abc123.vercel.app", verified: true }] }),
+    );
+    await expect(obtenerDominioProduccion("tok", "calculadora", fetchMock)).resolves.toBe(
+      "https://calculadora-abc123.vercel.app",
+    );
+    expect(fetchMock.mock.calls[0][0]).toContain("/v9/projects/calculadora/domains");
+  });
+
+  it("prefiere dominios verificados", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ domains: [{ name: "pendiente.com", verified: false }, { name: "real.vercel.app", verified: true }] }),
+    );
+    await expect(obtenerDominioProduccion("tok", "x", fetchMock)).resolves.toBe("https://real.vercel.app");
+  });
+
+  it("devuelve null sin dominios o si la API falla", async () => {
+    const vacio = vi.fn().mockResolvedValue(jsonResponse({ domains: [] }));
+    await expect(obtenerDominioProduccion("tok", "x", vacio)).resolves.toBeNull();
+    const error = vi.fn().mockResolvedValue(jsonResponse({}, false, 500));
+    await expect(obtenerDominioProduccion("tok", "x", error)).resolves.toBeNull();
   });
 });
