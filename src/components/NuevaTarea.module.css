@@ -1,0 +1,13 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ok {
+  color: #2ea043;
+}
+
+.error {
+  color: #c00;
+}

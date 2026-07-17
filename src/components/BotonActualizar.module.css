@@ -1,0 +1,11 @@
+.frescura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.hace {
+  opacity: 0.7;
+}
