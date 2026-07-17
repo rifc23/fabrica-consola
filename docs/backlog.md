@@ -213,6 +213,24 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 
 ## P1 — Siguientes
 
+- [ ] **Tipo de proyecto "Gem" en el formulario (decisión del usuario, 2026-07-17 — primera de
+  la cola P1).** Checkbox "🤖 Gem (chatbot con rol)" en `/nuevo-proyecto`; al marcarse muestra
+  textarea "Rol del bot" y las features MVP manuales se sustituyen por el blueprint Gem de
+  `docs/diseno-consola-web.md` §1.1 (CRUD de Gems, chat streaming con el rol SIEMPRE como
+  parámetro `system` fuera del historial, "✨ Mejorar rol" con preview, localStorage sin BD; el
+  usuario puede agregar features extra). Al crear: `docs/SPECS.md` del repo nuevo se genera desde
+  el blueprint con el rol del usuario TAL CUAL (sección "Rol inicial"), el backlog se siembra con
+  las P0 del blueprint, `.fabrica.json` lleva `tipo: "gem"`, y el `TAREAS-MANUALES.md` del repo
+  nuevo incluye la tarea 🔴 de configurar su `ANTHROPIC_API_KEY` en Vercel. El refinado del rol
+  es trabajo del primer tick de la routine del proyecto (la consola no llama a LLM).
+  **Criterios de aceptación:** dado el checkbox marcado y un rol escrito, cuando se crea el
+  proyecto, entonces el repo nuevo tiene SPECS.md tipo Gem con el rol textual íntegro, backlog
+  sembrado con las P0 del blueprint y `tipo:"gem"` en el manifest; dado el checkbox sin marcar,
+  el formulario se comporta exactamente como hoy (cero campos de rol); todo usable en móvil.
+  **Archivos previstos:** `src/app/nuevo-proyecto/page.tsx` (checkbox+textarea),
+  `src/lib/formulario-proyecto.ts` (blueprint Gem + generación de SPECS/backlog, con tests),
+  `src/lib/github.test.ts`/`formulario-proyecto.test.ts` (casos gem y no-gem).
+
 - [ ] **Vista de cola y tiempos en el dashboard** (decisión del usuario, 2026-07-17; requiere el
   dashboard P0). Renderiza los pendientes del backlog como cola numerada en su orden real (el
   orden del archivo ES la cola — regla 6 del protocolo del template); badge "🏭 trabajando ahora"
