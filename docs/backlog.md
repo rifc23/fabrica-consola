@@ -48,7 +48,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   `/api/proyectos` responde 200 con `[]`. Las features P0 quedan totalmente desbloqueadas,
   incluida la prueba end-to-end contra la API real de GitHub.
 - 2026-07-17: routine orquestadora instalada (`routine-fabrica-consola`,
-  `trig_01Ws7hZWK63THnZnPNdCRyPZ`, cron cada 2h con offset :15, peldaño 3). En su primer disparo mergeará a main
+  `trig_01XJA8ejJVsh1aQE4fZFdeN1`, cron cada 2h con offset :15, peldaño 3). En su primer disparo mergeará a main
   la rama `claude/factory-console-backlog-7jafgw` (solo documentación — autorizado por el usuario)
   y empezará a trabajar este backlog. Apagado automático por candado
   `docs/reportes/CAMPANA-*-FINAL.md` cuando no queden ítems delegables; entradas nuevas en el
@@ -65,6 +65,12 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 - 2026-07-17: decisión del usuario — regla **Multiplataforma SIEMPRE** (mobile-first/responsive,
   E2E en viewport móvil) agregada a las REGLAS NO NEGOCIABLES de la consola Y del template: toda
   UI de la fábrica funciona en celular. Aplica a TODAS las tareas P0/P1 con UI de este backlog.
+- 2026-07-17: PRIMER ERROR CONOCIDO resuelto — el tick de las 06:15 no pudo publicar: las
+  sesiones de routine tienen bloqueado el push a main por el clasificador del modo auto (ver
+  CLAUDE.md § Errores Conocidos). Solución desplegada: workflow `fabrica-sync.yml` (consola y
+  template) que auto-mergea a main las ramas de solo-estado; las routines ahora pushean
+  únicamente su rama designada. El merge de la documentación de hoy a main lo hizo el usuario
+  vía sesión interactiva (`9f9af34` consola, `862c483` template).
 - 2026-07-17: decisión del usuario — regla **Primer tick = producto funcional** en la plantilla
   de routine del template y en la routine de la consola: el primer disparo de un proyecto no
   entrega un lote incremental sino la idea principal funcionando de punta a punta (las P0 que

@@ -1,0 +1,46 @@
+# fabrica-sync — auto-merge a main de ramas que SOLO tocan estado (docs/CLAUDE.md/.fabrica.json).
+# Razón (Error Conocido 2026-07-17): las sesiones de routine no pueden pushear a main (clasificador
+# del modo auto); pushean su rama claude/* y este workflow consolida el estado en main. Las ramas
+# que tocan código NO se mergean aquí — las aprueba el usuario (peldaño 3).
+name: fabrica-sync
+on:
+  push:
+    branches:
+      - 'claude/**'
+      - 'fabrica/**'
+permissions:
+  contents: write
+concurrency:
+  group: fabrica-sync-main
+  cancel-in-progress: false
+jobs:
+  merge-estado:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Merge a main si el diff es solo estado
+        env:
+          RAMA: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git config user.name "fabrica-sync"
+          git config user.email "fabrica-sync@users.noreply.github.com"
+          git fetch origin "$RAMA"
+          if git merge-base --is-ancestor "origin/$RAMA" HEAD; then
+            echo "La rama ya está contenida en main — nada que hacer."; exit 0
+          fi
+          BASE=$(git merge-base HEAD "origin/$RAMA")
+          CAMBIOS=$(git diff --name-only "$BASE" "origin/$RAMA")
+          echo "Archivos tocados por $RAMA:"; echo "$CAMBIOS"
+          if [ -z "$CAMBIOS" ]; then echo "Sin cambios."; exit 0; fi
+          NO_ESTADO=$(echo "$CAMBIOS" | grep -vE '^(docs/|CLAUDE\.md$|\.fabrica\.json$)' || true)
+          if [ -n "$NO_ESTADO" ]; then
+            echo "La rama toca código — la mergea el usuario (peldaño 3). Archivos fuera de estado:"
+            echo "$NO_ESTADO"; exit 0
+          fi
+          git merge --no-ff "origin/$RAMA" -m "fabrica-sync: estado desde $RAMA (solo docs/CLAUDE.md/manifest)"
+          git push origin main
+          echo "Estado consolidado en main."

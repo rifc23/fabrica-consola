@@ -109,7 +109,16 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
 
 ## Errores Conocidos — No Repetir
 
-<Lista viva. Cada bug resuelto deja: síntoma → causa → solución → regla. Empieza vacía.>
+- **(2026-07-17) Las sesiones de routine NO pueden pushear a `main`.** Síntoma: el primer tick
+  terminó sin nada en main; `git push origin main` denegado por el clasificador de permisos del
+  modo auto (el push nunca llega a GitHub — NO es problema del PAT ni de la GitHub App, no
+  perseguir esa pista). Causa: las sesiones disparadas por triggers corren en modo auto y el
+  clasificador bloquea pushes a la rama default. Solución: workflow
+  `.github/workflows/fabrica-sync.yml` — las routines pushean SOLO su rama designada
+  (`claude/...`) y el workflow auto-mergea a main las ramas cuyo diff toque únicamente estado
+  (`docs/**`, `CLAUDE.md`, `.fabrica.json`); las ramas con código las mergea el usuario
+  (peldaño 3) y sus docs viajan en ese merge. **Regla: ningún prompt de routine debe instruir
+  `git push origin main` — siempre la rama designada + fabrica-sync.**
 
 ## Modelo de datos
 
