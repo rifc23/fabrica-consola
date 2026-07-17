@@ -76,12 +76,24 @@ el formulario funciona exactamente como siempre. Marcado, la consola siembra el 
 
 - **Features MVP fijas del blueprint** (el usuario puede agregar extras): (a) CRUD de Gems
   (nombre + rol en textarea; lista como pantalla principal; "Asistente general" sin rol por
-  default); (b) chat con streaming contra la API de Claude server-side (`ANTHROPIC_API_KEY` env
-  var del proyecto — queda como tarea manual 🔴 del repo nuevo) donde el rol viaja como parámetro
-  `system` en CADA llamada, fuera del historial — si hay que truncar contexto se truncan mensajes
-  viejos, JAMÁS el rol (esa es la garantía de que "no se pierde"); historial y Gems en
-  localStorage (sin BD); (c) botón "✨ Mejorar rol": reescribe el rol con la API de Claude
-  (identidad/tono/reglas/datos fijos) en preview editable — nunca se guarda sin aprobación.
+  default); (b) chat con streaming vía la **capa de abstracción de IA** (abajo) donde el rol
+  viaja SIEMPRE como instrucción de sistema en CADA llamada, fuera del historial — si hay que
+  truncar contexto se truncan mensajes viejos, JAMÁS el rol (esa es la garantía de que "no se
+  pierde"); historial y Gems en localStorage (sin BD); (c) botón "✨ Mejorar rol": reescribe el
+  rol usando la MISMA capa de abstracción (identidad/tono/reglas/datos fijos) en preview
+  editable — nunca se guarda sin aprobación.
+- **Capa de abstracción de IA (decisión del usuario, 2026-07-17 — OBLIGATORIA en todo Gem):** el
+  blueprint define una interfaz única `ProveedorIA` (p. ej. `chat({sistema, mensajes, onDelta})`,
+  solo server-side) con un adaptador por proveedor detrás; NINGÚN componente ni endpoint llama a
+  un proveedor directamente. Proveedor activo por env vars del proyecto: `IA_PROVEEDOR`
+  (`gemini` | `anthropic`; **default `gemini`**) + la key correspondiente (`GEMINI_API_KEY` —
+  capa GRATUITA de Google AI Studio, suficiente para chatbots personales — o `ANTHROPIC_API_KEY`
+  pagada). Agregar una IA futura = escribir UN adaptador nuevo, cero cambios en la app. Nota de
+  privacidad visible en el README del gem: la capa gratuita de Gemini puede usar los datos para
+  entrenamiento de Google; para conversaciones sensibles, usar proveedor pagado. Keys SIEMPRE
+  server-side, solo por nombre en código/docs (reglas de la fábrica). La tarea manual 🔴 del repo
+  nuevo pasa a ser: crear la `GEMINI_API_KEY` gratuita (aistudio.google.com) — o la del proveedor
+  elegido — y ponerla en el Vercel del gem.
 - **El rol del usuario viaja TAL CUAL** al `docs/SPECS.md` del repo nuevo (sección "Rol
   inicial"), y `.fabrica.json` gana `tipo: "gem"`. **El refinado del rol lo hace la routine del
   proyecto en su primer tick** (mismo patrón que el triaje del Inbox: mejora wording/estructura;
