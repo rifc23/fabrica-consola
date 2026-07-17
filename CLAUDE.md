@@ -33,10 +33,11 @@ datos (el estado vive en los repos de GitHub) · hosting/deploy: Vercel.
 - **Sanitizar todo render de markdown/HTML** proveniente de los repos leídos (reportes, backlog)
   antes de insertarlo en el DOM — los repos son del propio usuario pero el render pasa por HTML.
 - v1 es **read-only** sobre los repos de proyectos con DOS excepciones exactas: (1) la creación
-  inicial del repo y (2) el append de tareas/feedback del usuario DENTRO de la sección `📥 Inbox`
-  del `docs/backlog.md` del proyecto (decisión del usuario 2026-07-17). La consola NUNCA escribe
-  fuera de esa sección — responder decisiones `[USUARIO]` desde la web sigue siendo v2 (roadmap en
-  `docs/diseno-consola-web.md` §5).
+  inicial del repo y (2) el append DENTRO de la sección `📥 Inbox` del `docs/backlog.md` del
+  proyecto (decisión del usuario 2026-07-17) — que cubre tareas/feedback Y respuestas a
+  decisiones `[USUARIO]` (formato `Respuesta a decisión "...": ...`; la routine la aplica en su
+  triaje). La consola NUNCA escribe fuera de esa sección: las cards de decisiones responden vía
+  Inbox, no editando la sección `[USUARIO]` directamente.
 - **La consola no llama a ningún LLM en v1** (decisión del usuario, 2026-07-17): el tratamiento
   inteligente del feedback lo hace la routine en el cron (paso "TRIAJE DEL INBOX"). Si algún día
   se construye el refinado instantáneo (P2 del backlog), su `ANTHROPIC_API_KEY` seguirá las mismas

@@ -135,7 +135,10 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   por prioridad. **Frescura:** todas las lecturas del dashboard con `cache: 'no-store'` y botón
   **"↻ Actualizar"** (componente compartido, en el header del dashboard y en las secciones
   Tareas manuales y Brief) que re-lee del repo al instante (`router.refresh()`), mostrando
-  "actualizado hace Xs" en cada sección.
+  "actualizado hace Xs" en cada sección; además **auto-refresh suave** (decisión del usuario,
+  2026-07-17): polling cada ~60s mientras la pestaña está visible (`document.visibilityState`),
+  para que cuando la routine commitee (triaje de respuestas, inicio/cierre de tick) el dashboard
+  se actualice solo sin tocar nada.
   **Criterios de aceptación:** dado un proyecto con backlog y al menos un reporte, cuando se abre
   su dashboard, entonces se ve la barra de progreso con el conteo real de checkboxes, el reporte
   más reciente renderizado, la lista de decisiones estacionadas (vacía si no hay ninguna), las
@@ -163,6 +166,26 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   `src/app/api/tareas/route.ts`, `src/lib/backlog.ts` (helper `insertarEnInbox`, con tests),
   `src/lib/github.ts` (extender con append/commit de archivo existente, con tests).
 
+- [ ] **Cards de decisiones respondibles + "Disparar routine ahora" (subido de P1/v2 a P0 por
+  decisión del usuario, 2026-07-17 — cierre rápido del ciclo de feedback).** El dashboard muestra
+  cada decisión estacionada `[USUARIO]` del backlog como card con la pregunta EXACTA + input de
+  respuesta (+ botones si la pregunta es de opción). Al responder: (1) la consola commitea la
+  respuesta AL INBOX del proyecto con el formato `Respuesta a decisión "<primeras palabras de la
+  pregunta>": <respuesta>` — así se mantiene la regla de que la consola SOLO escribe en la
+  sección `📥 Inbox`; la routine aplica la respuesta en su triaje (despeja la decisión, ajusta la
+  tarea, repriorísa); (2) la card pasa a estado "respondida — esperando triaje"; (3) aparece el
+  botón **"🏭 Disparar routine ahora"** (deep-link a `claude.ai/code/routines/<trigger_id>` del
+  manifest) para ejecutar el triaje EN MINUTOS en vez de esperar el tick — el mismo botón vive
+  también junto al form de feedback y en el header del dashboard.
+  **Criterios de aceptación:** dado un proyecto con ≥1 decisión `[USUARIO]`, cuando el usuario
+  responde desde la card, entonces existe un commit nuevo cuyo diff agrega la respuesta SOLO
+  dentro de la sección `📥 Inbox`, la card muestra "respondida — esperando triaje" y el botón de
+  disparo con el deep-link correcto del `trigger_id` del manifest (oculto si el manifest no tiene
+  `trigger_id`).
+  **Archivos previstos:** `src/components/DecisionCard.tsx`, reutiliza `src/app/api/tareas/route.ts`
+  (mismo endpoint del Inbox), `src/lib/backlog.ts` (parser de decisiones ya previsto en el
+  dashboard P0), `src/components/DispararRoutine.tsx`.
+
 ## P1 — Siguientes
 
 - [ ] **Vista de cola y tiempos en el dashboard** (decisión del usuario, 2026-07-17; requiere el
@@ -187,9 +210,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   fecha con al menos esos puntos.
   **Archivos previstos:** `src/lib/burndown.ts` (con tests), `src/components/Burndown.tsx`,
   `src/lib/github.ts` (extender: historial de commits de un archivo).
-- [ ] Cards de decisiones `[USUARIO]` respondibles desde la web (input/botones → commit de la
-  respuesta al backlog; v2 del roadmap, §5 de diseno-consola-web.md).
-- [ ] Botón "Disparar routine ahora" (deep-link a `claude.ai/code/routines/<trigger_id>`).
+(Las cards de decisiones y el botón "Disparar routine ahora" subieron a P0 el 2026-07-17.)
 
 ## P2 — Deuda / mejoras
 
