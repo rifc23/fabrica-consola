@@ -79,17 +79,30 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   `.fabrica.json` inicial (`peldano: 3`, `estado: "iterando"`, `cadencia_cron`, `preview_url` si
   hubo Vercel) y `docs/SPECS.md` con las respuestas del form; (4) siembra `docs/backlog.md` del
   repo nuevo con las features MVP como paquetes P0 — este push dispara el primer deploy.
+  **Flujo post-creación (decisión del usuario, 2026-07-17):** al enviar, el botón se deshabilita
+  y aparece un indicador de progreso por pasos con el estado REAL de cada uno (creando repo →
+  conectando Vercel → sembrando backlog y manifest); al terminar, la consola redirige
+  AUTOMÁTICAMENTE al dashboard del proyecto nuevo (`/proyectos/<id>`), con el dropdown ya
+  revalidado (sin caché) y el proyecto nuevo seleccionado, un banner de éxito con la liga al repo
+  y la `preview_url` de Vercel, y el estado de la routine: "🏭 la routine madre la instalará
+  automáticamente (≤1h)" mientras el manifest no tenga `trigger_id` — el prompt manual de
+  `/schedule` queda como fallback colapsable por si la madre no está activa. Si un paso falla, se
+  muestra el error de ESE paso, qué alcanzó a crearse y cómo reintentar — nunca un fallo
+  silencioso. Desde ahí, el dashboard (cola, brief, Inbox, tareas manuales) es el **hub de mejora
+  continua** del proyecto.
   **Criterios de aceptación:** dado un usuario que llena el formulario con nombre+objetivo+≥1
-  feature MVP, cuando lo envía, entonces existe un repo nuevo en GitHub con el topic
-  `fabrica-agentes`, `.fabrica.json` válido y `docs/SPECS.md` commiteado, y la consola redirige a
-  la "pantalla de arranque" con el prompt de routine pre-rellenado; y dado que `VERCEL_TOKEN`
-  está configurado, entonces existe además el proyecto Vercel conectado al repo y el manifest
-  contiene su `preview_url`. El cron generado lleva **offset de minutos escalonado** (0/15/30/45,
-  rotando entre proyectos — ver §4 Motor A del diseño) y se guarda en `cadencia_cron` del
-  manifest, para que N routines no se disparen todas a la misma hora.
+  feature MVP, cuando lo envía, entonces ve el progreso por pasos y al completarse es redirigido
+  al dashboard del proyecto nuevo con el dropdown incluyéndolo y seleccionado, la liga al repo y
+  la `preview_url` visibles; y existe el repo nuevo en GitHub con el topic `fabrica-agentes`,
+  `.fabrica.json` válido y `docs/SPECS.md` commiteado; y dado que `VERCEL_TOKEN` está
+  configurado, entonces existe además el proyecto Vercel conectado al repo y el manifest contiene
+  su `preview_url`. El cron generado lleva **offset de minutos escalonado** (0/15/30/45, rotando
+  entre proyectos — ver §4 Motor A del diseño) y se guarda en `cadencia_cron` del manifest, para
+  que N routines no se disparen todas a la misma hora.
   **Archivos previstos:** `src/app/nuevo-proyecto/page.tsx`, `src/app/api/crear-proyecto/route.ts`,
   `src/lib/github.ts` (extender con `crearDesdeTemplate`, `commitearArchivo`),
-  `src/lib/vercel.ts` (crear-proyecto-conectado, con tests), tests en `src/lib/github.test.ts`.
+  `src/lib/vercel.ts` (crear-proyecto-conectado, con tests),
+  `src/components/ProgresoCreacion.tsx`, tests en `src/lib/github.test.ts`.
 
 - [ ] **Dropdown de proyectos existentes.** Usa `GET /api/proyectos` (ya implementado en el
   esqueleto — `src/app/api/proyectos/route.ts` + `src/lib/github.ts::obtenerProyectos`) para
@@ -97,7 +110,9 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   dashboard del proyecto elegido.
   **Criterios de aceptación:** dado que existen N repos con el topic `fabrica-agentes`, cuando se
   carga la consola, entonces el dropdown muestra los N proyectos por su `nombre` de manifest (o el
-  nombre del repo si el manifest falta) y seleccionar uno navega a `/proyectos/<id>`.
+  nombre del repo si el manifest falta) y seleccionar uno navega a `/proyectos/<id>`; y dado que
+  se acaba de crear un proyecto, cuando la consola redirige a su dashboard, entonces el dropdown
+  ya lo incluye y lo muestra seleccionado (lectura sin caché tras la creación).
   **Archivos previstos:** `src/app/layout.tsx` o un `src/components/SelectorProyectos.tsx`,
   `src/app/proyectos/[id]/page.tsx` (ruta destino).
 

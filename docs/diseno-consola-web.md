@@ -62,11 +62,18 @@ Mapea 1:1 a las 5 specs de la Fase 0 del método + configuración operativa:
 | 11 | Autoridad inicial | fijo (informativo) | "Peldaño 3: la fábrica deja ramas, tú apruebas merges. El push autónomo se gana después." |
 | 12 | Notificaciones | text opcional | chat_id de Telegram para avisos de reportes/decisiones |
 
-**Al enviar**, el backend: (1) crea el repo desde el template + topic + `.fabrica.json`;
-(2) commitea `docs/SPECS.md` con las respuestas; (3) siembra el backlog P0 con las features;
-(4) muestra la "pantalla de arranque" con los 2 pasos que aún son del humano: pegar el prompt de
-routine en `/schedule` (pre-rellenado, botón copiar) — o disparar el bootstrap automático si está
-configurado (ver §4).
+**Al enviar**, el backend: (1) crea el repo desde el template + topic; (2) conecta el proyecto a
+Vercel vía API si hay `VERCEL_TOKEN` (§4.5); (3) commitea `.fabrica.json` + `docs/SPECS.md` y
+siembra el backlog P0 con las features.
+**UX del flujo (decisión del usuario, 2026-07-17):** durante la creación, botón deshabilitado +
+indicador de progreso por pasos con el estado real (creando repo → conectando Vercel → sembrando
+backlog); al terminar, **redirección automática al dashboard del proyecto nuevo** con el dropdown
+revalidado y el proyecto seleccionado, banner de éxito con la liga al repo y la `preview_url`, y
+estado de la routine ("🏭 la routine madre la instalará automáticamente, ≤1h" mientras el
+manifest no tenga `trigger_id`; el prompt de `/schedule` pre-rellenado con botón copiar queda
+como fallback colapsable). Errores por paso con detalle y reintento — nunca fallos silenciosos.
+Desde ese momento el dashboard del proyecto (cola, brief, Inbox, tareas manuales) es el hub de
+mejora continua.
 
 ## 2. Dashboard por proyecto (el seguimiento amigable)
 
