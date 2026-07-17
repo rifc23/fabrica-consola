@@ -157,6 +157,21 @@ Todo se deriva de archivos del repo — cero estado nuevo, cero APIs extra:
 Incluido en la suscripción, tick cada N horas. Instalación manual: pegar el prompt en /schedule
 UNA vez por proyecto (~1 min). Sin estado en vivo (solo archivos). Ideal para uso personal.
 
+**Escala multi-proyecto (aclaración 2026-07-17): UNA routine POR proyecto, nunca una routine
+para todos.** Cada repo tiene su backlog (su cola) y su routine propia con su cadencia (campo 10
+del formulario); N proyectos = N routines independientes en paralelo, cada una tomando su lote de
+2-6 tareas de SU cola. Reglas de escala:
+- **Escalonar los ticks**: la consola asigna a cada proyecto nuevo un offset de minutos distinto
+  (`0 */2 * * *`, `15 */2 * * *`, `30 */2 * * *`, `45 */2 * * *`, y rota) para que no se disparen
+  todas a la misma hora — reparte el consumo de la suscripción y las sesiones concurrentes. El
+  cron elegido se guarda en `cadencia_cron` del manifest.
+- **Proyectos sin trabajo cuestan ~cero**: el candado `CAMPANA-*-FINAL.md` hace que sus ticks
+  terminen en segundos (o la routine quede deshabilitada); dejar feedback en su `📥 Inbox` los
+  reabre solo. En la práctica solo los proyectos con backlog vivo consumen ticks completos.
+- **El límite es la suscripción, no la arquitectura**: si los proyectos activos simultáneos
+  superan lo que la suscripción aguanta (ticks que se encolan, cuota agotada), ese es el
+  disparador para migrar esos proyectos a Motor B (abajo) — por token, sin límite de sesiones.
+
 ### Motor B — GitHub Actions + Claude Agent SDK (instalación 100% automática) ⭐ para la consola
 El template incluye .github/workflows/fabrica.yml: corre Claude headless (claude -p / Agent SDK)
 leyendo el prompt orquestador desde .fabrica/prompt-orquestador.md del propio repo.

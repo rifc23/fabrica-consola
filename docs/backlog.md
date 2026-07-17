@@ -71,7 +71,10 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   **Criterios de aceptación:** dado un usuario que llena el formulario con nombre+objetivo+≥1
   feature MVP, cuando lo envía, entonces existe un repo nuevo en GitHub con el topic
   `fabrica-agentes`, `.fabrica.json` válido y `docs/SPECS.md` commiteado, y la consola redirige a
-  la "pantalla de arranque" con el prompt de routine pre-rellenado.
+  la "pantalla de arranque" con el prompt de routine pre-rellenado. El cron generado lleva
+  **offset de minutos escalonado** (0/15/30/45, rotando entre proyectos — ver §4 Motor A del
+  diseño) y se guarda en `cadencia_cron` del manifest, para que N routines no se disparen todas a
+  la misma hora.
   **Archivos previstos:** `src/app/nuevo-proyecto/page.tsx`, `src/app/api/crear-proyecto/route.ts`,
   `src/lib/github.ts` (extender con `crearDesdeTemplate`, `commitearArchivo`), tests en
   `src/lib/github.test.ts`.
