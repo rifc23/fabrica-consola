@@ -4,7 +4,9 @@ import {
   agregarTopic,
   crearDesdeTemplate,
   actualizarArchivoConReintento,
+  borrarArchivo,
   escribirArchivo,
+  leerArchivo,
   obtenerProyectos,
   obtenerUsuarioAutenticado,
   type FabricaManifest,
@@ -18,6 +20,14 @@ import {
   agregarTareaManualVercel,
   type FormularioProyectoValidado,
 } from "@/lib/formulario-proyecto";
+import {
+  stackEfectivo,
+  frameworkVercel,
+  esStackOtro,
+  archivosEsqueletoVite,
+  archivosABorrarDeNext,
+  agregarTareaManualStackOtro,
+} from "@/lib/esqueletos";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +84,58 @@ async function ejecutarCreacion(
     return;
   }
 
+  // Paso 1.5: sembrar el esqueleto del stack elegido (el template solo trae el de Next). Ocurre
+  // ANTES de conectar Vercel y ANTES de manifest/SPECS/backlog para que el primer push visible
+  // ya sea el esqueleto correcto y el deploy nazca verde.
+  const stack = stackEfectivo(body.stack);
+  emitir({ tipo: "paso", paso: "esqueleto", estado: "en-progreso" });
+  try {
+    if (stack === "vite") {
+      for (const ruta of archivosABorrarDeNext()) {
+        await borrarArchivo(token, owner, repo, ruta, "chore(fabrica): quita el esqueleto Next para sembrar Vite");
+      }
+      for (const archivo of archivosEsqueletoVite(body.nombre)) {
+        const existente = await leerArchivo(token, owner, repo, archivo.ruta);
+        await escribirArchivo(
+          token,
+          owner,
+          repo,
+          archivo.ruta,
+          archivo.contenido,
+          "feat(fabrica): esqueleto Vite inicial",
+          existente?.sha,
+        );
+      }
+      emitir({ tipo: "paso", paso: "esqueleto", estado: "ok", detalle: { stack: "vite" } });
+    } else if (esStackOtro(body.stack)) {
+      await actualizarArchivoConReintento(
+        token,
+        owner,
+        repo,
+        "docs/TAREAS-MANUALES.md",
+        "docs: tarea manual — instalar el stack 'Otro' elegido",
+        (actual) => agregarTareaManualStackOtro(actual, body.stack),
+      );
+      emitir({
+        tipo: "paso",
+        paso: "esqueleto",
+        estado: "omitido",
+        motivo: "Stack 'Otro' — se dejó el esqueleto Next como placeholder y una tarea manual para el arquitecto-stack.",
+      });
+    } else {
+      emitir({
+        tipo: "paso",
+        paso: "esqueleto",
+        estado: "omitido",
+        motivo: "El esqueleto Next.js del template ya corresponde al stack elegido.",
+      });
+    }
+  } catch (err) {
+    emitir({ tipo: "paso", paso: "esqueleto", estado: "error", error: mensajeError(err) });
+    emitir({ tipo: "fin", ok: false, error: "El repo se creó pero no se pudo sembrar el esqueleto del stack elegido." });
+    return;
+  }
+
   // Paso 2: conectar a Vercel (degradación elegante si falta VERCEL_TOKEN o la API falla)
   emitir({ tipo: "paso", paso: "vercel", estado: "en-progreso" });
   let previewUrl: string | undefined;
@@ -92,6 +154,7 @@ async function ejecutarCreacion(
       const proyectoVercel = await crearProyectoVercelConectado(vercelToken, {
         nombre: slug,
         repoFullName: `${owner}/${repo}`,
+        framework: frameworkVercel(body.stack),
       });
       previewUrl = proyectoVercel.urlProduccion;
       emitir({ tipo: "paso", paso: "vercel", estado: "ok", detalle: { previewUrl } });
