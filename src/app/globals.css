@@ -47,3 +47,100 @@ a {
     color-scheme: dark;
   }
 }
+
+/* Base mobile-first para toda la consola (regla "Multiplataforma SIEMPRE" — CLAUDE.md):
+   usable desde 360px, targets táctiles ≥44px, sin interacciones solo-hover. */
+
+.container {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #999;
+  background: #f2f2f2;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #e6e6e6;
+}
+
+button:active {
+  background: #d9d9d9;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid #0366d6;
+  outline-offset: 2px;
+}
+
+select,
+input[type="text"],
+input[type="url"],
+textarea {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #999;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--background);
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+code {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+pre {
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 8px;
+  background: rgba(127, 127, 127, 0.12);
+  border-radius: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  button {
+    background: #1f1f1f;
+    border-color: #444;
+  }
+  button:hover {
+    background: #2a2a2a;
+  }
+  select,
+  input[type="text"],
+  input[type="url"],
+  textarea {
+    border-color: #444;
+  }
+}
