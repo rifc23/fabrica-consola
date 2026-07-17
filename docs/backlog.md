@@ -305,4 +305,5 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 | 2026-07-14 | Fase 0-1: kit, esqueleto andante, gate | main | (inicial) | lint ✅ test:run 6/6 ✅ build ✅ | Completado |
 | 2026-07-17 | Lote v1: las 5 P0 (formulario+Vercel, dropdown, dashboard, Inbox, decisiones) | claude/factory-console-backlog-7jafgw | 5cd4910..3f20eb1 | lint ✅ test:run 74/74 ✅ build ✅ | Mergeado a main (7f2644f) |
 | 2026-07-17 | Eliminar proyecto (Zona de peligro) | claude/factory-console-backlog-7jafgw | bcd92e7 | lint ✅ test:run 80/80 ✅ build ✅ | Mergeado a main (488cab0) |
-| 2026-07-17 | Esqueletos por stack (vite/estático/otro) | claude/factory-console-backlog-7jafgw | 61d7ceb..f129c0a | lint ✅ test:run 100/100 ✅ build ✅ | Pendiente de merge por el usuario |
+| 2026-07-17 | Esqueletos por stack (vite/estático/otro) | claude/factory-console-backlog-7jafgw | 61d7ceb..f129c0a | lint ✅ test:run 100/100 ✅ build ✅ | Mergeado a main (2ac3276) |
+| 2026-07-17 | Estado del deploy en preview + aviso claro de routine pendiente | claude/factory-console-backlog-7jafgw | (este lote) | lint ✅ test:run 104/104 ✅ build ✅ | Pendiente de merge por el usuario |

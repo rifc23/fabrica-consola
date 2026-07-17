@@ -4,6 +4,7 @@ import { calcularProgreso, extraerDecisiones } from "@/lib/backlog";
 import { derivarBrief, esperaEstimadaTicks } from "@/lib/brief";
 import { renderMarkdownSanitizado } from "@/lib/markdown";
 import { parametrizarPromptRoutine } from "@/lib/routine-prompt";
+import { obtenerEstadoDeploy } from "@/lib/vercel";
 import BotonActualizar from "@/components/BotonActualizar";
 import NuevaTarea from "@/components/NuevaTarea";
 import EliminarProyecto from "@/components/EliminarProyecto";
@@ -75,6 +76,17 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
   const previewDesdeQuery = typeof sp.preview === "string" ? sp.preview : undefined;
   const degradadoVercelQuery = sp.degradado === "1";
   const previewUrl = manifest?.preview_url || previewDesdeQuery;
+  const vercelToken = process.env.VERCEL_TOKEN;
+  const estadoDeploy =
+    previewUrl && vercelToken ? await obtenerEstadoDeploy(vercelToken, repo) : null;
+  const badgeDeploy =
+    estadoDeploy === "listo"
+      ? "🟢 en línea"
+      : estadoDeploy === "desplegando"
+        ? "⏳ desplegando… (el link puede dar 404 un momento)"
+        : estadoDeploy === "error"
+          ? "🔴 último deploy falló"
+          : null;
 
   return (
     <div className={`container ${styles.pagina}`}>
@@ -87,6 +99,7 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
           {previewUrl && (
             <span>
               Preview: <a href={previewUrl} target="_blank" rel="noopener noreferrer">{previewUrl}</a>
+              {badgeDeploy && <em> {badgeDeploy}</em>}
             </span>
           )}
           {degradadoVercelQuery && (
@@ -97,8 +110,8 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
           )}
           {!manifest?.trigger_id && (
             <span>
-              🏭 la routine madre la instalará automáticamente (≤1h) — mientras tanto, mira la
-              sección &quot;Instalar la routine&quot; más abajo.
+              ⚠️ <strong>Falta 1 paso para que la fábrica trabaje:</strong> instala la routine del
+              proyecto (~1 min) — ve a la sección &quot;🏭 Instalar la routine&quot; más abajo.
             </span>
           )}
         </div>
@@ -115,7 +128,7 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
           </a>
           {previewUrl && (
             <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-              🔗 Preview
+              🔗 Preview{badgeDeploy ? ` · ${badgeDeploy}` : ""}
             </a>
           )}
         </div>
@@ -211,13 +224,15 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
 
       {promptRoutine && (
         <section className={styles.seccion} aria-labelledby="titulo-instalar-routine">
-          <h2 id="titulo-instalar-routine">🏭 Instalar la routine</h2>
+          <h2 id="titulo-instalar-routine">🏭 Instalar la routine (pendiente — sin esto la fábrica NO trabaja este proyecto)</h2>
           <p>
-            La routine madre instala esto automáticamente (≤1h). Si prefieres hacerlo ya: pega
-            este prompt en la UI de routines de claude.ai, cadencia sugerida{" "}
-            {manifest?.cadencia_cron ?? "cada 2 horas"}.
+            El backlog de este proyecto no avanzará solo hasta que su routine exista. Es una vez y
+            toma ~1 min: copia el prompt de abajo, pégalo como routine nueva en claude.ai (sesión
+            nueva por disparo, con este repo como source) con cadencia{" "}
+            {manifest?.cadencia_cron ?? "cada 2 horas"}. Su primer tick construirá la idea
+            principal completa.
           </p>
-          <details className={styles.detallesInstalacion}>
+          <details className={styles.detallesInstalacion} open>
             <summary>Ver prompt parametrizado</summary>
             <pre>{promptRoutine}</pre>
             <CopiarBoton texto={promptRoutine} etiqueta="📋 Copiar prompt" />
