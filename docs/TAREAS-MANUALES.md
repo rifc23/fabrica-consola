@@ -83,8 +83,10 @@ backlog sola cada N horas; regenerable desde `docs/plantilla-routine-prompt.md`.
 **Completada 2026-07-17:** `routine-madre-fabrica` creada desde la UI (trigger
 `trig_01GKMxZGYkU5TqkS3pPcC5Mc`, cron `50 * * * *`, modelo Sonnet 5). Confirmado que conserva el
 conector Claude_Code_Remote (el que trae `create_trigger`) — buen augurio para el experimento.
-**Verificación pendiente:** su primer tick (a las :50) debe terminar "sin candidatos" y NO dejar
-`docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md`; la prueba definitiva será el primer
+**Verificación PASADA (2026-07-17 06:15):** primer tick corrió a las 05:50 y NO dejó
+`EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md` — las sesiones de la madre SÍ reciben las herramientas de
+triggers; el experimento es un éxito. Prompt actualizado a v2 por el usuario (instaladora +
+despachadora de Inboxes, ver `docs/routine-madre-prompt.md`). Prueba end-to-end final: el primer
 proyecto creado desde el formulario.
 
 **Qué:** una routine que detecta proyectos nuevos sin `trigger_id` en su `.fabrica.json` y les
