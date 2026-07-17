@@ -293,6 +293,34 @@ export async function escribirArchivo(
 }
 
 /**
+ * `DELETE /repos/{owner}/{repo}/contents/{path}` — borra un archivo (usado al reemplazar el
+ * esqueleto Next del template por el de Vite cuando el stack elegido lo requiere). Lee el sha
+ * actual primero: si el archivo ya no existe (404) es un no-op tolerado — devuelve false en vez
+ * de lanzar, igual que `eliminarRepo`.
+ */
+export async function borrarArchivo(
+  token: string,
+  owner: string,
+  repo: string,
+  path: string,
+  mensaje: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+  const actual = await leerArchivo(token, owner, repo, path, fetchImpl);
+  if (!actual) return false;
+  const res = await fetchImpl(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+    method: "DELETE",
+    headers: { ...githubHeaders(token), "Content-Type": "application/json" },
+    body: JSON.stringify({ message: mensaje, sha: actual.sha }),
+  });
+  if (!res.ok) {
+    const detalle = await res.text().catch(() => "");
+    throw new ErrorGitHubEscritura(`GitHub API respondió ${res.status} borrando ${path}: ${detalle}`, res.status);
+  }
+  return true;
+}
+
+/**
  * Lee-modifica-escribe con reintento ante conflicto de sha (409/422) — usado por el Inbox: si
  * otro commit cambió el archivo entre la lectura y la escritura, vuelve a leer y reintenta en vez
  * de sobrescribir a ciegas.
