@@ -65,6 +65,30 @@ Mapea 1:1 a las 5 specs de la Fase 0 del método + configuración operativa:
 **Al enviar**, el backend: (1) crea el repo desde el template + topic; (2) conecta el proyecto a
 Vercel vía API si hay `VERCEL_TOKEN` (§4.5); (3) commitea `.fabrica.json` + `docs/SPECS.md` y
 siembra el backlog P0 con las features.
+
+## 1.1 Tipo de proyecto "Gem" — chatbot con rol persistente (decisión del usuario, 2026-07-17)
+
+No todos los proyectos son iguales: el formulario ofrece un **checkbox "🤖 Gem (chatbot con
+rol)"** que, al marcarse, muestra un **textarea "Rol del bot"** (placeholder: *"Eres un
+entrenador fitness y me darás dietas con estos ingredientes: aguacate, cebolla…"*). Sin marcar,
+el formulario funciona exactamente como siempre. Marcado, la consola siembra el proyecto con el
+**blueprint Gem** en vez de pedir features MVP a mano:
+
+- **Features MVP fijas del blueprint** (el usuario puede agregar extras): (a) CRUD de Gems
+  (nombre + rol en textarea; lista como pantalla principal; "Asistente general" sin rol por
+  default); (b) chat con streaming contra la API de Claude server-side (`ANTHROPIC_API_KEY` env
+  var del proyecto — queda como tarea manual 🔴 del repo nuevo) donde el rol viaja como parámetro
+  `system` en CADA llamada, fuera del historial — si hay que truncar contexto se truncan mensajes
+  viejos, JAMÁS el rol (esa es la garantía de que "no se pierde"); historial y Gems en
+  localStorage (sin BD); (c) botón "✨ Mejorar rol": reescribe el rol con la API de Claude
+  (identidad/tono/reglas/datos fijos) en preview editable — nunca se guarda sin aprobación.
+- **El rol del usuario viaja TAL CUAL** al `docs/SPECS.md` del repo nuevo (sección "Rol
+  inicial"), y `.fabrica.json` gana `tipo: "gem"`. **El refinado del rol lo hace la routine del
+  proyecto en su primer tick** (mismo patrón que el triaje del Inbox: mejora wording/estructura;
+  si el cambio es sustancial lo estaciona como decisión `[USUARIO]`, si es pulido lo aplica) —
+  la consola sigue sin llamar a ningún LLM.
+- **Qué NO es v1 de un Gem**: multi-usuario, sync en la nube, compartir Gems, archivos/voz.
+- Multiplataforma como siempre: el Gem se usa desde el celular.
 **UX del flujo (decisión del usuario, 2026-07-17):** durante la creación, botón deshabilitado +
 indicador de progreso por pasos con el estado real (creando repo → conectando Vercel → sembrando
 backlog); al terminar, **redirección automática al dashboard del proyecto nuevo** con el dropdown
