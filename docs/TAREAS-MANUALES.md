@@ -78,6 +78,17 @@ routines de claude.ai.
 **Qué:** el prompt parametrizado (peldaño 3, sin push de merges) para que la fábrica itere el
 backlog sola cada N horas; regenerable desde `docs/plantilla-routine-prompt.md`.
 
+## 🟡 6. Crear la routine madre desde la UI de routines (experimento — instalación autónoma)
+
+**Qué:** una routine que detecta proyectos nuevos sin `trigger_id` en su `.fabrica.json` y les
+instala su routine orquestadora automáticamente (elimina el paso manual de la pantalla de
+arranque). DEBE crearse desde la UI de routines de claude.ai — creada programáticamente nace sin
+las herramientas de triggers. Análisis en `docs/diseno-consola-web.md` §4 Motor A.
+**Cómo:** seguir `docs/routine-madre-prompt.md` (prompt listo para pegar + pasos + verificación).
+Cadencia: `50 * * * *`. Si el primer tick deja `EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md` en
+`docs/reportes/`, borrar la routine de la UI — el flujo manual sigue funcionando igual.
+**Tiempo:** 3 min + verificar el primer tick.
+
 ## ⚪ 5. `VERCEL_TOKEN` (opcional, solo si quieres deploy autónomo desde agentes)
 
 **Qué:** permite que `arquitecto-stack` u otro agente conecte proyectos a Vercel por API/CLI sin
