@@ -229,6 +229,13 @@ Mientras tanto, v1 mantiene la pantalla de arranque (prompt pre-rellenado + copi
 /schedule, ~1 min por proyecto, una vez).
 
 ### Motor B — GitHub Actions + Claude Agent SDK (instalación 100% automática) ⭐ para la consola
+
+**Hallazgo verificado (2026-07-17): Motor B SIN API key no es viable.** Existe la vía oficial
+Pro/Max (`claude setup-token` → `CLAUDE_CODE_OAUTH_TOKEN` en el workflow, consumo por
+suscripción), PERO el token OAuth expira en ~1 día y su renovación exige navegador humano —
+inviable para cron autónomo (sería renovación manual diaria de todos los repos, peor que el
+1 min/proyecto del Motor A). Conclusión: Motor B = `ANTHROPIC_API_KEY` (por token) o nada; la
+autonomía con suscripción es Motor A + pantalla de arranque.
 El template incluye .github/workflows/fabrica.yml: corre Claude headless (claude -p / Agent SDK)
 leyendo el prompt orquestador desde .fabrica/prompt-orquestador.md del propio repo.
 - **Instalación sin copy/paste**: crear el repo desde el template YA instala el workflow; la
