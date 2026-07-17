@@ -88,25 +88,26 @@ consola es solo una vista bonita + un editor guiado del bus.
 
 ## 2.1 Input inteligente de feedback (decisión del usuario, 2026-07-17 — subido a v1)
 
-El usuario escribe feedback/ideas/specs sobre un proyecto ya creado en lenguaje natural, y el
-input se trata "de forma inteligente" antes de aterrizar en el backlog. Patrón **Inbox + triaje**:
+El usuario escribe feedback/ideas/specs sobre un proyecto ya creado en lenguaje natural desde el
+dashboard. Patrón **Inbox + triaje en el cron** — la consola es tonta a propósito; la
+inteligencia ya está pagada en la routine:
 
-1. **Refinado instantáneo (si hay `ANTHROPIC_API_KEY` server-side):** el API route llama a la API
-   de Claude para reescribir el input al formato de tarea del backlog (título, descripción,
-   criterios de aceptación dado/cuando/entonces, prioridad sugerida) y muestra un **preview
-   editable** — "así lo entendí, ¿lo agrego?". Al aprobar, se commitea a la sección `📥 Inbox` del
-   `docs/backlog.md` del proyecto.
-2. **Fallback crudo (sin API key):** el texto se commitea tal cual al Inbox, marcado
-   `(sin refinar)`. La feature nunca depende de la key.
-3. **Triaje final — siempre de la routine:** en su próximo tick, la routine orquestadora procesa
-   el Inbox: pule wording si hace falta, deduplica contra tareas existentes, asigna prioridad
-   definitiva y mueve cada entrada a P0/P1/P2 — o la estaciona como pregunta `[USUARIO]` si es
-   ambigua. El Inbox queda vacío tras cada triaje.
+1. **La consola commitea tal cual:** el API route agrega el texto (con fecha) DENTRO de la
+   sección `📥 Inbox` del `docs/backlog.md` del proyecto. Sin LLM, sin secretos nuevos, sin
+   decidir prioridades.
+2. **La routine hace el triaje en su próximo tick** (paso "TRIAJE DEL INBOX" de
+   `docs/plantilla-routine-prompt.md`): mejora el wording, redacta criterios de aceptación
+   (dado/cuando/entonces), deduplica contra tareas existentes, asigna prioridad y mueve cada
+   entrada a P0/P1/P2 — o la estaciona como pregunta `[USUARIO]` si es ambigua. El Inbox queda
+   vacío tras cada triaje.
 
 Por qué así: el backlog conserva un ÚNICO escritor con criterio (la routine/orquestador); la
 consola solo appendea en su buzón designado, así no hay conflictos de edición ni prioridades
-decididas por dos cerebros distintos. El template define la sección `📥 Inbox` en su backlog y el
-paso de triaje en `docs/plantilla-routine-prompt.md`.
+decididas por dos cerebros distintos; y no se configura ni paga nada nuevo (la routine ya corre
+con la suscripción). Trade-off aceptado: el wording mejorado se ve en el siguiente tick, no al
+instante. **Mejora opcional futura (P2):** refinado instantáneo con preview editable llamando a
+la API de Claude desde el API route (`ANTHROPIC_API_KEY` server-side) — solo UX; el triaje del
+cron sigue siendo la única autoridad.
 
 ## 3. Arquitectura mínima (principio de menor costo)
 

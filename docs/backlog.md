@@ -33,6 +33,10 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   feedback" sube de P1 a P0 con tratamiento inteligente del input (patrón Inbox + triaje de la
   routine, ver la tarea P0 y CLAUDE.md § Decisiones Arquitectónicas). El template gana la sección
   `📥 Inbox` en su backlog y el paso de triaje en la plantilla de routine.
+- 2026-07-17 (más tarde): simplificación por decisión del usuario — la consola NO llama a ningún
+  LLM en v1: commitea el feedback crudo al Inbox y el refinado completo lo hace la routine en el
+  cron (triaje). El refinado instantáneo con preview (`ANTHROPIC_API_KEY`) baja a P2 como mejora
+  opcional de UX; se retiró la tarea manual de la key.
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 
@@ -72,27 +76,21 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   **Archivos previstos:** `src/app/proyectos/[id]/page.tsx`, `src/lib/backlog.ts` (parser de
   checkboxes y sección `[USUARIO]`, con tests), `src/lib/markdown.ts` (render sanitizado).
 
-- [ ] **Input inteligente "＋ Nueva tarea / feedback" (subido de P1 a P0 por decisión del usuario,
-  2026-07-17).** En el dashboard de cada proyecto, un textarea donde el usuario escribe feedback,
-  una idea o una spec en lenguaje natural. Tratamiento en dos niveles:
-  (1) **Nivel refinado** — si `ANTHROPIC_API_KEY` está configurada (env var server-side en Vercel,
-  mismas reglas que `GITHUB_PAT`), el API route llama a la API de Claude para reescribir el input
-  al formato de tarea del backlog (título, descripción, criterios de aceptación
-  dado/cuando/entonces, prioridad sugerida), muestra el resultado como **preview editable** y, al
-  aprobar el usuario, lo commitea a la sección `📥 Inbox` del `docs/backlog.md` del proyecto.
-  (2) **Nivel crudo** — sin API key, degradación elegante: commitea el texto tal cual al Inbox con
-  fecha y marca `(sin refinar)`. En AMBOS casos la routine orquestadora del proyecto hace el
-  triaje final (wording, dedupe, prioridad definitiva, mover a P0/P1/P2 o estacionar como pregunta
-  `[USUARIO]`) en su próximo tick — la consola NUNCA escribe fuera de la sección Inbox.
+- [ ] **"＋ Nueva tarea / feedback" → Inbox (subido de P1 a P0 por decisión del usuario,
+  2026-07-17; simplificado el mismo día: el refinado lo hace la routine en el cron, no la
+  consola).** En el dashboard de cada proyecto, un textarea donde el usuario escribe feedback, una
+  idea o una spec en lenguaje natural. Al enviar, el API route commitea el texto TAL CUAL (con
+  fecha) DENTRO de la sección `📥 Inbox` del `docs/backlog.md` del proyecto — la consola no llama
+  a ningún LLM ni decide prioridades. El tratamiento inteligente ocurre en el siguiente tick de la
+  routine orquestadora (paso "TRIAJE DEL INBOX" de la plantilla): mejora el wording, redacta
+  criterios de aceptación, deduplica, prioriza a P0/P1/P2 o estaciona como pregunta `[USUARIO]`.
   **Criterios de aceptación:** dado un proyecto existente, cuando el usuario envía un feedback
   desde su dashboard, entonces aparece un commit nuevo en el repo del proyecto cuyo diff agrega la
-  entrada SOLO dentro de la sección `📥 Inbox` de `docs/backlog.md`; y dado que hay API key
-  configurada, cuando envía el feedback, entonces vio y pudo editar la versión refinada antes del
-  commit.
+  entrada SOLO dentro de la sección `📥 Inbox` de `docs/backlog.md`, y la UI confirma mostrando el
+  link al commit.
   **Archivos previstos:** `src/app/proyectos/[id]/NuevaTarea.tsx`,
-  `src/app/api/tareas/route.ts`, `src/lib/refinar.ts` (prompt + llamada a la API de Claude, con
-  tests del parseo), `src/lib/backlog.ts` (helper `insertarEnInbox`, con tests),
-  `src/lib/github.ts` (extender con append/commit de archivo existente).
+  `src/app/api/tareas/route.ts`, `src/lib/backlog.ts` (helper `insertarEnInbox`, con tests),
+  `src/lib/github.ts` (extender con append/commit de archivo existente, con tests).
 
 ## P1 — Siguientes
 
@@ -102,6 +100,11 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 
 ## P2 — Deuda / mejoras
 
+- [ ] Refinado instantáneo del feedback (mejora de UX, opcional): el API route llama a la API de
+  Claude server-side (`ANTHROPIC_API_KEY`, mismas reglas que `GITHUB_PAT`) para reescribir el
+  input al formato de tarea y mostrar un preview editable ANTES del commit al Inbox. Solo cambia
+  CUÁNDO se ve el wording mejorado — el triaje del cron sigue siendo la única autoridad de
+  prioridades. Requiere reponer la tarea manual de crear la key en Vercel.
 - [ ] Playwright E2E del flujo completo (crear proyecto → verlo en dropdown → dashboard) una vez
   exista el formulario real contra un repo de prueba.
 - [ ] Motor B (GitHub Actions + Agent SDK) — instalación 100% automática, ver §4 de

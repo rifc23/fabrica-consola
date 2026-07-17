@@ -37,10 +37,10 @@ datos (el estado vive en los repos de GitHub) · hosting/deploy: Vercel.
   del `docs/backlog.md` del proyecto (decisión del usuario 2026-07-17). La consola NUNCA escribe
   fuera de esa sección — responder decisiones `[USUARIO]` desde la web sigue siendo v2 (roadmap en
   `docs/diseno-consola-web.md` §5).
-- **La `ANTHROPIC_API_KEY` (si se configura) sigue las mismas reglas que el `GITHUB_PAT`**:
-  server-side únicamente, solo dentro de API routes, nunca en cliente/logs/git. Su ausencia nunca
-  rompe la consola: sin ella, el input del usuario se commitea crudo al Inbox (degradación
-  elegante).
+- **La consola no llama a ningún LLM en v1** (decisión del usuario, 2026-07-17): el tratamiento
+  inteligente del feedback lo hace la routine en el cron (paso "TRIAJE DEL INBOX"). Si algún día
+  se construye el refinado instantáneo (P2 del backlog), su `ANTHROPIC_API_KEY` seguirá las mismas
+  reglas que el `GITHUB_PAT`: server-side únicamente, nunca en cliente/logs/git.
 
 ## Regla de despliegue seguro (SIEMPRE, para cualquier cambio)
 
@@ -83,13 +83,14 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   2026-07-17). El dropdown selecciona el proyecto y el dashboard opera sobre él. Razón: la consola
   es stateless y todo el estado vive en cada repo hijo — N consolas serían N deploys, N secretos y
   N codebases duplicados sin aportar nada.
-- **Input inteligente = patrón "Inbox + triaje de la routine", en dos niveles** (decisión del
-  usuario, 2026-07-17). El feedback/idea/spec del usuario se refina con la API de Claude
-  server-side ANTES de commitear (preview editable) si hay `ANTHROPIC_API_KEY`; sin ella se
-  commitea crudo. Siempre aterriza SOLO en la sección `📥 Inbox` del backlog del proyecto, y el
-  triaje final (prioridad, dedupe, mover a P0/P1/P2 o estacionar) lo hace la routine orquestadora
-  del proyecto en su tick. Razón: el backlog conserva un único escritor con criterio (la routine),
-  la consola no compite con el orquestador, y el mecanismo funciona igual con o sin API key.
+- **Input inteligente = patrón "Inbox + triaje en el cron"** (decisión del usuario, 2026-07-17).
+  La consola commitea el feedback/idea/spec del usuario TAL CUAL, SOLO dentro de la sección
+  `📥 Inbox` del backlog del proyecto; toda la inteligencia (wording, criterios de aceptación,
+  dedupe, prioridad, estacionar preguntas) vive en el paso "TRIAJE DEL INBOX" de la routine
+  orquestadora, que ya corre con la suscripción. Razón: cero costo y cero secretos extra, la
+  consola queda mínima, y el backlog conserva un único escritor con criterio (la routine). El
+  refinado instantáneo con preview (API de Claude en el API route) es mejora opcional en P2 —
+  solo UX, nunca autoridad de triaje.
 
 ## Errores Conocidos — No Repetir
 

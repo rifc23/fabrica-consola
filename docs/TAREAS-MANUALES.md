@@ -72,14 +72,6 @@ que tú entres a la consola de Vercel cada vez. No es necesario si ya conectaste
 código/git — incluye la env var `VERCEL_TOKEN` en Vercel si algún workflow de CI lo necesita).
 **Tiempo:** 2 min.
 
-## 🟡 6. `ANTHROPIC_API_KEY` en Vercel (para el refinado inteligente del feedback)
-
-**Qué:** el "＋ Nueva tarea / feedback" del dashboard (P0 del backlog, 2026-07-17) usa la API de
-Claude server-side para reescribir tu idea al formato de tarea con spec y mostrarte un preview
-editable antes de commitearla al Inbox del proyecto. Sin esta key la feature igual funciona
-(commitea tu texto crudo y la routine lo refina en su próximo tick) — la key solo habilita el
-preview instantáneo.
-**Cómo:** console.anthropic.com → API Keys → Create Key → en Vercel → proyecto `fabrica-consola` →
-Settings → Environment Variables → agrega `ANTHROPIC_API_KEY` (scope Production/Preview). Nunca en
-código/git — solo el NOMBRE del secreto se documenta.
-**Tiempo:** 3 min. Costo: por token (centavos por refinado — cada uso es un prompt corto).
+(Retirada 2026-07-17: la tarea de crear `ANTHROPIC_API_KEY` para el refinado instantáneo del
+feedback ya no aplica en v1 — el refinado lo hace la routine en el cron. Se repondrá solo si se
+construye la mejora opcional P2 del backlog.)
