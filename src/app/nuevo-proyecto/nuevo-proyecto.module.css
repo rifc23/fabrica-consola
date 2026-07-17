@@ -1,0 +1,90 @@
+.pagina {
+  padding: 24px 16px 64px;
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.campo label {
+  font-weight: 600;
+}
+
+.ayuda {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.grupoRadio,
+.grupoCheckbox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.opcionRadio,
+.opcionCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.opcionRadio input,
+.opcionCheckbox input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.feature {
+  border: 1px solid rgba(127, 127, 127, 0.35);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.featureCabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.autoridad {
+  background: rgba(3, 102, 214, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.9rem;
+}
+
+.errorForm {
+  border: 1px solid #c00;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.banner {
+  border: 1px solid rgba(46, 160, 67, 0.5);
+  background: rgba(46, 160, 67, 0.1);
+  border-radius: 10px;
+  padding: 16px;
+}

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { obtenerProyectos } from "@/lib/github";
 
+// Lectura sin caché (regla no negociable "frescura"): un proyecto recién creado debe aparecer
+// en el dropdown inmediatamente después del redirect, sin esperar una revalidación.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const token = process.env.GITHUB_PAT;
   if (!token) {

@@ -1,0 +1,17 @@
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.selector {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.nuevo {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}

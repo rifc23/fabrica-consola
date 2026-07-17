@@ -2,13 +2,13 @@ import styles from "./page.module.css";
 
 export default function Home() {
   return (
-    <div className={styles.page}>
+    <div className={`container ${styles.page}`}>
       <main className={styles.main}>
         <h1>Fábrica — Consola</h1>
         <p>
-          Esqueleto andante. El dropdown de proyectos y el dashboard llegan como features del
-          backlog (docs/backlog.md). El endpoint <code>/api/proyectos</code> ya lee repos reales
-          por topic <code>fabrica-agentes</code> vía la API de GitHub (server-side).
+          Elige un proyecto arriba o crea uno nuevo. Cada proyecto vive en su propio repo de
+          GitHub (nacido de <code>rifc23/fabrica-agentes-template</code>) — esta consola solo lee
+          y escribe ahí, sin base de datos propia.
         </p>
       </main>
     </div>

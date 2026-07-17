@@ -85,9 +85,17 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   constituyen el corazón, en serie donde compartan archivos); al backlog solo queda lo no
   esencial. Para la consola: las 4 P0 son UN producto y van juntas en el primer tick.
 
+- 2026-07-17 (cierre del lote v1): las 5 P0 implementadas y con gate en verde (lint ✅ build ✅
+  test:run 74/74 ✅) en la rama `claude/factory-console-backlog-7jafgw` — pendiente de merge por
+  el usuario (peldaño 3). Revisión del orquestador: secretos solo server-side, markdown con
+  sanitizador propio (escape-first), escritura únicamente en sección 📥 Inbox con reintento por
+  SHA, countdown sin links a claude.ai, UI mobile-first. Reporte:
+  `docs/reportes/2026-07-17-lote-v1-consola.md`. Verificado además fabrica-sync en vivo: main
+  recibió `7f1fe03` automáticamente.
+
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 
-- [ ] **Formulario "Nuevo proyecto".** Página con los 12 campos de `docs/diseno-consola-web.md`
+- [x] **Formulario "Nuevo proyecto".** Página con los 12 campos de `docs/diseno-consola-web.md`
   §1 (nombre, objetivo, features MVP repetibles, qué NO es v1, criterios de aceptación opcionales,
   stack, presupuesto, decisiones reservadas, visibilidad, cadencia de routine, autoridad inicial
   informativa, notificaciones opcionales). Al enviar, un API route server-side: (1) crea el repo
@@ -126,7 +134,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   `src/lib/vercel.ts` (crear-proyecto-conectado, con tests),
   `src/components/ProgresoCreacion.tsx`, tests en `src/lib/github.test.ts`.
 
-- [ ] **Dropdown de proyectos existentes.** Usa `GET /api/proyectos` (ya implementado en el
+- [x] **Dropdown de proyectos existentes.** Usa `GET /api/proyectos` (ya implementado en el
   esqueleto — `src/app/api/proyectos/route.ts` + `src/lib/github.ts::obtenerProyectos`) para
   listar repos por topic con nombre desde el manifest. Selector en el header que navega al
   dashboard del proyecto elegido.
@@ -138,7 +146,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   **Archivos previstos:** `src/app/layout.tsx` o un `src/components/SelectorProyectos.tsx`,
   `src/app/proyectos/[id]/page.tsx` (ruta destino).
 
-- [ ] **Dashboard read-only por proyecto.** Página `/proyectos/[id]` que lee (vía Contents API)
+- [x] **Dashboard read-only por proyecto.** Página `/proyectos/[id]` que lee (vía Contents API)
   y renderiza: progreso desde checkboxes de `docs/backlog.md` (barra + lista ✅/⏳), el reporte
   más reciente de `docs/reportes/` (markdown renderizado, sanitizado), decisiones `[USUARIO]`
   visibles del backlog, link al repo y a `preview_url` del manifest. Además (decisión del usuario,
@@ -164,7 +172,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   (render sanitizado), `src/lib/brief.ts` (derivar hecho/en-curso/falta, con tests),
   `src/components/BotonActualizar.tsx`.
 
-- [ ] **"＋ Nueva tarea / feedback" → Inbox (subido de P1 a P0 por decisión del usuario,
+- [x] **"＋ Nueva tarea / feedback" → Inbox (subido de P1 a P0 por decisión del usuario,
   2026-07-17; simplificado el mismo día: el refinado lo hace la routine en el cron, no la
   consola).** En el dashboard de cada proyecto, un textarea donde el usuario escribe feedback, una
   idea o una spec en lenguaje natural. Al enviar, el API route commitea el texto TAL CUAL (con
@@ -180,7 +188,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   `src/app/api/tareas/route.ts`, `src/lib/backlog.ts` (helper `insertarEnInbox`, con tests),
   `src/lib/github.ts` (extender con append/commit de archivo existente, con tests).
 
-- [ ] **Cards de decisiones respondibles + "Disparar routine ahora" (subido de P1/v2 a P0 por
+- [x] **Cards de decisiones respondibles + "Disparar routine ahora" (subido de P1/v2 a P0 por
   decisión del usuario, 2026-07-17 — cierre rápido del ciclo de feedback).** El dashboard muestra
   cada decisión estacionada `[USUARIO]` del backlog como card con la pregunta EXACTA + input de
   respuesta (+ botones si la pregunta es de opción). Al responder: (1) la consola commitea la
@@ -256,3 +264,4 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 | Fecha | Tarea | Rama | Commits | Gate | Estado |
 |-------|-------|------|---------|------|--------|
 | 2026-07-14 | Fase 0-1: kit, esqueleto andante, gate | main | (inicial) | lint ✅ test:run 6/6 ✅ build ✅ | Completado |
+| 2026-07-17 | Lote v1: las 5 P0 (formulario+Vercel, dropdown, dashboard, Inbox, decisiones) | claude/factory-console-backlog-7jafgw | 5cd4910..3f20eb1 | lint ✅ test:run 74/74 ✅ build ✅ | Pendiente de merge por el usuario |
