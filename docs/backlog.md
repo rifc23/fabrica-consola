@@ -53,6 +53,10 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   y empezará a trabajar este backlog. Apagado automático por candado
   `docs/reportes/CAMPANA-*-FINAL.md` cuando no queden ítems delegables; entradas nuevas en el
   `📥 Inbox` o el backlog reabren la campaña.
+- 2026-07-17: decisión del usuario — el dashboard incluye "🧑 Tareas manuales" como documento
+  vivo y un "📋 Brief" hecho/pendiente derivado por parsing (sin LLM), ambos con botón
+  "↻ Actualizar" que re-lee del repo sin caché. Ampliada la spec del dashboard P0 y §2 del
+  diseño.
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 
@@ -85,12 +89,25 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 - [ ] **Dashboard read-only por proyecto.** Página `/proyectos/[id]` que lee (vía Contents API)
   y renderiza: progreso desde checkboxes de `docs/backlog.md` (barra + lista ✅/⏳), el reporte
   más reciente de `docs/reportes/` (markdown renderizado, sanitizado), decisiones `[USUARIO]`
-  visibles del backlog, link al repo y a `preview_url` del manifest.
+  visibles del backlog, link al repo y a `preview_url` del manifest. Además (decisión del usuario,
+  2026-07-17): sección **"🧑 Tareas manuales" como documento vivo** (render sanitizado de
+  `docs/TAREAS-MANUALES.md` del proyecto) y sección **"📋 Brief"** con qué-se-hizo / qué-falta
+  derivado POR PARSING, sin LLM (regla no negociable de v1): completadas recientes (`[x]` +
+  Registro de trabajo), en curso (tareas `🔄`), pendientes con su posición en la cola y conteos
+  por prioridad. **Frescura:** todas las lecturas del dashboard con `cache: 'no-store'` y botón
+  **"↻ Actualizar"** (componente compartido, en el header del dashboard y en las secciones
+  Tareas manuales y Brief) que re-lee del repo al instante (`router.refresh()`), mostrando
+  "actualizado hace Xs" en cada sección.
   **Criterios de aceptación:** dado un proyecto con backlog y al menos un reporte, cuando se abre
   su dashboard, entonces se ve la barra de progreso con el conteo real de checkboxes, el reporte
-  más reciente renderizado, y la lista de decisiones estacionadas (vacía si no hay ninguna).
+  más reciente renderizado, la lista de decisiones estacionadas (vacía si no hay ninguna), las
+  tareas manuales del proyecto y el brief hecho/pendiente; y dado que el repo cambió después de
+  cargar la página (ej. la routine commiteó), cuando el usuario pulsa "↻ Actualizar", entonces
+  las secciones reflejan el contenido más reciente del repo sin recargar manualmente el navegador.
   **Archivos previstos:** `src/app/proyectos/[id]/page.tsx`, `src/lib/backlog.ts` (parser de
-  checkboxes y sección `[USUARIO]`, con tests), `src/lib/markdown.ts` (render sanitizado).
+  checkboxes, `🔄`, sección `[USUARIO]` y Registro de trabajo, con tests), `src/lib/markdown.ts`
+  (render sanitizado), `src/lib/brief.ts` (derivar hecho/en-curso/falta, con tests),
+  `src/components/BotonActualizar.tsx`.
 
 - [ ] **"＋ Nueva tarea / feedback" → Inbox (subido de P1 a P0 por decisión del usuario,
   2026-07-17; simplificado el mismo día: el refinado lo hace la routine en el cron, no la

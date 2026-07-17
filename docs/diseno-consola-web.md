@@ -81,13 +81,21 @@ Secciones (todas se LEEN de archivos del repo — la consola no tiene base de da
 | **🕐 Cola y tiempos** | orden del backlog + marcador `🔄` + `cadencia_cron`/`ultimo_tick` del manifest | cola numerada de pendientes en su orden real, badge "🔄 trabajando ahora", countdown al próximo tick y espera estimada por posición (ver §2.2) |
 | **🔔 Decisiones que te esperan** | sección `[USUARIO]`/estacionadas del backlog | **la killer feature**: cada decisión como card con la pregunta + un `input text`/botones → al responder, la consola COMMITEA la respuesta al backlog (vía GitHub API) → la routine la ejecuta en su próximo tick. Cero terminal. |
 | **📝 Último reporte** | `docs/reportes/` más reciente | markdown renderizado (qué se hizo, gate, estacionado) |
-| **🧑 Tus tareas manuales** | `docs/TAREAS-MANUALES.md` | lista con checkbox → marcar = commit del ✅ |
+| **📋 Brief hecho/pendiente** | backlog (checkboxes, `🔄`, Registro de trabajo) + último reporte | resumen derivado POR PARSING, sin LLM: completadas recientes, en curso, pendientes con posición en cola y conteos por prioridad; botón ↻ Actualizar |
+| **🧑 Tus tareas manuales** | `docs/TAREAS-MANUALES.md` | documento vivo: render sanitizado + botón ↻ Actualizar; marcar ✅ desde la web (commit) queda para v2 |
 | **📜 Historial** | tabla "Registro de trabajo" del backlog + `git log` | timeline de merges con hashes |
 | **▶️ Acciones** | — | botón "Disparar routine ahora" (deep-link a `claude.ai/code/routines/<trigger_id>` — el run-now vive allá) · "＋ Nueva tarea / feedback" (ver §2.1 — input inteligente) · "Pedir auditoría retrospectiva" (commitea la solicitud) |
 
 **El principio que hace esto simple**: la consola nunca habla con la routine — **escribe y lee el
 repo, igual que todos los demás trabajadores de la fábrica**. El backlog sigue siendo el bus; la
 consola es solo una vista bonita + un editor guiado del bus.
+
+**Frescura (decisión del usuario, 2026-07-17):** el dashboard es un documento vivo — todas sus
+lecturas a la API de GitHub van con `cache: 'no-store'`, y un botón **"↻ Actualizar"**
+(componente compartido: en el header y en las secciones Brief y Tareas manuales) fuerza la
+re-lectura inmediata del repo (`router.refresh()`), con "actualizado hace Xs" por sección. Así,
+en cuanto la routine commitea (inicio de tick, cierre de lote, reporte nuevo), un clic trae lo
+último sin recargar el navegador.
 
 ## 2.1 Input inteligente de feedback (decisión del usuario, 2026-07-17 — subido a v1)
 
