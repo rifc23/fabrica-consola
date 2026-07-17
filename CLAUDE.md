@@ -130,6 +130,15 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   fallback. La madre NO instala routines con `create_trigger` (nacerían rotas): detecta proyectos
   sin routine y deja el prompt listo como tarea manual; su despacho con `fire_trigger` SÍ
   funciona (dispara routines existentes creadas por UI, que corren con sus propios permisos).
+- **(2026-07-17) El primer deploy de un proyecto recién creado fallaba: "No Next.js version
+  detected".** Síntoma: al crear el primer proyecto real desde el formulario, Vercel no pudo
+  buildear. Causa: el template era puro molde (docs, sin `package.json` ni app) mientras la
+  consola crea el proyecto Vercel con preset `nextjs`. Solución: el template ahora incluye un
+  **esqueleto Next.js mínimo** (placeholder "🏭 en construcción" + gate completo lint/build/test
+  corrible) — todo proyecto nace con deploy verde y la routine construye el producto ENCIMA en su
+  primer tick. Regla: el template siempre debe mantener su gate en verde; si un proyecto necesita
+  otro stack, el arquitecto-stack lo reemplaza en Fase 1 (y ajusta el framework de Vercel como
+  tarea manual).
 
 ## Modelo de datos
 
