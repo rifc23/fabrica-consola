@@ -64,13 +64,19 @@ estacionadas). La UI actual es intencionalmente mínima hasta que decidas.
 si quieres iterar sobre lo mínimo o invertir en un sistema de diseño antes del formulario real.
 **Tiempo:** cuando puedas — no bloquea el desarrollo de las features P0.
 
-## 🟡 4. Instalar la routine cloud (Motor A) — una vez, cuando quieras autonomía continua
+## ✅ 4. Instalar la routine cloud (Motor A) — una vez, cuando quieras autonomía continua
 
-**Qué:** el prompt parametrizado listo en el mensaje final de esta sesión de `/fabrica` (peldaño 3,
-sin push). Pégalo en `/schedule` para que la fábrica siga iterando el backlog sola cada N horas.
-**Cómo:** ver el prompt entregado al cierre de esta sesión, o regenerarlo desde
-`docs/plantilla-routine-prompt.md` con los datos de este proyecto.
-**Tiempo:** 1 min.
+**Completada 2026-07-17:** routine `routine-fabrica-consola` instalada (trigger
+`trig_01QeEmanoFZmaQD4xzhLMt1M`), cron cada 2 horas (`0 */2 * * *`), sesión fresca por disparo,
+peldaño 3 (deja ramas listas, el usuario aprueba merges; la documentación sí se pushea a main).
+**Apagado automático:** cuando no quede ningún ítem delegable, la routine escribe
+`docs/reportes/CAMPANA-<fecha>-FINAL.md` en main — ese archivo es el candado: los disparos
+siguientes terminan al instante sin hacer nada. Agregar entradas nuevas al `📥 Inbox` o tareas al
+backlog REABRE la campaña automáticamente. Para apagarla del todo o reactivarla a mano: UI de
+routines de claude.ai.
+
+**Qué:** el prompt parametrizado (peldaño 3, sin push de merges) para que la fábrica itere el
+backlog sola cada N horas; regenerable desde `docs/plantilla-routine-prompt.md`.
 
 ## ⚪ 5. `VERCEL_TOKEN` (opcional, solo si quieres deploy autónomo desde agentes)
 

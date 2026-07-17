@@ -41,6 +41,12 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   Vercel y repo conectado (deploy automático por push activo). Verificado en producción:
   `/api/proyectos` responde 200 con `[]`. Las features P0 quedan totalmente desbloqueadas,
   incluida la prueba end-to-end contra la API real de GitHub.
+- 2026-07-17: routine orquestadora instalada (`routine-fabrica-consola`,
+  `trig_01QeEmanoFZmaQD4xzhLMt1M`, cron cada 2h, peldaño 3). En su primer disparo mergeará a main
+  la rama `claude/factory-console-backlog-7jafgw` (solo documentación — autorizado por el usuario)
+  y empezará a trabajar este backlog. Apagado automático por candado
+  `docs/reportes/CAMPANA-*-FINAL.md` cuando no queden ítems delegables; entradas nuevas en el
+  `📥 Inbox` o el backlog reabren la campaña.
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 
