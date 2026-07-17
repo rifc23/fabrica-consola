@@ -41,6 +41,13 @@ datos (el estado vive en los repos de GitHub) · hosting/deploy: Vercel.
   inteligente del feedback lo hace la routine en el cron (paso "TRIAJE DEL INBOX"). Si algún día
   se construye el refinado instantáneo (P2 del backlog), su `ANTHROPIC_API_KEY` seguirá las mismas
   reglas que el `GITHUB_PAT`: server-side únicamente, nunca en cliente/logs/git.
+- **Multiplataforma SIEMPRE** (decisión del usuario, 2026-07-17, regla de toda la fábrica): la
+  consola y toda su UI se construyen mobile-first/responsive — usable desde 360px hasta desktop,
+  targets táctiles ≥44px, sin interacciones solo-hover, sin scroll horizontal. Los criterios de
+  aceptación de CADA feature con UI (formulario, dropdown, dashboard, cola, brief, Inbox)
+  incluyen su comportamiento en móvil, y el E2E de Playwright (P2) corre en viewport desktop Y
+  móvil (~390×844). La consola es el hub que el usuario abre desde el celular para revisar
+  proyectos y dejar feedback — el móvil no es un extra, es un caso de uso primario.
 
 ## Regla de despliegue seguro (SIEMPRE, para cualquier cambio)
 

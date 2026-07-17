@@ -62,6 +62,9 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   (`trig_01GKMxZGYkU5TqkS3pPcC5Mc`, cron `50 * * * *`). TODAS las tareas manuales bloqueantes o
   habilitadoras están cerradas: la P0 del formulario puede implementarse y probarse end-to-end
   (repo + Vercel + routine) sin intervención del usuario.
+- 2026-07-17: decisión del usuario — regla **Multiplataforma SIEMPRE** (mobile-first/responsive,
+  E2E en viewport móvil) agregada a las REGLAS NO NEGOCIABLES de la consola Y del template: toda
+  UI de la fábrica funciona en celular. Aplica a TODAS las tareas P0/P1 con UI de este backlog.
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 
@@ -191,7 +194,8 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   CUÁNDO se ve el wording mejorado — el triaje del cron sigue siendo la única autoridad de
   prioridades. Requiere reponer la tarea manual de crear la key en Vercel.
 - [ ] Playwright E2E del flujo completo (crear proyecto → verlo en dropdown → dashboard) una vez
-  exista el formulario real contra un repo de prueba.
+  exista el formulario real contra un repo de prueba. Cada spec de UI corre en DOS viewports:
+  desktop y móvil ~390×844 (regla Multiplataforma de CLAUDE.md).
 - [ ] Motor B (GitHub Actions + Agent SDK) — instalación 100% automática, ver §4 de
   diseno-consola-web.md. No es v1.
 
