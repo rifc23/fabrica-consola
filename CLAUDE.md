@@ -32,8 +32,15 @@ datos (el estado vive en los repos de GitHub) · hosting/deploy: Vercel.
   cachear" sin decisión explícita del usuario.
 - **Sanitizar todo render de markdown/HTML** proveniente de los repos leídos (reportes, backlog)
   antes de insertarlo en el DOM — los repos son del propio usuario pero el render pasa por HTML.
-- v1 es **read-only** sobre los repos de proyectos (excepto la creación inicial): no commitear
-  decisiones/tareas desde la web todavía (eso es v2, ver roadmap en `docs/diseno-consola-web.md` §5).
+- v1 es **read-only** sobre los repos de proyectos con DOS excepciones exactas: (1) la creación
+  inicial del repo y (2) el append de tareas/feedback del usuario DENTRO de la sección `📥 Inbox`
+  del `docs/backlog.md` del proyecto (decisión del usuario 2026-07-17). La consola NUNCA escribe
+  fuera de esa sección — responder decisiones `[USUARIO]` desde la web sigue siendo v2 (roadmap en
+  `docs/diseno-consola-web.md` §5).
+- **La `ANTHROPIC_API_KEY` (si se configura) sigue las mismas reglas que el `GITHUB_PAT`**:
+  server-side únicamente, solo dentro de API routes, nunca en cliente/logs/git. Su ausencia nunca
+  rompe la consola: sin ella, el input del usuario se commitea crudo al Inbox (degradación
+  elegante).
 
 ## Regla de despliegue seguro (SIEMPRE, para cualquier cambio)
 
@@ -72,6 +79,17 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
 - **Decisiones reservadas al usuario**: diseño visual y el nombre del producto. No renombrar el
   proyecto ni comprometerse a un sistema de diseño elaborado sin preguntar — usar UI mínima
   funcional (sin librería de componentes pesada) hasta que el usuario decida.
+- **Una SOLA consola multi-proyecto, nunca una consola por proyecto** (decisión del usuario,
+  2026-07-17). El dropdown selecciona el proyecto y el dashboard opera sobre él. Razón: la consola
+  es stateless y todo el estado vive en cada repo hijo — N consolas serían N deploys, N secretos y
+  N codebases duplicados sin aportar nada.
+- **Input inteligente = patrón "Inbox + triaje de la routine", en dos niveles** (decisión del
+  usuario, 2026-07-17). El feedback/idea/spec del usuario se refina con la API de Claude
+  server-side ANTES de commitear (preview editable) si hay `ANTHROPIC_API_KEY`; sin ella se
+  commitea crudo. Siempre aterriza SOLO en la sección `📥 Inbox` del backlog del proyecto, y el
+  triaje final (prioridad, dedupe, mover a P0/P1/P2 o estacionar) lo hace la routine orquestadora
+  del proyecto en su tick. Razón: el backlog conserva un único escritor con criterio (la routine),
+  la consola no compite con el orquestador, y el mecanismo funciona igual con o sin API key.
 
 ## Errores Conocidos — No Repetir
 
@@ -84,8 +102,9 @@ proyectos vía GitHub Contents API:
 
 - **`.fabrica.json`** (raíz de cada repo hijo): `{ id, nombre, creado, peldano, trigger_id,
   preview_url, estado }` — ver esquema completo en `docs/diseno-consola-web.md` §"Conceptos clave".
-- **`docs/backlog.md`**: fuente de progreso (checkboxes `- [ ]`/`- [x]` en P0/P1) y de decisiones
-  estacionadas (sección `[USUARIO]`).
+- **`docs/backlog.md`**: fuente de progreso (checkboxes `- [ ]`/`- [x]` en P0/P1), de decisiones
+  estacionadas (sección `[USUARIO]`) y buzón de entradas del usuario (sección `📥 Inbox` — la
+  ÚNICA parte del backlog donde la consola escribe; la routine la vacía en cada triaje).
 - **`docs/reportes/*.md`**: reportes de cada corrida de la routine/orquestador; la consola lee el
   más reciente por nombre de archivo (`<fecha>-<...>.md`).
 - **`docs/TAREAS-MANUALES.md`**: tareas pendientes del humano, mostradas en el dashboard.

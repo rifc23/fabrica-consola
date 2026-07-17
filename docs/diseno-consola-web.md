@@ -80,11 +80,33 @@ Secciones (todas se LEEN de archivos del repo — la consola no tiene base de da
 | **📝 Último reporte** | `docs/reportes/` más reciente | markdown renderizado (qué se hizo, gate, estacionado) |
 | **🧑 Tus tareas manuales** | `docs/TAREAS-MANUALES.md` | lista con checkbox → marcar = commit del ✅ |
 | **📜 Historial** | tabla "Registro de trabajo" del backlog + `git log` | timeline de merges con hashes |
-| **▶️ Acciones** | — | botón "Disparar routine ahora" (deep-link a `claude.ai/code/routines/<trigger_id>` — el run-now vive allá) · "＋ Nueva tarea" (textarea → se commitea al backlog como tarea con spec) · "Pedir auditoría retrospectiva" (commitea la solicitud) |
+| **▶️ Acciones** | — | botón "Disparar routine ahora" (deep-link a `claude.ai/code/routines/<trigger_id>` — el run-now vive allá) · "＋ Nueva tarea / feedback" (ver §2.1 — input inteligente) · "Pedir auditoría retrospectiva" (commitea la solicitud) |
 
 **El principio que hace esto simple**: la consola nunca habla con la routine — **escribe y lee el
 repo, igual que todos los demás trabajadores de la fábrica**. El backlog sigue siendo el bus; la
 consola es solo una vista bonita + un editor guiado del bus.
+
+## 2.1 Input inteligente de feedback (decisión del usuario, 2026-07-17 — subido a v1)
+
+El usuario escribe feedback/ideas/specs sobre un proyecto ya creado en lenguaje natural, y el
+input se trata "de forma inteligente" antes de aterrizar en el backlog. Patrón **Inbox + triaje**:
+
+1. **Refinado instantáneo (si hay `ANTHROPIC_API_KEY` server-side):** el API route llama a la API
+   de Claude para reescribir el input al formato de tarea del backlog (título, descripción,
+   criterios de aceptación dado/cuando/entonces, prioridad sugerida) y muestra un **preview
+   editable** — "así lo entendí, ¿lo agrego?". Al aprobar, se commitea a la sección `📥 Inbox` del
+   `docs/backlog.md` del proyecto.
+2. **Fallback crudo (sin API key):** el texto se commitea tal cual al Inbox, marcado
+   `(sin refinar)`. La feature nunca depende de la key.
+3. **Triaje final — siempre de la routine:** en su próximo tick, la routine orquestadora procesa
+   el Inbox: pule wording si hace falta, deduplica contra tareas existentes, asigna prioridad
+   definitiva y mueve cada entrada a P0/P1/P2 — o la estaciona como pregunta `[USUARIO]` si es
+   ambigua. El Inbox queda vacío tras cada triaje.
+
+Por qué así: el backlog conserva un ÚNICO escritor con criterio (la routine/orquestador); la
+consola solo appendea en su buzón designado, así no hay conflictos de edición ni prioridades
+decididas por dos cerebros distintos. El template define la sección `📥 Inbox` en su backlog y el
+paso de triaje en `docs/plantilla-routine-prompt.md`.
 
 ## 3. Arquitectura mínima (principio de menor costo)
 
@@ -160,8 +182,9 @@ decisiones de costo recurrente >$0 SIEMPRE se estacionan al usuario.
 ## 5. Roadmap de la propia consola (comerse su propia comida)
 
 - **v1 (MVP)**: crear proyecto (form → repo+SPECS+topic+manifest) + dropdown + dashboard
-  read-only (progreso, último reporte, decisiones visibles).
-- **v2**: decisiones y tareas nuevas COMMITEABLES desde la web (el editor guiado del backlog).
+  read-only (progreso, último reporte, decisiones visibles) + **"＋ Nueva tarea / feedback" con
+  input inteligente** (§2.1 — única escritura permitida además de la creación: append al Inbox).
+- **v2**: decisiones `[USUARIO]` respondibles desde la web (el editor guiado del backlog completo).
 - **v3**: Motor B completo (workflow en el template + secrets por API + dispatch instantáneo + estado en vivo + PRs con botón Merge) — cada usuario 100% autónomo con su API key. + notificaciones Telegram + auditorías con un clic.
 
 **Specs listas para arrancarla con `/fabrica`** (en una carpeta vacía):

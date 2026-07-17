@@ -28,6 +28,11 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   `fabrica-agentes` vía GitHub API server-side) con 6 tests unitarios sobre `src/lib/github.ts`.
   Gate en verde local (lint + test:run + build). CI en `.github/workflows/gate.yml`. Pusheado a
   `main` (commit `cafebd9`). Deploy a Vercel: pendiente de conexión (ver TAREAS-MANUALES.md).
+- 2026-07-17: decisión del usuario: una SOLA consola multi-proyecto (dropdown, no una consola por
+  proyecto) y la consola también recibe inputs sobre proyectos ya creados. El "＋ Nueva tarea /
+  feedback" sube de P1 a P0 con tratamiento inteligente del input (patrón Inbox + triaje de la
+  routine, ver la tarea P0 y CLAUDE.md § Decisiones Arquitectónicas). El template gana la sección
+  `📥 Inbox` en su backlog y el paso de triaje en la plantilla de routine.
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 
@@ -67,11 +72,33 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   **Archivos previstos:** `src/app/proyectos/[id]/page.tsx`, `src/lib/backlog.ts` (parser de
   checkboxes y sección `[USUARIO]`, con tests), `src/lib/markdown.ts` (render sanitizado).
 
+- [ ] **Input inteligente "＋ Nueva tarea / feedback" (subido de P1 a P0 por decisión del usuario,
+  2026-07-17).** En el dashboard de cada proyecto, un textarea donde el usuario escribe feedback,
+  una idea o una spec en lenguaje natural. Tratamiento en dos niveles:
+  (1) **Nivel refinado** — si `ANTHROPIC_API_KEY` está configurada (env var server-side en Vercel,
+  mismas reglas que `GITHUB_PAT`), el API route llama a la API de Claude para reescribir el input
+  al formato de tarea del backlog (título, descripción, criterios de aceptación
+  dado/cuando/entonces, prioridad sugerida), muestra el resultado como **preview editable** y, al
+  aprobar el usuario, lo commitea a la sección `📥 Inbox` del `docs/backlog.md` del proyecto.
+  (2) **Nivel crudo** — sin API key, degradación elegante: commitea el texto tal cual al Inbox con
+  fecha y marca `(sin refinar)`. En AMBOS casos la routine orquestadora del proyecto hace el
+  triaje final (wording, dedupe, prioridad definitiva, mover a P0/P1/P2 o estacionar como pregunta
+  `[USUARIO]`) en su próximo tick — la consola NUNCA escribe fuera de la sección Inbox.
+  **Criterios de aceptación:** dado un proyecto existente, cuando el usuario envía un feedback
+  desde su dashboard, entonces aparece un commit nuevo en el repo del proyecto cuyo diff agrega la
+  entrada SOLO dentro de la sección `📥 Inbox` de `docs/backlog.md`; y dado que hay API key
+  configurada, cuando envía el feedback, entonces vio y pudo editar la versión refinada antes del
+  commit.
+  **Archivos previstos:** `src/app/proyectos/[id]/NuevaTarea.tsx`,
+  `src/app/api/tareas/route.ts`, `src/lib/refinar.ts` (prompt + llamada a la API de Claude, con
+  tests del parseo), `src/lib/backlog.ts` (helper `insertarEnInbox`, con tests),
+  `src/lib/github.ts` (extender con append/commit de archivo existente).
+
 ## P1 — Siguientes
 
-- [ ] Commitear decisiones/tareas desde la web (v2 del roadmap, §5 de diseno-consola-web.md).
+- [ ] Cards de decisiones `[USUARIO]` respondibles desde la web (input/botones → commit de la
+  respuesta al backlog; v2 del roadmap, §5 de diseno-consola-web.md).
 - [ ] Botón "Disparar routine ahora" (deep-link a `claude.ai/code/routines/<trigger_id>`).
-- [ ] Botón "＋ Nueva tarea" que commitea al backlog como tarea con spec.
 
 ## P2 — Deuda / mejoras
 
