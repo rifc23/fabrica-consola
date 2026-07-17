@@ -71,6 +71,14 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   template) que auto-mergea a main las ramas de solo-estado; las routines ahora pushean
   únicamente su rama designada. El merge de la documentación de hoy a main lo hizo el usuario
   vía sesión interactiva (`9f9af34` consola, `862c483` template).
+- 2026-07-17: ERROR CONOCIDO #2 — los triggers creados programáticamente generan sesiones SIN
+  permiso de escritura (sin `outcomes`); el tick disparado a las 13:45 construyó pero no pudo
+  pushear ni su rama designada y su trabajo se perdió. Consecuencias aplicadas: la routine de la
+  consola DEBE crearse desde la UI de routines (tarea manual nueva), la madre pasa a v3
+  (preparadora de prompts + despachadora, ya no instaladora), y la pantalla de arranque del
+  formulario vuelve a ser el mecanismo oficial de instalación de routines. Las 5 P0 las está
+  implementando la sesión interactiva del usuario (que sí tiene escritura) para no perder otro
+  ciclo.
 - 2026-07-17: decisión del usuario — regla **Primer tick = producto funcional** en la plantilla
   de routine del template y en la routine de la consola: el primer disparo de un proyecto no
   entrega un lote incremental sino la idea principal funcionando de punta a punta (las P0 que
