@@ -50,6 +50,32 @@ export async function crearProyectoVercelConectado(
   return { id: data.id, nombre: data.name, urlProduccion: `https://${data.name}.vercel.app` };
 }
 
+export type EstadoDeploy = "listo" | "desplegando" | "error" | "sin-deploys";
+
+/**
+ * Estado del deploy más reciente del proyecto (`GET /v6/deployments?app=<nombre>&limit=1`).
+ * Para el badge junto a la preview_url: recién creado un proyecto, Vercel tarda 1-2 min en
+ * buildear y el link daría 404 — este estado evita el click ciego. Devuelve null sin token o si
+ * la API falla (el dashboard degrada a mostrar el link sin badge).
+ */
+export async function obtenerEstadoDeploy(
+  token: string,
+  nombreProyecto: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<EstadoDeploy | null> {
+  const res = await fetchImpl(
+    `https://api.vercel.com/v6/deployments?app=${encodeURIComponent(nombreProyecto)}&limit=1`,
+    { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" } as RequestInit,
+  );
+  if (!res.ok) return null;
+  const data = (await res.json()) as { deployments?: { readyState?: string }[] };
+  const estado = data.deployments?.[0]?.readyState;
+  if (!estado) return "sin-deploys";
+  if (estado === "READY") return "listo";
+  if (estado === "ERROR" || estado === "CANCELED") return "error";
+  return "desplegando"; // QUEUED | BUILDING | INITIALIZING
+}
+
 /**
  * Elimina el proyecto Vercel por nombre (acción destructiva — solo desde el endpoint de
  * eliminar proyecto, tras confirmación explícita). Devuelve false si no existía (404), lo cual
