@@ -96,12 +96,17 @@ Cadencia: `50 * * * *`. Si el primer tick deja `EXPERIMENTO-ROUTINE-MADRE-FALLID
 `docs/reportes/`, borrar la routine de la UI — el flujo manual sigue funcionando igual.
 **Tiempo:** 3 min + verificar el primer tick.
 
-## ⚪ 5. `VERCEL_TOKEN` (opcional, solo si quieres deploy autónomo desde agentes)
+## 🟠 5. `VERCEL_TOKEN` en Vercel (deploy autónomo de proyectos nuevos — subida de ⚪ a 🟠)
 
-**Qué:** permite que `arquitecto-stack` u otro agente conecte proyectos a Vercel por API/CLI sin
-que tú entres a la consola de Vercel cada vez. No es necesario si ya conectaste el repo (tarea 3).
-**Cómo:** vercel.com/account/tokens → Create Token → pégalo donde lo pida el agente (nunca en
-código/git — incluye la env var `VERCEL_TOKEN` en Vercel si algún workflow de CI lo necesita).
+**Qué:** con este token, el formulario "Nuevo proyecto" deja cada repo recién creado YA conectado
+a Vercel vía API (deploy automático por push + preview URL en el manifest, §4.5 del diseño) — sin
+él, cada proyecto nuevo te deja la conexión como tarea manual en su propio TAREAS-MANUALES
+(degradación elegante). Decisión del usuario 2026-07-17: el deploy autónomo va en la P0 del
+formulario, así que este token la habilita de punta a punta.
+**Cómo:** vercel.com/account/tokens → Create Token (scope: tu cuenta; expiración a tu criterio) →
+en Vercel → proyecto `fabrica-consola` → Settings → Environment Variables → agrega `VERCEL_TOKEN`
+(Production y Preview). Server-side únicamente, mismas reglas que `GITHUB_PAT`: nunca en
+cliente/logs/git — solo el NOMBRE del secreto se documenta.
 **Tiempo:** 2 min.
 
 (Retirada 2026-07-17: la tarea de crear `ANTHROPIC_API_KEY` para el refinado instantáneo del

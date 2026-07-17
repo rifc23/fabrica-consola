@@ -217,6 +217,10 @@ leyendo el prompt orquestador desde .fabrica/prompt-orquestador.md del propio re
 
 ## 4.5 Deploy autónomo a Vercel (cierra el último gap manual)
 
+**Decisión del usuario (2026-07-17): incluido en la P0 del formulario "Nuevo proyecto"** — al
+crear el repo, la consola crea también el proyecto Vercel conectado (si `VERCEL_TOKEN` está
+configurado; sin él, degradación elegante a tarea manual del proyecto nuevo).
+
 SÍ es posible sin intervención humana, con un segundo secret BYOK: **`VERCEL_TOKEN`**
 (vercel.com/account/tokens — el usuario lo pega UNA vez en la consola, igual que la API key).
 

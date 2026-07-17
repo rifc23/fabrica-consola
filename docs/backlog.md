@@ -65,19 +65,26 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   stack, presupuesto, decisiones reservadas, visibilidad, cadencia de routine, autoridad inicial
   informativa, notificaciones opcionales). Al enviar, un API route server-side: (1) crea el repo
   desde `rifc23/fabrica-agentes-template` vía `POST /repos/{owner}/{template}/generate` +
-  agrega el topic `fabrica-agentes`; (2) commitea `.fabrica.json` inicial (`peldano: 3`,
-  `estado: "iterando"`) y `docs/SPECS.md` con las respuestas del form; (3) siembra
-  `docs/backlog.md` del repo nuevo con las features MVP como paquetes P0.
+  agrega el topic `fabrica-agentes`; (2) **conecta el repo a Vercel** (decisión del usuario,
+  2026-07-17 — deploy autónomo §4.5 del diseño): si `VERCEL_TOKEN` está configurado (env var
+  server-side, mismas reglas que `GITHUB_PAT`), `POST https://api.vercel.com/v9/projects` con
+  `gitRepository` apuntando al repo nuevo → cada push despliega y cada PR genera preview, sin CLI;
+  la `preview_url` resultante va al manifest. Sin token: degradación elegante — los pasos de
+  conexión manual se escriben en el `TAREAS-MANUALES.md` del proyecto nuevo; (3) commitea
+  `.fabrica.json` inicial (`peldano: 3`, `estado: "iterando"`, `cadencia_cron`, `preview_url` si
+  hubo Vercel) y `docs/SPECS.md` con las respuestas del form; (4) siembra `docs/backlog.md` del
+  repo nuevo con las features MVP como paquetes P0 — este push dispara el primer deploy.
   **Criterios de aceptación:** dado un usuario que llena el formulario con nombre+objetivo+≥1
   feature MVP, cuando lo envía, entonces existe un repo nuevo en GitHub con el topic
   `fabrica-agentes`, `.fabrica.json` válido y `docs/SPECS.md` commiteado, y la consola redirige a
-  la "pantalla de arranque" con el prompt de routine pre-rellenado. El cron generado lleva
-  **offset de minutos escalonado** (0/15/30/45, rotando entre proyectos — ver §4 Motor A del
-  diseño) y se guarda en `cadencia_cron` del manifest, para que N routines no se disparen todas a
-  la misma hora.
+  la "pantalla de arranque" con el prompt de routine pre-rellenado; y dado que `VERCEL_TOKEN`
+  está configurado, entonces existe además el proyecto Vercel conectado al repo y el manifest
+  contiene su `preview_url`. El cron generado lleva **offset de minutos escalonado** (0/15/30/45,
+  rotando entre proyectos — ver §4 Motor A del diseño) y se guarda en `cadencia_cron` del
+  manifest, para que N routines no se disparen todas a la misma hora.
   **Archivos previstos:** `src/app/nuevo-proyecto/page.tsx`, `src/app/api/crear-proyecto/route.ts`,
-  `src/lib/github.ts` (extender con `crearDesdeTemplate`, `commitearArchivo`), tests en
-  `src/lib/github.test.ts`.
+  `src/lib/github.ts` (extender con `crearDesdeTemplate`, `commitearArchivo`),
+  `src/lib/vercel.ts` (crear-proyecto-conectado, con tests), tests en `src/lib/github.test.ts`.
 
 - [ ] **Dropdown de proyectos existentes.** Usa `GET /api/proyectos` (ya implementado en el
   esqueleto — `src/app/api/proyectos/route.ts` + `src/lib/github.ts::obtenerProyectos`) para
