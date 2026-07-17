@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import {
+  eliminarRepo,
   obtenerProyectos,
   leerManifest,
   listarProyectosPorTopic,
@@ -302,5 +303,26 @@ describe("actualizarArchivoConReintento", () => {
 
     expect(resultado.commitSha).toBe("sha-final");
     expect(intentosPUT).toBe(2);
+  });
+});
+
+describe("eliminarRepo", () => {
+  it("hace DELETE al repo y devuelve true si existía", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(null, true, 204));
+    await expect(eliminarRepo("tok", "rifc23", "proyecto-fallido", fetchMock)).resolves.toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.github.com/repos/rifc23/proyecto-fallido",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
+  it("devuelve false si el repo ya no existía (404) sin lanzar", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(null, false, 404));
+    await expect(eliminarRepo("tok", "rifc23", "nada", fetchMock)).resolves.toBe(false);
+  });
+
+  it("lanza con el status si el PAT no tiene permiso (403)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(null, false, 403));
+    await expect(eliminarRepo("tok", "rifc23", "x", fetchMock)).rejects.toThrow("403");
   });
 });

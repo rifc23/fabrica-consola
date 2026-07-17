@@ -211,6 +211,16 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   (mismo endpoint del Inbox), `src/lib/backlog.ts` (parser de decisiones ya previsto en el
   dashboard P0), `src/lib/cron.ts` (próximo disparo, compartido con la vista de cola).
 
+- [x] **Eliminar proyecto ("⚠️ Zona de peligro" del dashboard).** (Decisión del usuario,
+  2026-07-17, motivada por el proyecto fallido del Error Conocido #3; implementada el mismo día.)
+  Sección colapsada al final del dashboard: borra el repo de GitHub (`DELETE /repos`) y el
+  proyecto Vercel (`DELETE /v9/projects`, 404 tolerado y degradación sin token), con confirmación
+  escribiendo el nombre EXACTO del repo (re-validada server-side), botón deshabilitado hasta
+  coincidir, targets ≥44px. Redirige al home con el dropdown refrescado. Tercera excepción a la
+  regla read-only de v1 (ver CLAUDE.md). Archivos: `src/app/api/eliminar-proyecto/route.ts`,
+  `src/components/EliminarProyecto.tsx`, `eliminarRepo`/`eliminarProyectoVercel` en libs con 6
+  tests nuevos.
+
 ## P1 — Siguientes
 
 - [ ] **Tipo de proyecto "Gem" en el formulario (decisión del usuario, 2026-07-17 — primera de
@@ -282,4 +292,5 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 | Fecha | Tarea | Rama | Commits | Gate | Estado |
 |-------|-------|------|---------|------|--------|
 | 2026-07-14 | Fase 0-1: kit, esqueleto andante, gate | main | (inicial) | lint ✅ test:run 6/6 ✅ build ✅ | Completado |
-| 2026-07-17 | Lote v1: las 5 P0 (formulario+Vercel, dropdown, dashboard, Inbox, decisiones) | claude/factory-console-backlog-7jafgw | 5cd4910..3f20eb1 | lint ✅ test:run 74/74 ✅ build ✅ | Pendiente de merge por el usuario |
+| 2026-07-17 | Lote v1: las 5 P0 (formulario+Vercel, dropdown, dashboard, Inbox, decisiones) | claude/factory-console-backlog-7jafgw | 5cd4910..3f20eb1 | lint ✅ test:run 74/74 ✅ build ✅ | Mergeado a main (7f2644f) |
+| 2026-07-17 | Eliminar proyecto (Zona de peligro) | claude/factory-console-backlog-7jafgw | (este lote) | lint ✅ test:run 80/80 ✅ build ✅ | Pendiente de merge por el usuario |

@@ -183,6 +183,28 @@ export async function agregarTopic(
   }
 }
 
+/**
+ * Elimina un repositorio COMPLETO (acción destructiva e irreversible — solo la invoca el
+ * endpoint de eliminar proyecto tras la confirmación explícita del usuario escribiendo el
+ * nombre). Devuelve false si el repo ya no existía (404).
+ */
+export async function eliminarRepo(
+  token: string,
+  owner: string,
+  repo: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+  const res = await fetchImpl(`https://api.github.com/repos/${owner}/${repo}`, {
+    method: "DELETE",
+    headers: githubHeaders(token),
+  });
+  if (res.status === 404) return false;
+  if (!res.ok) {
+    throw new Error(`GitHub API respondió ${res.status} eliminando el repo`);
+  }
+  return true;
+}
+
 export interface ArchivoRepo {
   contenido: string;
   sha: string;

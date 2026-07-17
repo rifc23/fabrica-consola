@@ -49,3 +49,25 @@ export async function crearProyectoVercelConectado(
   const data = (await res.json()) as { id: string; name: string };
   return { id: data.id, nombre: data.name, urlProduccion: `https://${data.name}.vercel.app` };
 }
+
+/**
+ * Elimina el proyecto Vercel por nombre (acción destructiva — solo desde el endpoint de
+ * eliminar proyecto, tras confirmación explícita). Devuelve false si no existía (404), lo cual
+ * es normal cuando el proyecto se creó sin `VERCEL_TOKEN` o ya fue borrado a mano.
+ */
+export async function eliminarProyectoVercel(
+  token: string,
+  nombre: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean> {
+  const res = await fetchImpl(`https://api.vercel.com/v9/projects/${encodeURIComponent(nombre)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) return false;
+  if (!res.ok) {
+    const detalle = await res.text().catch(() => "");
+    throw new Error(`Vercel API respondió ${res.status} eliminando el proyecto: ${detalle}`);
+  }
+  return true;
+}

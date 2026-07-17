@@ -1,0 +1,66 @@
+.zona {
+  margin-top: 2.5rem;
+  border: 1px solid #7f1d1d;
+  border-radius: 8px;
+  padding: 0.25rem 1rem;
+}
+
+.titulo {
+  cursor: pointer;
+  color: #f87171;
+  font-weight: 600;
+  padding: 0.75rem 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+}
+
+.contenido p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.etiqueta {
+  font-size: 0.9rem;
+}
+
+.campo {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--borde, #333);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  max-width: 24rem;
+}
+
+.boton {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #b91c1c;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 24rem;
+}
+
+.boton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #f87171;
+  margin: 0;
+}
