@@ -11,6 +11,7 @@ import {
   listarArchivosDirectorio,
   escribirArchivo,
   actualizarArchivoConReintento,
+  borrarArchivo,
 } from "./github";
 
 function jsonResponse(body: unknown, ok = true, status = 200) {
@@ -324,5 +325,39 @@ describe("eliminarRepo", () => {
   it("lanza con el status si el PAT no tiene permiso (403)", async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(null, false, 403));
     await expect(eliminarRepo("tok", "rifc23", "x", fetchMock)).rejects.toThrow("403");
+  });
+});
+
+describe("borrarArchivo", () => {
+  it("lee el sha actual y hace DELETE con ese sha", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ content: Buffer.from("hola").toString("base64"), encoding: "base64", sha: "sha-actual" }))
+      .mockResolvedValueOnce(jsonResponse(null, true, 200));
+
+    await expect(borrarArchivo("tok", "rifc23", "mi-calculadora", "next.config.ts", "chore: borra", fetchMock)).resolves.toBe(true);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://api.github.com/repos/rifc23/mi-calculadora/contents/next.config.ts",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    const body = JSON.parse((fetchMock.mock.calls[1][1] as RequestInit).body as string);
+    expect(body).toEqual({ message: "chore: borra", sha: "sha-actual" });
+  });
+
+  it("devuelve false sin llamar DELETE si el archivo ya no existe (404 al leerlo)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}, false, 404));
+    await expect(borrarArchivo("tok", "rifc23", "x", "no-existe.ts", "chore: borra", fetchMock)).resolves.toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("lanza con el status si el DELETE falla", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ content: Buffer.from("hola").toString("base64"), encoding: "base64", sha: "sha-actual" }))
+      .mockResolvedValueOnce(jsonResponse({ message: "conflicto" }, false, 409));
+    await expect(borrarArchivo("tok", "rifc23", "x", "y.ts", "chore: borra", fetchMock)).rejects.toThrow("409");
   });
 });

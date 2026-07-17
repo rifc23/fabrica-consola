@@ -221,6 +221,17 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   `src/components/EliminarProyecto.tsx`, `eliminarRepo`/`eliminarProyectoVercel` en libs con 6
   tests nuevos.
 
+- [x] **Esqueletos por stack en el formulario (decisión del usuario, 2026-07-17 — extiende el fix
+  del Error Conocido #3 a TODOS los stacks del dropdown).** La consola siembra el esqueleto del
+  stack elegido al crear el repo: Recomiéndame/Next → esqueleto del template; Vite y Estático →
+  esqueleto Vite vanilla-TS (borra los archivos Next vía Contents API y siembra los propios;
+  Vercel con `framework: "vite"`; verificado con npm install + gate real en proyecto de prueba);
+  Otro → placeholder Next + tarea manual 🟠 para que arquitecto-stack instale el stack en Fase 1.
+  **Invariante de fábrica:** todo esqueleto expone los MISMOS scripts `dev/build/lint/test:run` —
+  el gate es uniforme para cualquier routine. Archivos: `src/lib/esqueletos.ts` (+tests),
+  `borrarArchivo` en github.ts (+tests), paso "esqueleto" en crear-proyecto y ProgresoCreacion.
+  Gate: lint ✅ build ✅ test:run 100/100 ✅.
+
 ## P1 — Siguientes
 
 - [ ] **Tipo de proyecto "Gem" en el formulario (decisión del usuario, 2026-07-17 — primera de
@@ -293,4 +304,5 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 |-------|-------|------|---------|------|--------|
 | 2026-07-14 | Fase 0-1: kit, esqueleto andante, gate | main | (inicial) | lint ✅ test:run 6/6 ✅ build ✅ | Completado |
 | 2026-07-17 | Lote v1: las 5 P0 (formulario+Vercel, dropdown, dashboard, Inbox, decisiones) | claude/factory-console-backlog-7jafgw | 5cd4910..3f20eb1 | lint ✅ test:run 74/74 ✅ build ✅ | Mergeado a main (7f2644f) |
-| 2026-07-17 | Eliminar proyecto (Zona de peligro) | claude/factory-console-backlog-7jafgw | (este lote) | lint ✅ test:run 80/80 ✅ build ✅ | Pendiente de merge por el usuario |
+| 2026-07-17 | Eliminar proyecto (Zona de peligro) | claude/factory-console-backlog-7jafgw | bcd92e7 | lint ✅ test:run 80/80 ✅ build ✅ | Mergeado a main (488cab0) |
+| 2026-07-17 | Esqueletos por stack (vite/estático/otro) | claude/factory-console-backlog-7jafgw | 61d7ceb..f129c0a | lint ✅ test:run 100/100 ✅ build ✅ | Pendiente de merge por el usuario |

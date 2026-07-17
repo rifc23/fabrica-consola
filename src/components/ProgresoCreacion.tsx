@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./ProgresoCreacion.module.css";
 import type { FormularioProyecto } from "@/lib/formulario-proyecto";
+import { stackEfectivo } from "@/lib/esqueletos";
 
 export interface ProyectoCreado {
   owner: string;
@@ -12,7 +13,7 @@ export interface ProyectoCreado {
   degradadoVercel: boolean;
 }
 
-type PasoId = "repo" | "vercel" | "manifest" | "backlog";
+type PasoId = "repo" | "esqueleto" | "vercel" | "manifest" | "backlog";
 type EstadoPaso = "pendiente" | "en-progreso" | "ok" | "omitido" | "error";
 
 type EventoProgreso =
@@ -28,12 +29,15 @@ interface InfoPaso {
   detalle?: string;
 }
 
-const PASOS: { id: PasoId; etiqueta: string }[] = [
-  { id: "repo", etiqueta: "Creando el repo desde el template + topic fabrica-agentes" },
-  { id: "vercel", etiqueta: "Conectando el proyecto a Vercel" },
-  { id: "manifest", etiqueta: "Commiteando .fabrica.json y docs/SPECS.md" },
-  { id: "backlog", etiqueta: "Sembrando docs/backlog.md con las features MVP" },
-];
+function pasosPara(stack: string): { id: PasoId; etiqueta: string }[] {
+  return [
+    { id: "repo", etiqueta: "Creando el repo desde el template + topic fabrica-agentes" },
+    { id: "esqueleto", etiqueta: `Sembrando esqueleto ${stackEfectivo(stack)} (${stack})` },
+    { id: "vercel", etiqueta: "Conectando el proyecto a Vercel" },
+    { id: "manifest", etiqueta: "Commiteando .fabrica.json y docs/SPECS.md" },
+    { id: "backlog", etiqueta: "Sembrando docs/backlog.md con las features MVP" },
+  ];
+}
 
 const ICONOS: Record<EstadoPaso, string> = {
   pendiente: "⏳",
@@ -53,8 +57,9 @@ interface Props {
  * un fallo silencioso: cada paso con error queda visible con su detalle y qué alcanzó a crearse.
  */
 export default function ProgresoCreacion({ payload, onExito }: Props) {
+  const pasosDef = pasosPara(payload.stack);
   const [pasos, setPasos] = useState<Record<PasoId, InfoPaso>>(() =>
-    Object.fromEntries(PASOS.map((p) => [p.id, { estado: "pendiente" as EstadoPaso }])) as Record<PasoId, InfoPaso>,
+    Object.fromEntries(pasosDef.map((p) => [p.id, { estado: "pendiente" as EstadoPaso }])) as Record<PasoId, InfoPaso>,
   );
   const [errorFinal, setErrorFinal] = useState<string | null>(null);
   const [terminado, setTerminado] = useState(false);
@@ -130,7 +135,7 @@ export default function ProgresoCreacion({ payload, onExito }: Props) {
   return (
     <div>
       <ul className={styles.lista}>
-        {PASOS.map((p) => {
+        {pasosDef.map((p) => {
           const info = pasos[p.id];
           return (
             <li key={p.id} className={styles.paso}>
