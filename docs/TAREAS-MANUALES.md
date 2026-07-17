@@ -64,19 +64,21 @@ estacionadas). La UI actual es intencionalmente mínima hasta que decidas.
 si quieres iterar sobre lo mínimo o invertir en un sistema de diseño antes del formulario real.
 **Tiempo:** cuando puedas — no bloquea el desarrollo de las features P0.
 
-## ✅ 4. Instalar la routine cloud (Motor A) — una vez, cuando quieras autonomía continua
+## 🔴 4. Crear `routine-fabrica-consola` DESDE LA UI de routines (reabierta 2026-07-17)
 
-**Completada 2026-07-17:** routine `routine-fabrica-consola` instalada (trigger
-`trig_01XJA8ejJVsh1aQE4fZFdeN1`), cron cada 2 horas con offset escalonado (`15 */2 * * *`), sesión fresca por disparo,
-peldaño 3 (deja ramas listas, el usuario aprueba merges; la documentación sí se pushea a main).
-**Apagado automático:** cuando no quede ningún ítem delegable, la routine escribe
-`docs/reportes/CAMPANA-<fecha>-FINAL.md` en main — ese archivo es el candado: los disparos
-siguientes terminan al instante sin hacer nada. Agregar entradas nuevas al `📥 Inbox` o tareas al
-backlog REABRE la campaña automáticamente. Para apagarla del todo o reactivarla a mano: UI de
-routines de claude.ai.
-
-**Qué:** el prompt parametrizado (peldaño 3, sin push de merges) para que la fábrica itere el
-backlog sola cada N horas; regenerable desde `docs/plantilla-routine-prompt.md`.
+**Historia:** se instaló programáticamente 3 veces y las 3 fallaron — Error Conocido #2: los
+triggers creados por herramienta generan sesiones sin permiso de escritura en los repos (sin
+`outcomes`); su trabajo muere con el contenedor. El trigger programático fue eliminado. Las
+routines con escritura SOLO pueden crearse desde la UI (como Diván y la madre).
+**Qué:** la routine que itera el backlog de la consola. Crearla cuando el producto v1 esté
+mergeado (las 5 P0 las está implementando la sesión interactiva) — su primer trabajo será el
+backlog P1.
+**Cómo:** UI de routines de claude.ai → nueva routine → nombre `routine-fabrica-consola`, cron
+`15 */2 * * *`, sesión nueva por disparo, source `rifc23/fabrica-consola`, y el prompt
+parametrizado desde `docs/plantilla-routine-prompt.md` (peldaño 3; el bloque CÓMO PUBLICAR con
+fabrica-sync ya viene en la plantilla). Con apagado automático por candado
+`docs/reportes/CAMPANA-*-FINAL.md`; entradas nuevas en el `📥 Inbox` la reabren.
+**Tiempo:** 2 min.
 
 ## ✅ 6. Crear la routine madre desde la UI de routines (experimento — instalación autónoma)
 

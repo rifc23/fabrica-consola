@@ -119,6 +119,17 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   (`docs/**`, `CLAUDE.md`, `.fabrica.json`); las ramas con código las mergea el usuario
   (peldaño 3) y sus docs viajan en ese merge. **Regla: ningún prompt de routine debe instruir
   `git push origin main` — siempre la rama designada + fabrica-sync.**
+- **(2026-07-17) Los triggers creados PROGRAMÁTICAMENTE generan sesiones SIN permiso de escritura
+  en los repos.** Síntoma: el tick construyó y commiteó pero TODO push fue denegado ("falta de
+  permiso de escritura"), incluso a su rama designada — el trabajo muere con el contenedor.
+  Causa: la herramienta `create_trigger` no configura `outcomes` (las ramas con permiso de
+  escritura de la sesión); solo las routines creadas desde la UI de claude.ai los llevan (Diván y
+  la madre los tienen; las creadas por herramienta, no). Solución/regla: **toda routine que deba
+  ESCRIBIR en un repo se crea desde la UI de routines** — la "pantalla de arranque" de la consola
+  (prompt parametrizado + botón copiar, ~1 min/proyecto) es el mecanismo de instalación, no un
+  fallback. La madre NO instala routines con `create_trigger` (nacerían rotas): detecta proyectos
+  sin routine y deja el prompt listo como tarea manual; su despacho con `fire_trigger` SÍ
+  funciona (dispara routines existentes creadas por UI, que corren con sus propios permisos).
 
 ## Modelo de datos
 

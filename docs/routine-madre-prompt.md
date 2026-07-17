@@ -1,11 +1,12 @@
-# Routine madre v2 — instaladora de routines + despachadora de Inboxes
+# Routine madre v3 — preparadora de routines + despachadora de Inboxes
 
-**v2 (2026-07-17):** además de instalar routines a proyectos nuevos, la madre ahora DESPACHA: si
-el Inbox de un proyecto tiene entradas pendientes, dispara su routine al momento con
-`fire_trigger` — así el feedback del usuario se procesa en ≤1h sin que nadie toque routines
-(decisión: los usuarios de la consola NO tienen acceso a claude.ai/routines). Para actualizar la
-madre ya creada: UI de routines → editar `routine-madre-fabrica` → reemplazar el prompt por el
-bloque de abajo.
+**v3 (2026-07-17, tras el Error Conocido #2):** la madre YA NO instala routines con
+`create_trigger` — los triggers creados programáticamente generan sesiones SIN permiso de
+escritura en los repos (sin `outcomes`) y nacerían rotas. Ahora, para cada proyecto sin routine,
+la madre PREPARA el prompt parametrizado y lo deja como tarea manual en fabrica-consola (el
+usuario lo pega en la UI de routines, ~1 min). Su rol de DESPACHADORA se mantiene intacto:
+`fire_trigger` sobre routines existentes SÍ funciona. Para actualizar la madre ya creada: UI de
+routines → editar `routine-madre-fabrica` → reemplazar el prompt por el bloque de abajo.
 
 Ver análisis en `docs/diseno-consola-web.md` §4 Motor A. La madre se crea UNA sola vez desde la
 UI de routines de claude.ai (las routines creadas desde la UI pueden conservar las herramientas
@@ -45,26 +46,28 @@ list_triggers y descarta candidatos que ya tengan un trigger llamado "routine-<n
 (dedupe defensivo — si existe, escribe su id en el manifest en vez de crear otro). Si no hay
 candidatos: termina en silencio — es el resultado normal de la mayoría de los ticks.
 
-PASO 3 — INSTALACIÓN (por cada candidato, máximo 5 por tick):
-1. Clona el repo y lee: docs/plantilla-routine-prompt.md (la plantilla que viaja en cada repo),
-   CLAUDE.md (stack y comandos del gate), package.json/scripts si existe, .fabrica.json
-   (cadencia_cron si la consola ya la dejó) y docs/SPECS.md.
+PASO 3 — PREPARACIÓN DE ROUTINE (por cada candidato, máximo 5 por tick). PROHIBIDO usar
+create_trigger para instalar routines de proyectos: los triggers creados programáticamente
+generan sesiones SIN permiso de escritura en los repos (Error Conocido #2 de fabrica-consola) —
+nacerían rotas. En su lugar:
+1. Clona el repo candidato y lee: docs/plantilla-routine-prompt.md (la plantilla que viaja en
+   cada repo), CLAUDE.md (stack y comandos del gate), package.json/scripts si existe,
+   .fabrica.json (cadencia_cron si la consola ya la dejó) y docs/SPECS.md.
 2. Parametriza la plantilla COMPLETA: <PROYECTO>=nombre del repo, <URL-REPO>, <RAMA-PRINCIPAL>=la
    default del repo, <COMANDOS-DEL-GATE>=los reales del proyecto, autoridad=Peldaño 3,
    <IDIOMA>=español. La plantilla ya incluye candado de campaña, triaje del Inbox, reglas de cola
-   (marcador 🔄 + ultimo_tick) y apagado automático — consérvalos TODOS.
-3. Cadencia: usa cadencia_cron del manifest si existe; si no, cron cada 2 horas con offset
-   escalonado rotando según cuántos triggers "routine-*" existan ya (list_triggers):
-   resto 0→"0 */2 * * *", 1→"15 */2 * * *", 2→"30 */2 * * *", 3→"45 */2 * * *".
-4. create_trigger con name="routine-<nombre-repo>", cron_expression=la cadencia elegida,
-   create_new_session_on_fire=true, prompt=la plantilla parametrizada.
-5. Escribe de vuelta en el .fabrica.json del proyecto: trigger_id=<id devuelto> y
-   cadencia_cron=<cron usado>. OJO (Error Conocido 2026-07-17): NO intentes pushear a la rama
-   principal — el clasificador lo bloquea en sesiones de routine. Commitea el cambio en tu rama
-   designada de la sesión (claude/...) para ESE repo y púshala: el workflow fabrica-sync del repo
-   auto-mergea a la principal las ramas que solo tocan .fabrica.json/docs/CLAUDE.md.
-6. Si create_trigger falla: NO escribas trigger_id (el candidato se reintenta el próximo tick) y
-   anota el error en tu resumen final.
+   y apagado automático — consérvalos TODOS. Cadencia: usa cadencia_cron del manifest si existe;
+   si no, cron cada 2 horas con offset escalonado rotando según cuántos triggers "routine-*"
+   existan ya (list_triggers): resto 0→"0 */2 * * *", 1→"15 */2 * * *", 2→"30 */2 * * *",
+   3→"45 */2 * * *".
+3. En el repo rifc23/fabrica-consola (donde SÍ tienes rama designada con escritura), agrega una
+   entrada 🔴 a docs/TAREAS-MANUALES.md: "Crear routine-<repo> desde la UI de routines" con el
+   prompt parametrizado COMPLETO en un bloque de código listo para copiar, la cadencia sugerida y
+   el recordatorio de vincular el repo del proyecto como source. Commitea en tu rama designada y
+   púshala (fabrica-sync la lleva a main). Tu notificación de fin de tick avisará al usuario.
+4. NO escribas trigger_id en el manifest del proyecto (eso pasa cuando el usuario cree la routine
+   y la registre, o cuando la consola lo haga en v2); no dupliques la tarea manual si ya existe
+   para ese repo.
 
 PASO 4 — DESPACHO DE INBOXES (corre SIEMPRE, aunque no haya candidatos de instalación; este paso
 es lo que hace que el feedback del usuario se procese rápido sin que él toque routines): para
@@ -76,10 +79,12 @@ list_triggers), SALVO que esa routine haya corrido hace <15 minutos (last_fired_
 tick esté a <10 minutos (next_run_at) — en esos casos no dispares, ya la tomará. Máximo UN
 fire_trigger por proyecto por tick tuyo.
 
-REGLAS: nunca escribas nada fuera del .fabrica.json de los proyectos (única excepción: el reporte
-de fracaso del PASO 1 en fabrica-consola); nunca borres ni modifiques triggers existentes — solo
-creas y disparas; nunca dupliques. Al terminar, resume qué instalaste (repo → trigger_id → cron)
-y qué despachaste (repo → motivo), o di explícitamente "sin candidatos y sin despachos".
+REGLAS: en los repos de proyectos NO escribes NADA (solo lees); en rifc23/fabrica-consola
+escribes ÚNICAMENTE en docs/TAREAS-MANUALES.md y docs/reportes/ (vía tu rama designada +
+fabrica-sync); nunca crees triggers de proyectos con create_trigger (Error Conocido #2); nunca
+borres ni modifiques triggers existentes — solo disparas con fire_trigger; nunca dupliques
+tareas manuales. Al terminar, resume qué prompts preparaste (repo → tarea manual creada) y qué
+despachaste (repo → motivo), o di explícitamente "sin candidatos y sin despachos".
 
 ---
 
