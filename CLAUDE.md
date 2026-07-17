@@ -32,8 +32,23 @@ datos (el estado vive en los repos de GitHub) · hosting/deploy: Vercel.
   cachear" sin decisión explícita del usuario.
 - **Sanitizar todo render de markdown/HTML** proveniente de los repos leídos (reportes, backlog)
   antes de insertarlo en el DOM — los repos son del propio usuario pero el render pasa por HTML.
-- v1 es **read-only** sobre los repos de proyectos (excepto la creación inicial): no commitear
-  decisiones/tareas desde la web todavía (eso es v2, ver roadmap en `docs/diseno-consola-web.md` §5).
+- v1 es **read-only** sobre los repos de proyectos con DOS excepciones exactas: (1) la creación
+  inicial del repo y (2) el append DENTRO de la sección `📥 Inbox` del `docs/backlog.md` del
+  proyecto (decisión del usuario 2026-07-17) — que cubre tareas/feedback Y respuestas a
+  decisiones `[USUARIO]` (formato `Respuesta a decisión "...": ...`; la routine la aplica en su
+  triaje). La consola NUNCA escribe fuera de esa sección: las cards de decisiones responden vía
+  Inbox, no editando la sección `[USUARIO]` directamente.
+- **La consola no llama a ningún LLM en v1** (decisión del usuario, 2026-07-17): el tratamiento
+  inteligente del feedback lo hace la routine en el cron (paso "TRIAJE DEL INBOX"). Si algún día
+  se construye el refinado instantáneo (P2 del backlog), su `ANTHROPIC_API_KEY` seguirá las mismas
+  reglas que el `GITHUB_PAT`: server-side únicamente, nunca en cliente/logs/git.
+- **Multiplataforma SIEMPRE** (decisión del usuario, 2026-07-17, regla de toda la fábrica): la
+  consola y toda su UI se construyen mobile-first/responsive — usable desde 360px hasta desktop,
+  targets táctiles ≥44px, sin interacciones solo-hover, sin scroll horizontal. Los criterios de
+  aceptación de CADA feature con UI (formulario, dropdown, dashboard, cola, brief, Inbox)
+  incluyen su comportamiento en móvil, y el E2E de Playwright (P2) corre en viewport desktop Y
+  móvil (~390×844). La consola es el hub que el usuario abre desde el celular para revisar
+  proyectos y dejar feedback — el móvil no es un extra, es un caso de uso primario.
 
 ## Regla de despliegue seguro (SIEMPRE, para cualquier cambio)
 
@@ -72,6 +87,25 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
 - **Decisiones reservadas al usuario**: diseño visual y el nombre del producto. No renombrar el
   proyecto ni comprometerse a un sistema de diseño elaborado sin preguntar — usar UI mínima
   funcional (sin librería de componentes pesada) hasta que el usuario decida.
+- **Una SOLA consola multi-proyecto, nunca una consola por proyecto** (decisión del usuario,
+  2026-07-17). El dropdown selecciona el proyecto y el dashboard opera sobre él. Razón: la consola
+  es stateless y todo el estado vive en cada repo hijo — N consolas serían N deploys, N secretos y
+  N codebases duplicados sin aportar nada.
+- **Los usuarios de la consola NO tienen acceso a claude.ai/routines** (decisión del usuario,
+  2026-07-17). Ninguna función de la consola puede depender de deep-links a claude.ai, de la UI
+  de routines ni de que el usuario dispare nada a mano fuera de la consola. La reacción rápida al
+  feedback la da el DESPACHADOR de la routine madre (revisa Inboxes cada hora a los :50 y dispara
+  la routine del proyecto con fire_trigger si hay entradas pendientes — ≤1h de latencia) y, como
+  evolución, Motor B (dispatch instantáneo vía GitHub Actions, v3). Los deep-links a routines son
+  herramienta interna del dueño de la fábrica, solo en docs — nunca en la UI.
+- **Input inteligente = patrón "Inbox + triaje en el cron"** (decisión del usuario, 2026-07-17).
+  La consola commitea el feedback/idea/spec del usuario TAL CUAL, SOLO dentro de la sección
+  `📥 Inbox` del backlog del proyecto; toda la inteligencia (wording, criterios de aceptación,
+  dedupe, prioridad, estacionar preguntas) vive en el paso "TRIAJE DEL INBOX" de la routine
+  orquestadora, que ya corre con la suscripción. Razón: cero costo y cero secretos extra, la
+  consola queda mínima, y el backlog conserva un único escritor con criterio (la routine). El
+  refinado instantáneo con preview (API de Claude en el API route) es mejora opcional en P2 —
+  solo UX, nunca autoridad de triaje.
 
 ## Errores Conocidos — No Repetir
 
@@ -83,9 +117,15 @@ No hay base de datos. "Modelo de datos" = contrato de archivos leídos/escritos 
 proyectos vía GitHub Contents API:
 
 - **`.fabrica.json`** (raíz de cada repo hijo): `{ id, nombre, creado, peldano, trigger_id,
-  preview_url, estado }` — ver esquema completo en `docs/diseno-consola-web.md` §"Conceptos clave".
-- **`docs/backlog.md`**: fuente de progreso (checkboxes `- [ ]`/`- [x]` en P0/P1) y de decisiones
-  estacionadas (sección `[USUARIO]`).
+  cadencia_cron, ultimo_tick, preview_url, estado }` — ver esquema completo en
+  `docs/diseno-consola-web.md` §"Conceptos clave". `cadencia_cron` permite calcular el countdown
+  al próximo tick sin APIs; `ultimo_tick` lo actualiza la routine al iniciar cada tick con trabajo.
+- **`docs/backlog.md`**: fuente de progreso (checkboxes `- [ ]`/`- [x]` en P0/P1), de decisiones
+  estacionadas (sección `[USUARIO]`) y buzón de entradas del usuario (sección `📥 Inbox` — la
+  ÚNICA parte del backlog donde la consola escribe; la routine la vacía en cada triaje). Además,
+  **el orden del archivo ES la cola de la routine** (arriba = siguiente) y el marcador `🔄`
+  antepuesto al título de una tarea significa "en el lote del tick actual" — la consola deriva de
+  ahí la cola numerada, el "trabajando ahora" y las esperas estimadas (diseño en §2.2).
 - **`docs/reportes/*.md`**: reportes de cada corrida de la routine/orquestador; la consola lee el
   más reciente por nombre de archivo (`<fecha>-<...>.md`).
 - **`docs/TAREAS-MANUALES.md`**: tareas pendientes del humano, mostradas en el dashboard.

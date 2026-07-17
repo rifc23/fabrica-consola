@@ -53,6 +53,32 @@ pegue los secrets.
 - En handlers serverless: NUNCA responder antes de terminar el trabajo async (responder mata la
   función en Vercel).
 
+## Base de datos para un proyecto (agregado 2026-07-17)
+
+SÍ es posible y está previsto — la decide e instala el `arquitecto-stack` en la Fase 1 (o al
+agregarla como capa mayor después), con ADR contra las specs y el presupuesto. Árbol de decisión:
+
+0. **¿De verdad hace falta BD?** Principio de menor costo primero: si el estado cabe en el propio
+   repo (archivos JSON/markdown, como hace la consola de la fábrica) o en el navegador
+   (localStorage), no hay BD que operar ni pagar. Muchos MVP no la necesitan el día 0.
+1. **Default cuando sí hace falta: storage nativo de Vercel** (Marketplace) — Postgres (Neon),
+   KV/Redis (Upstash) o Blob. Razón: se aprovisiona con el MISMO `VERCEL_TOKEN` que ya tiene la
+   fábrica y las env vars se inyectan SOLAS al proyecto conectado → conserva la autonomía (cero
+   o mínima tarea manual), free tier Hobby para empezar, y el agente puede dejarlo andando.
+2. **Firestore** — cuando el dominio es documental/realtime o se quiere el ecosistema Firebase
+   (Auth, Storage). Patrón ya probado en casa (Diván). Mitad del usuario: crear el proyecto en la
+   consola Firebase y pegar credenciales. Sus `firestore.rules` NUNCA las deploya la routine
+   (restricción vigente) — quedan como tarea manual con el comando exacto.
+3. **Supabase** — cuando se necesita Postgres + Auth + Storage + realtime en un solo proveedor
+   con free tier generoso. Mitad del usuario: crear el proyecto Supabase y pegar URL + keys.
+
+Reglas NO negociables (aplican a cualquier opción): credenciales SIEMPRE server-side y por
+NOMBRE (nunca el valor en repo/cliente/logs); escrituras merge/parcial, nunca sobreescribir
+documentos completos; **la routine NUNCA corre migraciones contra la BD real** ni deploya
+reglas/esquemas — las migraciones se entregan como script + tarea manual con pasos exactos;
+tests y gate SIEMPRE contra mock/emulador local, nunca contra la BD real; y toda opción con
+costo recurrente >$0 se estaciona como decisión `[USUARIO]` antes de comprometerse.
+
 ## Integraciones ya destiladas (crecer esta tabla con cada proyecto)
 
 | Servicio | Patrón de referencia | Dónde está el ejemplo completo |
