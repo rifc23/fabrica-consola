@@ -173,18 +173,21 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   respuesta AL INBOX del proyecto con el formato `Respuesta a decisión "<primeras palabras de la
   pregunta>": <respuesta>` — así se mantiene la regla de que la consola SOLO escribe en la
   sección `📥 Inbox`; la routine aplica la respuesta en su triaje (despeja la decisión, ajusta la
-  tarea, repriorísa); (2) la card pasa a estado "respondida — esperando triaje"; (3) aparece el
-  botón **"🏭 Disparar routine ahora"** (deep-link a `claude.ai/code/routines/<trigger_id>` del
-  manifest) para ejecutar el triaje EN MINUTOS en vez de esperar el tick — el mismo botón vive
-  también junto al form de feedback y en el header del dashboard.
+  tarea, repriorísa); (2) la card pasa a estado "respondida — la fábrica la tomará
+  automáticamente" con **countdown al próximo despacho**: el mínimo entre el próximo tick del
+  proyecto (`cadencia_cron` del manifest) y el próximo paso del despachador de la routine madre
+  (cada hora a los :50). IMPORTANTE (decisión del usuario, 2026-07-17): **los usuarios de la
+  consola NO tienen acceso a claude.ai/routines** — nada en la UI puede depender de deep-links a
+  claude.ai ni de disparar routines a mano; la inmediatez la da el despachador de la madre
+  (≤1h) y, en el futuro, Motor B (instantáneo). Lo mismo aplica al envío de feedback normal.
   **Criterios de aceptación:** dado un proyecto con ≥1 decisión `[USUARIO]`, cuando el usuario
   responde desde la card, entonces existe un commit nuevo cuyo diff agrega la respuesta SOLO
-  dentro de la sección `📥 Inbox`, la card muestra "respondida — esperando triaje" y el botón de
-  disparo con el deep-link correcto del `trigger_id` del manifest (oculto si el manifest no tiene
-  `trigger_id`).
+  dentro de la sección `📥 Inbox`, y la card muestra "respondida — la fábrica la tomará en ~X
+  min" con el countdown calculado de `cadencia_cron` y el horario del despachador — sin ningún
+  link a claude.ai en la UI.
   **Archivos previstos:** `src/components/DecisionCard.tsx`, reutiliza `src/app/api/tareas/route.ts`
   (mismo endpoint del Inbox), `src/lib/backlog.ts` (parser de decisiones ya previsto en el
-  dashboard P0), `src/components/DispararRoutine.tsx`.
+  dashboard P0), `src/lib/cron.ts` (próximo disparo, compartido con la vista de cola).
 
 ## P1 — Siguientes
 

@@ -1,4 +1,11 @@
-# Routine madre — instalación autónoma de routines por proyecto (EXPERIMENTO)
+# Routine madre v2 — instaladora de routines + despachadora de Inboxes
+
+**v2 (2026-07-17):** además de instalar routines a proyectos nuevos, la madre ahora DESPACHA: si
+el Inbox de un proyecto tiene entradas pendientes, dispara su routine al momento con
+`fire_trigger` — así el feedback del usuario se procesa en ≤1h sin que nadie toque routines
+(decisión: los usuarios de la consola NO tienen acceso a claude.ai/routines). Para actualizar la
+madre ya creada: UI de routines → editar `routine-madre-fabrica` → reemplazar el prompt por el
+bloque de abajo.
 
 Ver análisis en `docs/diseno-consola-web.md` §4 Motor A. La madre se crea UNA sola vez desde la
 UI de routines de claude.ai (las routines creadas desde la UI pueden conservar las herramientas
@@ -57,10 +64,20 @@ PASO 3 — INSTALACIÓN (por cada candidato, máximo 5 por tick):
 6. Si create_trigger falla: NO escribas trigger_id (el candidato se reintenta el próximo tick) y
    anota el error en tu resumen final.
 
+PASO 4 — DESPACHO DE INBOXES (corre SIEMPRE, aunque no haya candidatos de instalación; este paso
+es lo que hace que el feedback del usuario se procese rápido sin que él toque routines): para
+cada repo de la fábrica CON routine instalada (los del topic fabrica-agentes con trigger_id, MÁS
+rifc23/fabrica-consola que es proyecto de la fábrica aunque no lleve el topic), lee la sección
+"📥 Inbox" de docs/backlog.md en su rama principal. Si tiene entradas pendientes (bullets reales,
+no "(vacío)"): dispara su routine AHORA con fire_trigger (busca el trigger "routine-<repo>" en
+list_triggers), SALVO que esa routine haya corrido hace <15 minutos (last_fired_at) o su próximo
+tick esté a <10 minutos (next_run_at) — en esos casos no dispares, ya la tomará. Máximo UN
+fire_trigger por proyecto por tick tuyo.
+
 REGLAS: nunca escribas nada fuera del .fabrica.json de los proyectos (única excepción: el reporte
 de fracaso del PASO 1 en fabrica-consola); nunca borres ni modifiques triggers existentes — solo
-creas; nunca dupliques. Al terminar, resume qué instalaste (repo → trigger_id → cron) o di
-explícitamente "sin candidatos".
+creas y disparas; nunca dupliques. Al terminar, resume qué instalaste (repo → trigger_id → cron)
+y qué despachaste (repo → motivo), o di explícitamente "sin candidatos y sin despachos".
 
 ---
 

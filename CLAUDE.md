@@ -91,6 +91,13 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   2026-07-17). El dropdown selecciona el proyecto y el dashboard opera sobre él. Razón: la consola
   es stateless y todo el estado vive en cada repo hijo — N consolas serían N deploys, N secretos y
   N codebases duplicados sin aportar nada.
+- **Los usuarios de la consola NO tienen acceso a claude.ai/routines** (decisión del usuario,
+  2026-07-17). Ninguna función de la consola puede depender de deep-links a claude.ai, de la UI
+  de routines ni de que el usuario dispare nada a mano fuera de la consola. La reacción rápida al
+  feedback la da el DESPACHADOR de la routine madre (revisa Inboxes cada hora a los :50 y dispara
+  la routine del proyecto con fire_trigger si hay entradas pendientes — ≤1h de latencia) y, como
+  evolución, Motor B (dispatch instantáneo vía GitHub Actions, v3). Los deep-links a routines son
+  herramienta interna del dueño de la fábrica, solo en docs — nunca en la UI.
 - **Input inteligente = patrón "Inbox + triaje en el cron"** (decisión del usuario, 2026-07-17).
   La consola commitea el feedback/idea/spec del usuario TAL CUAL, SOLO dentro de la sección
   `📥 Inbox` del backlog del proyecto; toda la inteligencia (wording, criterios de aceptación,

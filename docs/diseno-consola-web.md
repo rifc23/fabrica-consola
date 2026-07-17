@@ -86,7 +86,7 @@ Secciones (todas se LEEN de archivos del repo — la consola no tiene base de da
 |---|---|---|
 | **📊 Progreso** | checkboxes del backlog (`- [ ]`/`- [x]` en P0/P1) | barra de progreso + lista de features con ✅/⏳ |
 | **🕐 Cola y tiempos** | orden del backlog + marcador `🔄` + `cadencia_cron`/`ultimo_tick` del manifest | cola numerada de pendientes en su orden real, badge "🔄 trabajando ahora", countdown al próximo tick y espera estimada por posición (ver §2.2) |
-| **🔔 Decisiones que te esperan** | sección `[USUARIO]`/estacionadas del backlog | **la killer feature** (subida a v1 el 2026-07-17): cada decisión como card con la pregunta + `input text`/botones → al responder, la consola commitea la respuesta AL INBOX (`Respuesta a decisión "...": ...` — única zona de escritura) → botón **"🏭 Disparar routine ahora"** (deep-link a `claude.ai/code/routines/<trigger_id>`) para que el triaje la aplique EN MINUTOS en vez de esperar el tick. Cero terminal. |
+| **🔔 Decisiones que te esperan** | sección `[USUARIO]`/estacionadas del backlog | **la killer feature** (subida a v1 el 2026-07-17): cada decisión como card con la pregunta + `input text`/botones → al responder, la consola commitea la respuesta AL INBOX (`Respuesta a decisión "...": ...` — única zona de escritura) → card en "respondida — la fábrica la tomará en ~X min" (countdown al mínimo entre el tick del proyecto y el despachador de la madre a los :50). **Sin deep-links a claude.ai: los usuarios de la consola no tienen acceso a routines** — el despacho lo hace la routine madre (fire_trigger) o, en v3, Motor B al instante. |
 | **📝 Último reporte** | `docs/reportes/` más reciente | markdown renderizado (qué se hizo, gate, estacionado) |
 | **📋 Brief hecho/pendiente** | backlog (checkboxes, `🔄`, Registro de trabajo) + último reporte | resumen derivado POR PARSING, sin LLM: completadas recientes, en curso, pendientes con posición en cola y conteos por prioridad; botón ↻ Actualizar |
 | **🧑 Tus tareas manuales** | `docs/TAREAS-MANUALES.md` | documento vivo: render sanitizado + botón ↻ Actualizar; marcar ✅ desde la web (commit) queda para v2 |
@@ -178,6 +178,14 @@ del formulario); N proyectos = N routines independientes en paralelo, cada una t
 - **El límite es la suscripción, no la arquitectura**: si los proyectos activos simultáneos
   superan lo que la suscripción aguanta (ticks que se encolan, cuota agotada), ese es el
   disparador para migrar esos proyectos a Motor B (abajo) — por token, sin límite de sesiones.
+
+**Despachador de Inboxes (v2 de la madre, 2026-07-17):** como los usuarios de la consola NO
+tienen acceso a claude.ai/routines, la reacción rápida al feedback no puede depender de deep-links
+ni de "run now" manual. La routine madre, en cada tick horario (:50), revisa el `📥 Inbox` de
+todos los proyectos de la fábrica y dispara con `fire_trigger` la routine de los que tengan
+entradas pendientes (con anti-duplicado: no dispara si la routine corrió hace <15 min o su tick
+está a <10 min). Latencia máxima del feedback: ~1h; Motor B (v3) la bajará a segundos con
+`workflow_dispatch` desde la propia consola.
 
 **¿Instalación autónoma de la routine al crear el proyecto? (análisis 2026-07-17)** La consola
 NO puede crear routines de claude.ai desde sus API routes (no hay API pública — la limitación
