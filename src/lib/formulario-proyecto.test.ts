@@ -8,6 +8,8 @@ import {
   generarSpecsMdGem,
   agregarTareaManualClaveIA,
   generarContenidoProyecto,
+  personalizarClaudeMd,
+  personalizarTareasManuales,
 } from "./formulario-proyecto";
 
 describe("slugificar", () => {
@@ -183,5 +185,86 @@ describe("generarContenidoProyecto", () => {
     expect(contenido.specsMd).toBe(generarSpecsMd(form));
     expect(contenido.specsMd).not.toContain("Rol inicial");
     expect(contenido.specsMd).not.toContain("ProveedorIA");
+  });
+});
+
+const CLAUDE_MD_TEMPLATE = `# <NOMBRE-PROYECTO> — Guía para Claude Code y agentes
+
+## Qué es este proyecto
+
+<2-3 párrafos: qué hace, para quién, modelo de negocio si aplica.>
+
+**Stack:** <frontend · backend · base de datos · hosting/deploy>
+**Deploy:** <cómo se despliega; qué dispara el deploy — ej. "push a main despliega vía X">
+
+## Regla de despliegue seguro (SIEMPRE, para cualquier cambio)
+
+\`\`\`bash
+git rev-parse <RAMA-PRINCIPAL>
+
+<COMANDO-TESTS>            # ej. npm run test:run
+<COMANDO-LINT-O-RATCHET>   # ej. npm run lint
+<COMANDO-BUILD>            # ej. npm run build
+<COMANDO-E2E>              # ej. npm run test:e2e — OBLIGATORIO desde que exista
+
+git checkout <RAMA-PRINCIPAL> && git merge --no-ff <rama> && git push
+\`\`\`
+
+## Testing
+
+- **Gate:** <comandos exactos, repetidos aquí para grep-abilidad>.
+`;
+
+const TAREAS_MANUALES_TEMPLATE = `# Tareas manuales del usuario — <NOMBRE-PROYECTO>
+
+---
+
+<sembrar en la Fase 1 con: crear cuentas/keys del stack, configurar secretos en el store, dominio,
+verificaciones en prod de cada feature mergeada>
+`;
+
+describe("personalizarClaudeMd", () => {
+  it("reemplaza <NOMBRE-PROYECTO> y <RAMA-PRINCIPAL> por los datos reales", () => {
+    const form = validarFormulario(BODY_VALIDO);
+    const resultado = personalizarClaudeMd(CLAUDE_MD_TEMPLATE, form, "npm run lint && npm run build && npm run test:run");
+    expect(resultado).not.toContain("<NOMBRE-PROYECTO>");
+    expect(resultado).not.toContain("<RAMA-PRINCIPAL>");
+    expect(resultado).toContain("# Mi Calculadora — Guía para Claude Code y agentes");
+    expect(resultado).toContain("git rev-parse main");
+  });
+
+  it("rellena el objetivo, stack y deploy con datos del formulario", () => {
+    const form = validarFormulario(BODY_VALIDO);
+    const resultado = personalizarClaudeMd(CLAUDE_MD_TEMPLATE, form, "npm run lint && npm run build && npm run test:run");
+    expect(resultado).toContain("Sumar y restar rápido");
+    expect(resultado).toContain("**Stack:** Next.js+Vercel");
+    expect(resultado).toContain("deploy automático por push");
+  });
+
+  it("rellena los comandos del gate individuales y el bloque de Testing", () => {
+    const form = validarFormulario(BODY_VALIDO);
+    const resultado = personalizarClaudeMd(CLAUDE_MD_TEMPLATE, form, "npm run lint && npm run build && npm run test:run");
+    expect(resultado).not.toContain("<COMANDO-TESTS>");
+    expect(resultado).not.toContain("<COMANDO-LINT-O-RATCHET>");
+    expect(resultado).not.toContain("<COMANDO-BUILD>");
+    expect(resultado).toContain("npm run test:run");
+    expect(resultado).toContain("npm run lint");
+    expect(resultado).toContain("npm run build");
+    expect(resultado).toContain("**Gate:** `npm run lint && npm run build && npm run test:run`.");
+  });
+});
+
+describe("personalizarTareasManuales", () => {
+  it("reemplaza <NOMBRE-PROYECTO> en el título", () => {
+    const form = validarFormulario(BODY_VALIDO);
+    const resultado = personalizarTareasManuales(TAREAS_MANUALES_TEMPLATE, form);
+    expect(resultado).not.toContain("<NOMBRE-PROYECTO>");
+    expect(resultado).toContain("# Tareas manuales del usuario — Mi Calculadora");
+  });
+
+  it("reemplaza el texto instructivo genérico por un placeholder neutro", () => {
+    const form = validarFormulario(BODY_VALIDO);
+    const resultado = personalizarTareasManuales(TAREAS_MANUALES_TEMPLATE, form);
+    expect(resultado).not.toContain("<sembrar en la Fase 1");
   });
 });
