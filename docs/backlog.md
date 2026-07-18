@@ -141,6 +141,12 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   marcado explícitamente "no es v1". Resultado: **sin trabajo nuevo delegable este disparo** —
   no es cierre de campaña porque sigue pendiente el merge del lote P1 y la decisión de Playwright
   E2E podría reabrir la cola. Reporte: `docs/reportes/2026-07-18-0815-rutina.md`.
+- 2026-07-18 (10:15 UTC): tercer disparo — mismo diagnóstico que el de las 08:15: Inbox `(vacío)`,
+  sin triaje; trigger verificado contra `list_triggers` sin discrepancias; gate real en verde
+  (lint ✅, test:run 107/107 ✅, build ✅); sin trabajo P1/P2 nuevo delegable. El lote P1
+  (`claude/rutina-2026-07-18-0615-p1-batch`) sigue sin mergear — van 3 ticks consecutivos
+  (~3h39min desde su cierre en `21ca51a`) esperando el merge manual del usuario, el único paso que
+  falta para reabrir la cola. Reporte: `docs/reportes/2026-07-18-1015-rutina.md`.
 
 ## 📥 Inbox
 
@@ -379,3 +385,4 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 | 2026-07-17 | Estado del deploy en preview + aviso claro de routine pendiente | claude/factory-console-backlog-7jafgw | 22967ec / 6520bd4 | lint ✅ test:run 104/104 ✅ build ✅ | Mergeado a main (6520bd4) — corregido 2026-07-18, el registro anterior lo daba por pendiente |
 | 2026-07-18 | Tick 06:15 UTC: primer disparo real de `routine-fabrica-consola` — lote P1 completo (Gem, cola/tiempos, burndown), 3 subagentes + 1 de integración de conflicto | claude/rutina-2026-07-18-0615-p1-batch | 8158d1d (Gem) · 69ba763 (cola/tiempos) · f80f0f5 (burndown+integración) · 21ca51a (cierre) | lint ✅ test:run 143/143 ✅ build ✅ | Completo en la rama — **pendiente de merge por el usuario** (toca código, `fabrica-sync.yml` no la auto-mergea) |
 | 2026-07-18 | Tick 08:15 UTC: segundo disparo — Inbox vacío, sin trabajo P1 nuevo (ya `[x]` en rama pendiente), P2 auditado sin ítems delegables (E2E estacionado, ver Decisiones [USUARIO]); solo documentación | claude/rutina-2026-07-18-0815-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
+| 2026-07-18 | Tick 10:15 UTC: tercer disparo — mismo diagnóstico (Inbox vacío, sin P1/P2 nuevo delegable); lote P1 sigue sin mergear (~3h39min); trigger verificado sin discrepancias; solo documentación | claude/rutina-2026-07-18-1015-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
