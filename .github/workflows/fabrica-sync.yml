@@ -12,6 +12,14 @@
 # Límite conocido: GITHUB_TOKEN no puede pushear cambios de .github/workflows/** — una rama que
 # toque .github/** la mergea el usuario (o una sesión interactiva autorizada) a mano.
 # workflow_dispatch permite reintentar una rama ya pusheada (input "rama").
+#
+# Error Conocido (2026-07-18, calculadora): Vercel BLOQUEA deploys automáticos cuyo email de
+# commit no pueda vincularse a un colaborador real del repo — un email inventado como
+# "fabrica-sync@users.noreply.github.com" nunca existió como cuenta de GitHub, así que Vercel lo
+# rechaza en silencio (el código llega a main, pero el sitio en vivo nunca se actualiza). Fix:
+# usar el email noreply REAL de GitHub del dueño del repo (formato "<user-id>+<username>@users.
+# noreply.github.com", visible en github.com/settings/emails o vía API pública
+# api.github.com/users/<username>) — ese sí está vinculado a la cuenta y Vercel lo reconoce.
 name: fabrica-sync
 on:
   push:
@@ -42,8 +50,8 @@ jobs:
           RAMA: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.rama || github.ref_name }}
         run: |
           set -euo pipefail
-          git config user.name "fabrica-sync"
-          git config user.email "fabrica-sync@users.noreply.github.com"
+          git config user.name "rifc23"
+          git config user.email "262635924+rifc23@users.noreply.github.com"
           git fetch origin "$RAMA"
           echo "rama=$RAMA" >> "$GITHUB_OUTPUT"
           if git merge-base --is-ancestor "origin/$RAMA" HEAD; then
