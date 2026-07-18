@@ -15,6 +15,10 @@ import {
   historialCommitsArchivo,
   muestrearUniforme,
   obtenerHistorialArchivo,
+  lockEstaLibre,
+  reclamarProyecto,
+  liberarProyecto,
+  type FabricaManifest,
 } from "./github";
 
 function jsonResponse(body: unknown, ok = true, status = 200) {
@@ -476,5 +480,129 @@ describe("obtenerHistorialArchivo", () => {
     const llamadasContenido = fetchMock.mock.calls.filter((c) => (c[0] as string).includes("/contents/"));
     expect(llamadasContenido.length).toBeLessThanOrEqual(30);
     expect(llamadasContenido.length).toBe(puntos.length);
+  });
+});
+
+function manifestBase(overrides: Partial<FabricaManifest> = {}): FabricaManifest {
+  return {
+    id: "fab-mi-calc",
+    nombre: "Mi Calculadora",
+    creado: "2026-07-14",
+    peldano: 3,
+    estado: "iterando",
+    ...overrides,
+  };
+}
+
+describe("lockEstaLibre", () => {
+  it("está libre si el lock está ausente o null", () => {
+    expect(lockEstaLibre(undefined)).toBe(true);
+    expect(lockEstaLibre(null)).toBe(true);
+  });
+
+  it("NO está libre si el lock es reciente", () => {
+    const ahora = new Date("2026-07-18T15:00:00Z");
+    const lock = { rutina: "rutina-trabajadora-1", desde: "2026-07-18T14:30:00Z" };
+    expect(lockEstaLibre(lock, ahora)).toBe(false);
+  });
+
+  it("está libre si el lock es huérfano (>90 min sin liberar)", () => {
+    const ahora = new Date("2026-07-18T15:00:00Z");
+    const lock = { rutina: "rutina-trabajadora-1", desde: "2026-07-18T13:00:00Z" };
+    expect(lockEstaLibre(lock, ahora)).toBe(true);
+  });
+
+  it("está libre si `desde` no es una fecha parseable (defensivo)", () => {
+    const lock = { rutina: "rutina-trabajadora-1", desde: "no-es-fecha" };
+    expect(lockEstaLibre(lock)).toBe(true);
+  });
+});
+
+describe("reclamarProyecto", () => {
+  it("reclama con éxito cuando el proyecto está libre, preservando el resto del manifest", async () => {
+    const manifest = manifestBase();
+    const encoded = Buffer.from(JSON.stringify(manifest), "utf-8").toString("base64");
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === "PUT") {
+        return Promise.resolve(jsonResponse({ commit: { sha: "nuevo-sha", html_url: "url" } }));
+      }
+      return Promise.resolve(jsonResponse({ content: encoded, encoding: "base64", sha: "sha-actual" }));
+    });
+
+    const resultado = await reclamarProyecto("tok", "rifc23", "mi-calculadora", "rutina-trabajadora-1", fetchMock);
+    expect(resultado).toEqual({ ganado: true });
+
+    const put = fetchMock.mock.calls.find((c) => (c[1] as RequestInit)?.method === "PUT");
+    const body = JSON.parse((put![1] as RequestInit).body as string);
+    const escrito = JSON.parse(Buffer.from(body.content, "base64").toString("utf-8")) as FabricaManifest;
+    expect(escrito.lock?.rutina).toBe("rutina-trabajadora-1");
+    expect(escrito.nombre).toBe("Mi Calculadora"); // preserva el resto del manifest
+    expect(body.sha).toBe("sha-actual");
+  });
+
+  it("NO reclama (ganado: false) si el lock actual ya está tomado y vigente", async () => {
+    const manifest = manifestBase({ lock: { rutina: "otra-rutina", desde: new Date().toISOString() } });
+    const encoded = Buffer.from(JSON.stringify(manifest), "utf-8").toString("base64");
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ content: encoded, encoding: "base64", sha: "sha" }));
+
+    const resultado = await reclamarProyecto("tok", "rifc23", "mi-calculadora", "rutina-trabajadora-1", fetchMock);
+    expect(resultado).toEqual({ ganado: false });
+    expect(fetchMock).toHaveBeenCalledTimes(1); // ni intenta el PUT si el lock está vigente
+  });
+
+  it("devuelve ganado:false (no lanza) si pierde la carrera por conflicto de sha (409)", async () => {
+    const manifest = manifestBase();
+    const encoded = Buffer.from(JSON.stringify(manifest), "utf-8").toString("base64");
+    const fetchMock = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
+      if (init?.method === "PUT") return Promise.resolve(jsonResponse({ message: "conflicto" }, false, 409));
+      return Promise.resolve(jsonResponse({ content: encoded, encoding: "base64", sha: "sha" }));
+    });
+
+    const resultado = await reclamarProyecto("tok", "rifc23", "mi-calculadora", "rutina-trabajadora-1", fetchMock);
+    expect(resultado).toEqual({ ganado: false });
+  });
+
+  it("devuelve ganado:false si el repo no tiene .fabrica.json", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}, false, 404));
+    const resultado = await reclamarProyecto("tok", "rifc23", "sin-manifest", "rutina-trabajadora-1", fetchMock);
+    expect(resultado).toEqual({ ganado: false });
+  });
+});
+
+describe("liberarProyecto", () => {
+  it("pone lock:null preservando el resto del manifest", async () => {
+    const manifest = manifestBase({ lock: { rutina: "rutina-trabajadora-1", desde: "2026-07-18T14:15:00Z" } });
+    const encoded = Buffer.from(JSON.stringify(manifest), "utf-8").toString("base64");
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === "PUT") {
+        return Promise.resolve(jsonResponse({ commit: { sha: "nuevo-sha", html_url: "url" } }));
+      }
+      return Promise.resolve(jsonResponse({ content: encoded, encoding: "base64", sha: "sha-actual" }));
+    });
+
+    await liberarProyecto("tok", "rifc23", "mi-calculadora", fetchMock);
+
+    const put = fetchMock.mock.calls.find((c) => (c[1] as RequestInit)?.method === "PUT");
+    const body = JSON.parse((put![1] as RequestInit).body as string);
+    const escrito = JSON.parse(Buffer.from(body.content, "base64").toString("utf-8")) as FabricaManifest;
+    expect(escrito.lock).toBeNull();
+    expect(escrito.nombre).toBe("Mi Calculadora");
+  });
+
+  it("reintenta ante conflicto de sha (409) releyendo y reescribiendo", async () => {
+    const manifest = manifestBase({ lock: { rutina: "rutina-trabajadora-1", desde: "2026-07-18T14:15:00Z" } });
+    const encoded = Buffer.from(JSON.stringify(manifest), "utf-8").toString("base64");
+    let intentosPut = 0;
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === "PUT") {
+        intentosPut += 1;
+        if (intentosPut === 1) return Promise.resolve(jsonResponse({ message: "conflicto" }, false, 409));
+        return Promise.resolve(jsonResponse({ commit: { sha: "nuevo-sha", html_url: "url" } }));
+      }
+      return Promise.resolve(jsonResponse({ content: encoded, encoding: "base64", sha: "sha-actual" }));
+    });
+
+    await liberarProyecto("tok", "rifc23", "mi-calculadora", fetchMock);
+    expect(intentosPut).toBe(2);
   });
 });

@@ -1,5 +1,10 @@
 export const FABRICA_TOPIC = "fabrica-agentes";
 
+export interface FabricaManifestLock {
+  rutina: string;
+  desde: string;
+}
+
 export interface FabricaManifest {
   id: string;
   nombre: string;
@@ -10,6 +15,10 @@ export interface FabricaManifest {
   ultimo_tick?: string;
   preview_url?: string;
   estado: "iterando" | "esperando-decisiones" | "completado";
+  /** Presente SOLO mientras una rutina del pool trabaja este proyecto (Motor A-pool, ver
+   *  docs/diseno-consola-web.md §4). Ausente/null = proyecto libre o atendido por su
+   *  routine dedicada (`trigger_id`). */
+  lock?: FabricaManifestLock | null;
 }
 
 export interface FabricaProyecto {
@@ -358,6 +367,108 @@ export async function actualizarArchivoConReintento(
     }
   }
   throw ultimoError instanceof Error ? ultimoError : new Error("No se pudo actualizar el archivo tras reintentos");
+}
+
+const LOCK_HUERFANO_MINUTOS = 90;
+
+/**
+ * ¿Está `lock` libre para reclamar? Ausente/null = libre. Presente pero con `desde` de hace más
+ * de `LOCK_HUERFANO_MINUTOS` = lock huérfano (la rutina que lo tomó murió a medio tick) —
+ * tratado como libre. `ahora` es inyectable para tests deterministas.
+ */
+export function lockEstaLibre(
+  lock: FabricaManifestLock | null | undefined,
+  ahora: Date = new Date(),
+): boolean {
+  if (!lock) return true;
+  const desde = new Date(lock.desde).getTime();
+  if (Number.isNaN(desde)) return true;
+  const minutosTranscurridos = (ahora.getTime() - desde) / 60000;
+  return minutosTranscurridos > LOCK_HUERFANO_MINUTOS;
+}
+
+/**
+ * Reclama un proyecto para el pool de rutinas genéricas (Motor A-pool): escribe
+ * `lock: {rutina, desde: ahora}` en su `.fabrica.json`, preservando el resto de campos. Lock
+ * optimista — si el push falla por conflicto de sha (409/422, alguien más escribió primero),
+ * devuelve `{ganado: false}` en vez de lanzar: es el caso esperado de "otra rutina ganó la
+ * carrera", no un error. Antes de reclamar, verifica que el lock actual esté realmente libre
+ * (`lockEstaLibre`) — si no, devuelve `{ganado: false}` sin intentar el commit.
+ */
+export async function reclamarProyecto(
+  token: string,
+  owner: string,
+  repo: string,
+  nombreRutina: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ ganado: boolean }> {
+  const actual = await leerManifestConSha(token, owner, repo, fetchImpl);
+  if (!actual) return { ganado: false };
+  if (!lockEstaLibre(actual.manifest.lock)) return { ganado: false };
+
+  const nuevoManifest: FabricaManifest = {
+    ...actual.manifest,
+    lock: { rutina: nombreRutina, desde: new Date().toISOString() },
+  };
+  try {
+    await escribirArchivo(
+      token,
+      owner,
+      repo,
+      ".fabrica.json",
+      JSON.stringify(nuevoManifest, null, 2) + "\n",
+      `fabrica: ${nombreRutina} reclama el proyecto`,
+      actual.sha,
+      fetchImpl,
+    );
+    return { ganado: true };
+  } catch (err) {
+    const status = err instanceof ErrorGitHubEscritura ? err.status : undefined;
+    if (status === 409 || status === 422) return { ganado: false };
+    throw err;
+  }
+}
+
+/**
+ * Libera el lock de un proyecto (`lock: null`), preservando el resto de campos. Usa
+ * `actualizarArchivoConReintento` porque liberar SIEMPRE debe tener éxito eventualmente (no hay
+ * "otra rutina ganó la carrera" al liberar — solo conflictos transitorios de sha con otro
+ * escritor legítimo del manifest, ej. la consola actualizando `estado`), a diferencia de
+ * `reclamarProyecto` donde perder la carrera es un resultado válido y esperado.
+ */
+export async function liberarProyecto(
+  token: string,
+  owner: string,
+  repo: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  await actualizarArchivoConReintento(
+    token,
+    owner,
+    repo,
+    ".fabrica.json",
+    "fabrica: libera el lock del proyecto",
+    (contenidoActual) => {
+      const manifest = JSON.parse(contenidoActual) as FabricaManifest;
+      return JSON.stringify({ ...manifest, lock: null }, null, 2) + "\n";
+    },
+    fetchImpl,
+  );
+}
+
+async function leerManifestConSha(
+  token: string,
+  owner: string,
+  repo: string,
+  fetchImpl: typeof fetch,
+): Promise<{ manifest: FabricaManifest; sha: string } | null> {
+  const archivo = await leerArchivo(token, owner, repo, ".fabrica.json", fetchImpl);
+  if (!archivo) return null;
+  try {
+    return { manifest: JSON.parse(archivo.contenido) as FabricaManifest, sha: archivo.sha };
+  } catch {
+    return null;
+  }
 }
 
 export interface CommitArchivo {
