@@ -185,6 +185,14 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   siendo el único paso que falta para reabrir la cola. Dado el tiempo transcurrido, este tick
   notificó al usuario fuera de banda (push/email) en vez de esperar un sexto tick silencioso.
   Reporte: `docs/reportes/2026-07-18-1415-rutina.md`.
+- 2026-07-18 (sesión interactiva, ~15 UTC): **lote P1 mergeado a `main` (`399111d`)** por la
+  sesión interactiva con gate local en verde sobre el resultado del merge (lint ✅, test:run
+  143/143 ✅, build ✅; conflicto de docs/backlog.md resuelto conservando ambas historias). Y
+  decisión del usuario — **peldaño 4**: "quiero que sea autónoma" → `fabrica-sync.yml` ahora
+  también auto-mergea a main las ramas con código, corriendo el gate completo en CI (npm ci +
+  lint + test:run + build) sobre el resultado del merge; solo publica si pasa. El merge manual
+  del usuario deja de ser cuello de botella; las ramas que tocan `.github/**` siguen siendo
+  merge humano (límite de GITHUB_TOKEN). Ver CLAUDE.md § Decisiones Arquitectónicas.
 
 ## 📥 Inbox
 
@@ -435,3 +443,4 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 | 2026-07-18 | Tick 10:15 UTC: tercer disparo — mismo diagnóstico (Inbox vacío, sin P1/P2 nuevo delegable); lote P1 sigue sin mergear (~3h39min); trigger verificado sin discrepancias; solo documentación | claude/rutina-2026-07-18-1015-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
 | 2026-07-18 | Tick 12:15 UTC: cuarto disparo — mismo diagnóstico (Inbox vacío, sin P1/P2 nuevo delegable); lote P1 sigue sin mergear (~5h39min); trigger verificado sin discrepancias; solo documentación | claude/rutina-2026-07-18-1215-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
 | 2026-07-18 | Tick 14:15 UTC: quinto disparo — mismo diagnóstico (Inbox vacío, sin P1/P2 nuevo delegable); lote P1 sigue sin mergear (~7h39min, casi 8h); trigger verificado sin discrepancias; usuario notificado fuera de banda por el tiempo transcurrido; solo documentación | claude/rutina-2026-07-18-1415-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
+| 2026-07-18 | Merge del lote P1 a main + activación peldaño 4 (autopiloto en fabrica-sync.yml) | main / claude/factory-console-backlog-7jafgw | 399111d (merge) | lint ✅ test:run 143/143 ✅ build ✅ (local, sobre el merge) | Completado — en producción |
