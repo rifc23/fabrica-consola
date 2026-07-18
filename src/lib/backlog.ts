@@ -79,6 +79,22 @@ export function calcularProgreso(md: string): ProgresoBacklog {
   return { total: items.length, hechas, porcentaje, items };
 }
 
+export interface ItemCola extends ItemProgreso {
+  posicion: number;
+}
+
+/**
+ * La cola real de la routine: pendientes (sin `[x]`) en el orden EXACTO del archivo — P0 arriba
+ * a abajo, luego P1, luego P2 (regla no negociable: "el orden del archivo ES la cola", ver
+ * CLAUDE.md/§2.2 del diseño). `posicion` es 1-based ("#1 entra en el próximo tick") y `enCurso`
+ * viene heredado de `parseCheckboxes` (marcador `🔄`, "en el lote del tick actual").
+ */
+export function obtenerColaPendientes(md: string): ItemCola[] {
+  return calcularProgreso(md)
+    .items.filter((item) => !item.hecho)
+    .map((item, i) => ({ ...item, posicion: i + 1 }));
+}
+
 /** Bullets de la sección "Decisiones estacionadas [USUARIO]" — la pregunta EXACTA de cada una. */
 export function extraerDecisiones(md: string): string[] {
   const seccion = buscarSeccion(md, /Decisiones estacionadas/);

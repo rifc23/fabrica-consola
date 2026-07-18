@@ -10,6 +10,7 @@ import {
   insertarEnInbox,
   sembrarBacklogNuevoProyecto,
   parseRegistroTrabajo,
+  obtenerColaPendientes,
 } from "./backlog";
 
 const BACKLOG_EJEMPLO = `# Backlog — mi-proyecto
@@ -83,6 +84,29 @@ describe("calcularProgreso", () => {
   it("no falla con un backlog sin secciones de prioridad", () => {
     const progreso = calcularProgreso("# Backlog\n\nsin secciones\n");
     expect(progreso).toEqual({ total: 0, hechas: 0, porcentaje: 0, items: [] });
+  });
+});
+
+describe("obtenerColaPendientes", () => {
+  it("devuelve solo pendientes, en el orden real del archivo (P0 luego P1), con posición y enCurso", () => {
+    const cola = obtenerColaPendientes(BACKLOG_EJEMPLO);
+    expect(cola).toHaveLength(3);
+    expect(cola.map((i) => i.posicion)).toEqual([1, 2, 3]);
+    expect(cola[0]).toMatchObject({ prioridad: "P0", enCurso: true, hecho: false, posicion: 1 });
+    expect(cola[0].texto).toContain("Feature B");
+    expect(cola[1]).toMatchObject({ prioridad: "P0", enCurso: false, hecho: false, posicion: 2 });
+    expect(cola[1].texto).toContain("Feature C");
+    expect(cola[2]).toMatchObject({ prioridad: "P1", enCurso: false, hecho: false, posicion: 3 });
+    expect(cola[2].texto).toContain("Feature D");
+  });
+
+  it("no incluye tareas completadas (`[x]`)", () => {
+    const cola = obtenerColaPendientes(BACKLOG_EJEMPLO);
+    expect(cola.some((i) => i.texto.includes("Feature A"))).toBe(false);
+  });
+
+  it("devuelve [] con un backlog sin pendientes", () => {
+    expect(obtenerColaPendientes("# Backlog\n\nsin secciones\n")).toEqual([]);
   });
 });
 
