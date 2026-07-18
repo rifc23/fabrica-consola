@@ -102,6 +102,14 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   la routine del proyecto con fire_trigger si hay entradas pendientes — ≤1h de latencia) y, como
   evolución, Motor B (dispatch instantáneo vía GitHub Actions, v3). Los deep-links a routines son
   herramienta interna del dueño de la fábrica, solo en docs — nunca en la UI.
+- **Peldaño 4 para fabrica-consola: el gate de CI reemplaza la revisión humana en los merges**
+  (decisión del usuario, 2026-07-18 — "quiero que sea autónoma"). `fabrica-sync.yml` mergea a
+  `main` TAMBIÉN las ramas `claude/**`/`fabrica/**` que tocan código: mergea localmente en el
+  runner, corre el gate COMPLETO (npm ci + lint + test:run + build) sobre el resultado del merge
+  y solo publica si todo pasa; si el gate falla o hay conflicto, main queda intacto y el run en
+  rojo. El usuario supervisa por los reportes/consola y puede revertir (`git revert` del merge o
+  Instant Rollback de Vercel). Excepción permanente: las ramas que tocan `.github/**` siguen
+  requiriendo merge humano (GITHUB_TOKEN no puede pushear workflows).
 - **Input inteligente = patrón "Inbox + triaje en el cron"** (decisión del usuario, 2026-07-17).
   La consola commitea el feedback/idea/spec del usuario TAL CUAL, SOLO dentro de la sección
   `📥 Inbox` del backlog del proyecto; toda la inteligencia (wording, criterios de aceptación,
@@ -120,9 +128,11 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   clasificador bloquea pushes a la rama default. Solución: workflow
   `.github/workflows/fabrica-sync.yml` — las routines pushean SOLO su rama designada
   (`claude/...`) y el workflow auto-mergea a main las ramas cuyo diff toque únicamente estado
-  (`docs/**`, `CLAUDE.md`, `.fabrica.json`); las ramas con código las mergea el usuario
-  (peldaño 3) y sus docs viajan en ese merge. **Regla: ningún prompt de routine debe instruir
-  `git push origin main` — siempre la rama designada + fabrica-sync.**
+  (`docs/**`, `CLAUDE.md`, `.fabrica.json`). Actualización 2026-07-18: en fabrica-consola el
+  mismo workflow también mergea las ramas con código tras correr el gate completo en CI
+  (peldaño 4, ver Decisiones Arquitectónicas); solo las ramas que tocan `.github/**` requieren
+  merge humano. **Regla: ningún prompt de routine debe instruir `git push origin main` — siempre
+  la rama designada + fabrica-sync.**
 - **(2026-07-17) Los triggers creados PROGRAMÁTICAMENTE generan sesiones SIN permiso de escritura
   en los repos.** Síntoma: el tick construyó y commiteó pero TODO push fue denegado ("falta de
   permiso de escritura"), incluso a su rama designada — el trabajo muere con el contenedor.

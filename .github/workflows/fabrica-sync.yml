@@ -1,46 +1,89 @@
-# fabrica-sync — auto-merge a main de ramas que SOLO tocan estado (docs/CLAUDE.md/.fabrica.json).
-# Razón (Error Conocido 2026-07-17): las sesiones de routine no pueden pushear a main (clasificador
-# del modo auto); pushean su rama claude/* y este workflow consolida el estado en main. Las ramas
-# que tocan código NO se mergean aquí — las aprueba el usuario (peldaño 3).
+# fabrica-sync — publicación autónoma a main de las ramas de routine (claude/**, fabrica/**).
+#
+# Dos caminos según el diff de la rama contra main:
+#  · SOLO ESTADO (docs/**, CLAUDE.md, .fabrica.json): merge directo a main, sin gate (no hay
+#    código que romper). Comportamiento original del workflow (Error Conocido #1, 2026-07-17).
+#  · CÓDIGO (peldaño 4 — decisión del usuario, 2026-07-18): se mergea LOCALMENTE en el runner,
+#    se corre el gate COMPLETO sobre el resultado del merge (npm ci + lint + test:run + build)
+#    y SOLO si todo pasa se pushea main (que despliega a producción vía Vercel). Si el gate
+#    falla o el merge tiene conflicto, main queda intacto y este run queda en rojo como señal
+#    para la routine (que lo reporta) y el usuario.
+#
+# Límite conocido: GITHUB_TOKEN no puede pushear cambios de .github/workflows/** — una rama que
+# toque .github/** la mergea el usuario (o una sesión interactiva autorizada) a mano.
+# workflow_dispatch permite reintentar una rama ya pusheada (input "rama").
 name: fabrica-sync
 on:
   push:
     branches:
       - 'claude/**'
       - 'fabrica/**'
+  workflow_dispatch:
+    inputs:
+      rama:
+        description: 'Rama a clasificar, gatear y mergear a main'
+        required: true
 permissions:
   contents: write
 concurrency:
   group: fabrica-sync-main
   cancel-in-progress: false
 jobs:
-  merge-estado:
+  publicar:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
-      - name: Merge a main si el diff es solo estado
+      - name: Clasificar la rama (estado vs código) y mergear localmente
+        id: clasifica
         env:
-          RAMA: ${{ github.ref_name }}
+          RAMA: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.rama || github.ref_name }}
         run: |
           set -euo pipefail
           git config user.name "fabrica-sync"
           git config user.email "fabrica-sync@users.noreply.github.com"
           git fetch origin "$RAMA"
+          echo "rama=$RAMA" >> "$GITHUB_OUTPUT"
           if git merge-base --is-ancestor "origin/$RAMA" HEAD; then
+            echo "tipo=nada" >> "$GITHUB_OUTPUT"
             echo "La rama ya está contenida en main — nada que hacer."; exit 0
           fi
           BASE=$(git merge-base HEAD "origin/$RAMA")
           CAMBIOS=$(git diff --name-only "$BASE" "origin/$RAMA")
           echo "Archivos tocados por $RAMA:"; echo "$CAMBIOS"
-          if [ -z "$CAMBIOS" ]; then echo "Sin cambios."; exit 0; fi
-          NO_ESTADO=$(echo "$CAMBIOS" | grep -vE '^(docs/|CLAUDE\.md$|\.fabrica\.json$)' || true)
-          if [ -n "$NO_ESTADO" ]; then
-            echo "La rama toca código — la mergea el usuario (peldaño 3). Archivos fuera de estado:"
-            echo "$NO_ESTADO"; exit 0
+          if [ -z "$CAMBIOS" ]; then echo "tipo=nada" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if echo "$CAMBIOS" | grep -qE '^\.github/'; then
+            echo "tipo=nada" >> "$GITHUB_OUTPUT"
+            echo "La rama toca .github/** — GITHUB_TOKEN no puede pushear workflows; merge manual."
+            exit 0
           fi
-          git merge --no-ff "origin/$RAMA" -m "fabrica-sync: estado desde $RAMA (solo docs/CLAUDE.md/manifest)"
+          NO_ESTADO=$(echo "$CAMBIOS" | grep -vE '^(docs/|CLAUDE\.md$|\.fabrica\.json$)' || true)
+          if [ -z "$NO_ESTADO" ]; then
+            echo "tipo=estado" >> "$GITHUB_OUTPUT"
+            git merge --no-ff "origin/$RAMA" -m "fabrica-sync: estado desde $RAMA (solo docs/CLAUDE.md/manifest)"
+          else
+            echo "tipo=codigo" >> "$GITHUB_OUTPUT"
+            git merge --no-ff "origin/$RAMA" -m "fabrica-sync: código desde $RAMA (peldaño 4 — gate completo en verde en CI)" \
+              || { echo "::error::Conflicto mergeando $RAMA en main — requiere resolución humana."; exit 1; }
+          fi
+      - name: Node para el gate
+        if: steps.clasifica.outputs.tipo == 'codigo'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Gate completo sobre el resultado del merge
+        if: steps.clasifica.outputs.tipo == 'codigo'
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run lint
+          npm run test:run
+          npm run build
+      - name: Publicar main
+        if: steps.clasifica.outputs.tipo == 'estado' || steps.clasifica.outputs.tipo == 'codigo'
+        run: |
           git push origin main
-          echo "Estado consolidado en main."
+          echo "Publicado en main (tipo: ${{ steps.clasifica.outputs.tipo }})."
