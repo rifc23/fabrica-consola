@@ -248,7 +248,7 @@ honesta de §3). Dos caminos:
 Mientras tanto, v1 mantiene la pantalla de arranque (prompt pre-rellenado + copiar/pegar en
 /schedule, ~1 min por proyecto, una vez).
 
-### Motor A-pool — N routines genéricas compartiendo el catálogo de proyectos (diseño 2026-07-18)
+### Motor A-pool — despachadora + N routines trabajadoras (diseño 2026-07-18, revisado el mismo día)
 
 **Matiza la regla "UNA routine POR proyecto" de arriba**: esa regla sigue siendo el default para
 proyectos con volumen propio (la propia fabrica-consola, o cualquier proyecto con backlog grande y
@@ -258,9 +258,9 @@ modesto — instalar una routine dedicada por proyecto vuelve a depender del pas
 madre" (arriba) intenta mitigar sin poder eliminar del todo (no puede instalar routines con
 escritura vía `create_trigger` — Error Conocido: los triggers creados programáticamente nacen sin
 permisos de escritura en los repos). El pool es la alternativa: un número FIJO y chico de routines
-(empezar con 2) creadas UNA VEZ por el usuario, que en cada tick reclaman y trabajan CUALQUIER
-proyecto de la fábrica que tenga trabajo pendiente y no esté siendo atendido — sin instalar nada
-nuevo por proyecto nuevo.
+TRABAJADORAS (empezar con 2) más UNA routine DESPACHADORA, todas creadas UNA VEZ por el usuario,
+que entre todas atienden CUALQUIER proyecto de la fábrica con trabajo pendiente — sin instalar
+nada nuevo por proyecto nuevo.
 
 **Por qué es técnicamente posible pese al límite de permisos:** el repo fuente de un trigger
 (`session_context.sources`) es fijo en su configuración — una rutina no puede "cambiar" su repo
@@ -270,35 +270,46 @@ credenciales git del entorno, no el mecanismo de `outcomes` del trigger — es e
 ya usa la routine madre en su PASO 3 (clona repos candidatos y commitea directo a su rama
 principal sin ser su repo fuente). El pool generaliza ese patrón: cada rutina del pool tiene como
 repo fuente `fabrica-consola` (o cualquier repo de control), pero su trabajo real ocurre clonando
-el proyecto que reclamó.
+el proyecto que le toca.
 
-**Protocolo de reclamo (lock optimista sobre `.fabrica.json`, sin infraestructura nueva):**
-1. **Descubrimiento** — igual que la routine madre: `search_repositories` por topic
-   `fabrica-agentes`, leer `.fabrica.json` de cada uno.
-2. **Filtrar libres**: proyectos cuyo campo `lock` (ver esquema en Conceptos clave) está ausente,
-   o cuyo `lock.desde` tiene más de ~90 minutos (lock huérfano — la rutina que lo tomó murió a
-   medio tick; 90 min da margen sobre cualquier tick normal antes de considerarlo abandonado).
-3. **Elegir candidato** de los libres CON backlog pendiente real (Inbox no vacío, o P0/P1/P2 con
-   ítems sin `[x]`) — orden determinista, ej. el de `ultimo_tick` más antiguo primero (el que
-   lleva más tiempo esperando atención).
-4. **Reclamar con un commit atómico**: escribir `lock: {rutina: "<nombre-propio>", desde: "<ahora
-   ISO8601>"}` en el `.fabrica.json` de ESE repo y pushear a su rama principal, usando el `sha`
-   actual del archivo. Si el commit falla por conflicto de `sha` (409): otra rutina ganó la
-   carrera — descartar candidato y probar el siguiente. **Esto ES el lock real**: no hace falta
-   coordinación adicional, la propia API de Contents de GitHub arbitra el empate por rutina.
-5. Con el lock propio confirmado: clonar el repo, trabajar su backlog con el MISMO protocolo que
-   cualquier routine dedicada (triaje de Inbox, gate, rama `claude/<algo>`, fabrica-sync para
-   docs-only, peldaño 3 para código).
-6. **Liberar el lock** al terminar el tick (o si el contexto se agota a medio trabajo, dejando el
-   estado consistente): otro commit poniendo `lock: null` en ese `.fabrica.json`.
+**Por qué despachadora + trabajadoras y no auto-reclamo (decisión del usuario, 2026-07-18):** el
+diseño original (cada trabajadora descubre y reclama un proyecto libre por su cuenta, arbitrando
+empates por conflicto de `sha`) funciona, pero deja el reparto sin control explícito — nadie
+decide QUÉ trabajadora atiende QUÉ proyecto, solo emerge de quién gana cada carrera. El modelo
+revisado separa las dos responsabilidades: una única routine **despachadora** mira el catálogo
+completo y ASIGNA (decide y escribe); las routines **trabajadoras** solo EJECUTAN lo que ya les
+tocó. Nótese la restricción real de la plataforma detrás de esto: una routine no puede "disparar
+a otra con un parámetro" — `fire_trigger` solo relanza el prompt FIJO de esa routine, no puede
+decirle "trabaja el proyecto X". Por eso la asignación viaja por el único canal compartido que
+existe entre rutinas: el `.fabrica.json` de cada proyecto, escrito por la despachadora y leído por
+la trabajadora en su tick normal (sin `fire_trigger` de por medio — solo el cron de cada una).
+
+**Protocolo (dos roles, ver prompts completos en `docs/plantilla-routine-prompt.md` bloques B/C):**
+1. **Despachadora** (corre PRIMERO en el ciclo, cron antes que las trabajadoras): descubre
+   trabajadoras vía `list_triggers` (nombres `rutina-trabajadora-<N>`) y proyectos con trabajo
+   pendiente vía topic `fabrica-agentes` (igual que la routine madre); descarta proyectos con
+   `trigger_id` (tienen routine dedicada) o `lock` vigente (`desde` de <90 min — ya asignado);
+   ordena por `ultimo_tick` más antiguo primero; asigna 1 proyecto por trabajadora disponible
+   escribiendo `lock: {rutina: "<nombre-trabajadora>", desde: "<ahora>"}` en su `.fabrica.json`
+   (commit con el `sha` leído). Nunca clona, implementa, ni mergea nada — su única escritura es
+   ese campo.
+2. **Trabajadora** (corre DESPUÉS, en su propio cron): busca entre los proyectos del topic cuál
+   tiene `lock.rutina` igual a su propio nombre exacto; si no encuentra ninguno, termina sin
+   reporte (tick vacío — normal si la despachadora no le asignó nada esa ronda); si encuentra su
+   asignación, clona ese repo y trabaja su backlog con el MISMO protocolo que una routine
+   dedicada (triaje de Inbox, gate, rama `claude/<algo>`, fabrica-sync/peldaño 4); al terminar (o
+   si el contexto se agota a medio trabajo, dejando el estado consistente en su reporte), libera
+   el lock con otro commit (`lock: null`) para que la despachadora pueda reasignar ese proyecto en
+   la siguiente ronda.
 
 **Cuándo usar cada modelo:**
-| | Routine dedicada (1:1) | Pool (N:M) |
+| | Routine dedicada (1:1) | Pool (despachadora + N trabajadoras) |
 |---|---|---|
-| Instalación | manual por proyecto (~1 min c/u) | manual UNA vez (crear el pool) |
+| Instalación | manual por proyecto (~1 min c/u) | manual UNA vez (despachadora + N trabajadoras) |
 | Encaja mejor con | proyectos con volumen propio sostenido | muchos proyectos chicos/intermitentes |
-| Latencia por proyecto | su propia cadencia fija | depende de cuántos proyectos compiten por el pool en ese momento |
-| Riesgo | ninguno nuevo | un proyecto grande puede "acaparar" una rutina varios ticks — mitigar limitando ticks consecutivos por proyecto antes de rotar |
+| Latencia por proyecto | su propia cadencia fija | depende del ciclo despachadora→trabajadora y cuántos proyectos compiten |
+| Control del reparto | trivial (1:1) | explícito: la despachadora decide, no emerge de una carrera |
+| Riesgo | ninguno nuevo | la despachadora es punto único de asignación (si falla, las trabajadoras simplemente no encuentran asignación ese ciclo — degradación segura, no bloqueante) |
 
 **Rol de la routine madre con el pool activo:** su PASO 3 (preparar prompt de instalación por
 proyecto) deja de ser necesario para los proyectos que el pool ya cubre — se simplifica a solo

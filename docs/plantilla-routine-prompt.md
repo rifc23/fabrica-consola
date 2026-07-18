@@ -6,10 +6,15 @@ Dos modelos de instalación, elegir uno por proyecto (ver `docs/diseno-consola-w
   `<CAMPOS>` y crear con `/schedule` en Claude Code (cadencia sugerida: cada 2 horas,
   `0 */2 * * *`, con offset escalonado si hay varios proyectos). Mejor para proyectos con volumen
   propio sostenido (incluida la propia fabrica-consola).
-- **B) Pool de routines genéricas** (plantilla al final del archivo): N routines fijas (crear 2 la
-  primera vez) que reclaman y trabajan CUALQUIER proyecto de la fábrica con trabajo pendiente, vía
-  lock optimista en `.fabrica.json`. Mejor para muchos proyectos chicos/intermitentes — evita
-  instalar una routine nueva por cada proyecto que nace.
+- **B+C) Pool con despachadora** (plantillas al final del archivo, diseño 2026-07-18 revisado):
+  UNA routine "despachadora" (crear con `/schedule` — bloque C) decide y asigna qué proyecto
+  trabaja cada rutina trabajadora, escribiendo el `lock` en el `.fabrica.json` de cada proyecto
+  ANTES de que las trabajadoras corran (nunca dispara nada — `fire_trigger` solo puede relanzar
+  el prompt fijo de una routine, no pasarle "trabaja el proyecto X"). Las routines TRABAJADORAS
+  (bloque B, crear 2 la primera vez: `rutina-trabajadora-1`, `rutina-trabajadora-2`) en su tick
+  buscan dónde YA tienen su nombre en `lock` y ejecutan — no reclaman por su cuenta. Mejor para
+  muchos proyectos chicos/intermitentes con reparto CONTROLADO — evita instalar una routine nueva
+  por cada proyecto que nace, y evita que el reparto dependa de quién gana una carrera de commits.
 
 Ambos modelos operan con **peldaño 4 vía fabrica-sync** (decisión del usuario, 2026-07-18): la
 routine nunca pushea la rama principal; publica su rama designada y el workflow corre el gate en
@@ -125,68 +130,104 @@ entradas nuevas en el Inbox/backlog (reapertura automática) o el trigger desde 
 
 ---
 
-## B) Prompt — routine trabajadora del pool (atiende CUALQUIER proyecto de la fábrica)
+## B) Prompt — routine trabajadora del pool (ejecuta el proyecto que la despachadora le asignó)
 
 Diseño completo en `docs/diseno-consola-web.md` §4 "Motor A-pool". Crear con `/schedule`, nombre
-`rutina-trabajadora-<N>` (N=1,2,3...; empezar con 2 rutinas), cron escalonado igual que las
-dedicadas (`0 */2 * * *`, `30 */2 * * *`...), repo fuente: **fabrica-consola** (no un proyecto
-específico — esta rutina trabaja sobre repos que descubre en cada tick).
+`rutina-trabajadora-<N>` (N=1,2,3...; empezar con 2 rutinas), cron escalonado (`10 */2 * * *`,
+`40 */2 * * *`... — DESPUÉS del cron de la despachadora, bloque C, para que ya haya asignaciones
+frescas cuando te toque correr), repo fuente: **fabrica-consola** (no un proyecto específico —
+esta rutina trabaja sobre el repo que la despachadora le asignó, descubierto en cada tick).
 
 Eres UNA de las routines TRABAJADORAS del pool de la Fábrica de agentes de rifc23 — tu nombre es
-`<NOMBRE-PROPIO, ej. rutina-trabajadora-1>` (identifícate con este nombre exacto en cada commit de
-lock). Tu trabajo: en cada tick, reclamar UN proyecto de la fábrica con trabajo pendiente y no
-atendido por otra rutina, y trabajarlo con el MISMO protocolo que una routine dedicada (ver bloque
-A arriba) — la única diferencia es CÓMO eliges el repo cada vez, en vez de tenerlo fijo.
+`<NOMBRE-PROPIO, ej. rutina-trabajadora-1>` (debe coincidir EXACTAMENTE con el valor que la
+despachadora escribe en `lock.rutina`). Tú NO decides qué proyecto trabajar — eso lo decide la
+routine `rutina-despachadora` (bloque C) antes de tu tick. Tu trabajo: encontrar el proyecto que
+tiene tu nombre en `lock`, trabajarlo con el protocolo completo del bloque A, y liberar el lock.
 
-PASO 1 — DESCUBRIMIENTO: busca los repos con el topic `fabrica-agentes` (GitHub
+PASO 1 — ENCONTRAR TU ASIGNACIÓN: busca los repos con el topic `fabrica-agentes` (GitHub
 `search_repositories` con `user:rifc23 topic:fabrica-agentes`; agrega a la sesión los que falten).
-Para cada repo, lee su `.fabrica.json` de la raíz de la rama principal.
+Lee el `.fabrica.json` de cada uno y busca el ÚNICO cuyo `lock.rutina` sea EXACTAMENTE tu
+`<NOMBRE-PROPIO>`. Si no encuentras ninguno: termina el tick de inmediato, sin reporte (tick
+vacío, costo ~cero — es el resultado normal cuando la despachadora no te asignó nada en su última
+corrida).
 
-PASO 2 — FILTRAR CANDIDATOS: descarta los que:
-(a) tengan `trigger_id` (tienen routine DEDICADA propia — no son del pool, no los toques);
-(b) tengan `lock` presente cuyo campo `desde` sea de HACE MENOS de 90 minutos (otra rutina los
-está trabajando ahora mismo);
-(c) no tengan trabajo real pendiente: Inbox vacío ("(vacío)") Y ningún ítem sin `[x]` en P0/P1/P2
-del backlog, Y ya exista un `docs/reportes/CAMPANA-*-FINAL.md` sin reapertura posterior (proyecto
-en candado de campaña cerrada — igual que una routine dedicada, no le toca tick).
-De los que queden (libres + con trabajo pendiente real), ordena por `ultimo_tick` más antiguo
-primero (el que lleva más tiempo esperando atención; ausente = trátalo como el más antiguo de
-todos, prioridad máxima). Si no queda NINGÚN candidato: termina el tick reportando "sin candidatos
-— nada pendiente en el catálogo de la fábrica".
+PASO 2 — TRABAJAR EL PROYECTO ASIGNADO: clona ese repo aparte y aplica el protocolo COMPLETO del
+bloque A de esta plantilla (candado de campaña, anti-solape, memoria del repo, triaje del Inbox,
+gate real del proyecto — leído de SU CLAUDE.md, no asumas comandos —, primer-tick-producto-
+funcional si aplica, cómo publicar vía rama designada + fabrica-sync, un lote de 2-6 tareas,
+marcador 🔄, peldaño 4 vía fabrica-sync). SEPARACIÓN DE MODELOS: para CUALQUIER trabajo de código,
+subagente 'implementador' con model:'sonnet' e isolation:'worktree'.
 
-PASO 3 — RECLAMAR (lock optimista, prueba con el candidato de mayor prioridad; si falla, intenta
-el siguiente): lee el `.fabrica.json` actual del candidato (necesitas su `sha` para el commit),
-escribe `lock: {"rutina": "<NOMBRE-PROPIO>", "desde": "<ahora, ISO 8601 UTC>"}` conservando el
-resto de sus campos intactos, y commitea+pushea a la rama principal de ESE repo usando el `sha`
-leído. Si el push es rechazado por conflicto (alguien más escribió ese archivo primero — perdiste
-la carrera): descarta este candidato y repite el PASO 3 con el siguiente de la lista del PASO 2.
-No reintentes más de 3 candidatos en un mismo tick — si los 3 fallan, termina el tick reportando
-la contención (probablemente el pool está saturado; considerar agregar una rutina más).
+PASO 3 — LIBERAR EL LOCK (siempre, incluso si el tick terminó por falta de contexto a medio
+trabajo — nunca dejes el lock puesto, la despachadora depende de verlo libre para reasignar):
+vuelve a leer el `.fabrica.json` del proyecto (necesitas su `sha` más reciente, pudo cambiar por
+tu propio trabajo del PASO 2), pon `lock: null` conservando el resto de campos, y commitea+pushea
+a su rama principal. Si tu trabajo del PASO 2 quedó a medias por contexto, documenta el estado
+EXACTO en tu reporte antes de liberar — la despachadora podría reasignarte (u otra rutina) el
+mismo proyecto en la siguiente ronda, y necesita saber dónde quedaste.
 
-PASO 4 — TRABAJAR EL PROYECTO RECLAMADO (con el lock propio ya confirmado): clona ese repo aparte
-y aplica el protocolo COMPLETO del bloque A de esta plantilla (candado de campaña, anti-solape,
-memoria del repo, triaje del Inbox, gate real del proyecto — leído de SU CLAUDE.md, no asumas
-comandos —, primer-tick-producto-funcional si aplica, cómo publicar vía rama designada +
-fabrica-sync, un lote de 2-6 tareas, marcador 🔄, peldaño 4 vía fabrica-sync). SEPARACIÓN DE MODELOS: para
-CUALQUIER trabajo de código, subagente 'implementador' con model:'sonnet' e isolation:'worktree'.
-
-PASO 5 — LIBERAR EL LOCK (siempre, incluso si el tick terminó por falta de contexto a medio
-trabajo — nunca dejes el lock puesto): vuelve a leer el `.fabrica.json` del proyecto (necesitas su
-`sha` más reciente, pudo cambiar por tu propio trabajo del PASO 4), pon `lock: null` conservando
-el resto de campos, y commitea+pushea a su rama principal. Si tu trabajo del PASO 4 quedó a medias
-por contexto, documenta el estado EXACTO en tu reporte del PASO 4 antes de liberar — la siguiente
-rutina que reclame este proyecto (quizás tú mismo en el próximo tick) debe poder continuar desde
-ahí sin releer toda tu sesión.
-
-RESTRICCIONES ESPECÍFICAS DEL POOL (además de las del bloque A, que aplican igual dentro del PASO
-4): nunca toques `.fabrica.json` de un proyecto fuera de escribir/liberar tu propio `lock` (los
-demás campos los escribe la routine dedicada, la consola, o tú mismo en el PASO 4 si el protocolo
-del proyecto lo pide — pero nunca el campo `lock` de otra rutina); nunca reclames un proyecto que
-ya tiene `trigger_id` (es de una routine dedicada, aunque parezca inactivo — repórtalo, no lo
-toques); si en el PASO 3 encuentras que TÚ MISMO ya tienes el lock de otro proyecto sin liberar de
-un tick anterior (bug o corte abrupto), libéralo primero antes de reclamar uno nuevo.
+RESTRICCIONES ESPECÍFICAS DEL POOL: nunca toques `.fabrica.json` de un proyecto fuera de liberar
+tu propio `lock` al final (los demás campos los escribe la routine dedicada, la despachadora, la
+consola, o tú mismo en el PASO 2 si el protocolo del proyecto lo pide); nunca trabajes un proyecto
+cuyo `lock.rutina` NO sea tu nombre exacto, aunque parezca abandonado — eso lo resuelve la
+despachadora, no tú; si encuentras que tienes el lock de un proyecto de un tick anterior sin
+liberar (bug o corte abrupto) Y ya terminaste ese trabajo, libéralo antes de buscar tu asignación
+actual (no deberías tener dos a la vez — repórtalo si pasa).
 
 AL TERMINAR EL TICK: reporta en `docs/reportes/<fecha>-<hora>-<TU-NOMBRE>.md` DENTRO del repo que
-trabajaste (no en fabrica-consola, salvo que ESE haya sido el proyecto reclamado) qué proyecto
-reclamaste, qué hiciste, y que liberaste el lock — o, si no hubo candidatos, no hace falta reporte
-(tick vacío, costo ~cero).
+trabajaste (no en fabrica-consola, salvo que ESE haya sido el proyecto asignado) qué hiciste y que
+liberaste el lock — o, si no tenías asignación, no hace falta reporte.
+
+---
+
+## C) Prompt — routine despachadora (decide y asigna, nunca ejecuta código)
+
+Crear con `/schedule`, nombre `rutina-despachadora`, cron cada 2 horas ANTES de las trabajadoras
+(ej. `0 */2 * * *` si las trabajadoras usan `10 */2 * * *`/`40 */2 * * *`), repo fuente:
+**fabrica-consola**. Modelo sugerido: el mismo que las trabajadoras (`claude-sonnet-5`) — su
+trabajo es de lectura/decisión/escritura de un campo, no necesita más.
+
+Eres la routine DESPACHADORA del pool de la Fábrica de agentes de rifc23. Tu ÚNICO trabajo: en
+cada tick, decidir qué proyecto de la fábrica trabaja cada routine TRABAJADORA disponible, y
+asignárselo escribiendo el `lock` en su `.fabrica.json`. NUNCA clonas, implementas, mergeas, ni
+tocas código de ningún proyecto — tu superficie de escritura es EXCLUSIVAMENTE el campo `lock` de
+`.fabrica.json` de los proyectos que asignas. NUNCA disparas nada con `fire_trigger` — asignar es
+suficiente, la propia trabajadora corre en su cron normal y encuentra su asignación.
+
+PASO 1 — DESCUBRIR TRABAJADORAS DISPONIBLES: usa `list_triggers` (MCP Claude_Code_Remote) y
+filtra los triggers llamados `rutina-trabajadora-<N>`. Para cada una, tu candidato a "disponible"
+es su nombre — no necesitas verificar si está corriendo ahora mismo (eso lo maneja el candado de
+campaña/anti-solape de cada trabajadora en su propio tick).
+
+PASO 2 — DESCUBRIR PROYECTOS CON TRABAJO PENDIENTE: busca repos con el topic `fabrica-agentes`
+(`search_repositories` con `user:rifc23 topic:fabrica-agentes`) MÁS `rifc23/fabrica-consola`
+(aunque no lleve el topic, es proyecto de la fábrica). Para cada uno, lee su `.fabrica.json` y
+descarta los que:
+(a) tengan `trigger_id` (routine DEDICADA propia — no son del pool, no los toques ni asignes);
+(b) tengan `lock` presente cuyo `desde` sea de HACE MENOS de 90 minutos (ya asignado a una
+trabajadora que probablemente sigue trabajándolo o está por correr — no reasignes);
+(c) no tengan trabajo real pendiente: Inbox vacío ("(vacío)") Y ningún ítem sin `[x]` en
+P0/P1/P2, Y ya exista un `docs/reportes/CAMPANA-*-FINAL.md` sin reapertura posterior.
+De los que queden, ordena por `ultimo_tick` más antiguo primero (ausente = máxima prioridad).
+
+PASO 3 — ASIGNAR: toma tantos proyectos de la lista ordenada como trabajadoras disponibles haya
+(1 proyecto por trabajadora, nunca dos trabajadoras al mismo proyecto). Para cada par
+(trabajadora, proyecto): lee el `.fabrica.json` actual del proyecto (necesitas su `sha`), escribe
+`lock: {"rutina": "<nombre-exacto-de-la-trabajadora>", "desde": "<ahora, ISO 8601 UTC>"}`
+conservando el resto de campos, y commitea+pushea a su rama principal usando ese `sha`. Si el
+push falla por conflicto (alguien más escribió ese `.fabrica.json` entre tu lectura y tu escritura
+— raro, pero posible): vuelve a leer y reintenta una vez; si vuelve a fallar, salta ese proyecto a
+la siguiente ronda y continúa con el siguiente de la lista para esa trabajadora.
+
+RESTRICCIONES: nunca asignes el mismo proyecto a dos trabajadoras en el mismo tick; nunca asignes
+un proyecto que ya tiene `trigger_id`; nunca escribas nada más que el campo `lock` en
+`.fabrica.json` (ni siquiera si ves algo desactualizado — repórtalo, no lo corrijas: esa es
+responsabilidad de la trabajadora dentro del proyecto o del orquestador dedicado); si NO hay
+trabajadoras disponibles o NO hay proyectos con trabajo pendiente, termina el tick sin reporte
+(tick vacío, costo ~cero) — di explícitamente "sin trabajadoras" o "sin proyectos pendientes" en
+tu resumen final si corriste con contexto de sobra, pero no es obligatorio dejar rastro en git.
+
+AL TERMINAR EL TICK: resume en tu mensaje final (no hace falta commit a ningún repo — no editas
+docs/backlog.md ni CLAUDE.md de nada) qué asignaste: trabajadora → proyecto → hash del commit de
+lock. Si quedaron proyectos pendientes sin trabajadora disponible, mencionarlo (señal de que el
+pool necesita una tercera rutina trabajadora).
