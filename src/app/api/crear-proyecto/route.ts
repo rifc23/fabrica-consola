@@ -7,6 +7,7 @@ import {
   borrarArchivo,
   escribirArchivo,
   leerArchivo,
+  listarArchivosDirectorio,
   obtenerProyectos,
   obtenerUsuarioAutenticado,
   type FabricaManifest,
@@ -21,6 +22,7 @@ import {
   agregarTareaManualClaveIA,
   personalizarClaudeMd,
   personalizarTareasManuales,
+  personalizarAgente,
   type FormularioProyectoValidado,
 } from "@/lib/formulario-proyecto";
 import {
@@ -120,6 +122,28 @@ async function ejecutarCreacion(
         tareasActual.sha,
       );
     }
+    // Los 7 agentes de .claude/agents/ también llevan <NOMBRE-PROYECTO> en el template (mismo
+    // bug detectado 2026-07-18 al corregir 'calculadora' a mano) — se reemplaza en paralelo, uno
+    // por uno tolera el fallo individual sin tumbar los demás.
+    const nombresAgentes = await listarArchivosDirectorio(token, owner, repo, ".claude/agents");
+    await Promise.all(
+      nombresAgentes
+        .filter((n) => n.endsWith(".md"))
+        .map(async (nombre) => {
+          const ruta = `.claude/agents/${nombre}`;
+          const actual = await leerArchivo(token, owner, repo, ruta);
+          if (!actual) return;
+          await escribirArchivo(
+            token,
+            owner,
+            repo,
+            ruta,
+            personalizarAgente(actual.contenido, body),
+            `docs: personaliza ${ruta} con el nombre del proyecto`,
+            actual.sha,
+          );
+        }),
+    );
     emitir({ tipo: "paso", paso: "cimientos", estado: "ok" });
   } catch (err) {
     emitir({ tipo: "paso", paso: "cimientos", estado: "error", error: mensajeError(err) });

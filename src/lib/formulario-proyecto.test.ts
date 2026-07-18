@@ -10,6 +10,7 @@ import {
   generarContenidoProyecto,
   personalizarClaudeMd,
   personalizarTareasManuales,
+  personalizarAgente,
 } from "./formulario-proyecto";
 
 describe("slugificar", () => {
@@ -266,5 +267,21 @@ describe("personalizarTareasManuales", () => {
     const form = validarFormulario(BODY_VALIDO);
     const resultado = personalizarTareasManuales(TAREAS_MANUALES_TEMPLATE, form);
     expect(resultado).not.toContain("<sembrar en la Fase 1");
+  });
+});
+
+describe("personalizarAgente", () => {
+  it("reemplaza <NOMBRE-PROYECTO> en cualquier ocurrencia del archivo de agente", () => {
+    const form = validarFormulario(BODY_VALIDO);
+    const agenteMd = "Eres el implementador de <NOMBRE-PROYECTO>. Trabaja en <NOMBRE-PROYECTO>.";
+    const resultado = personalizarAgente(agenteMd, form);
+    expect(resultado).not.toContain("<NOMBRE-PROYECTO>");
+    expect(resultado).toBe("Eres el implementador de Mi Calculadora. Trabaja en Mi Calculadora.");
+  });
+
+  it("no toca el resto del contenido del agente", () => {
+    const form = validarFormulario(BODY_VALIDO);
+    const agenteMd = "# implementador\n\nSin placeholders aquí.";
+    expect(personalizarAgente(agenteMd, form)).toBe(agenteMd);
   });
 });

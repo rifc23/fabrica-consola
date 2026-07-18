@@ -217,6 +217,16 @@ export function personalizarTareasManuales(tareasMd: string, form: FormularioPro
     );
 }
 
+/**
+ * Rellena `<NOMBRE-PROYECTO>` en un archivo de `.claude/agents/*.md` del template (mismo bug que
+ * `personalizarClaudeMd`/`personalizarTareasManuales`, detectado 2026-07-18 al corregir
+ * `calculadora` a mano: los 7 agentes también nacían con el placeholder sin rellenar). Solo ese
+ * reemplazo — el resto del contenido de cada agente es genérico y no depende del proyecto.
+ */
+export function personalizarAgente(agenteMd: string, form: FormularioProyectoValidado): string {
+  return agenteMd.replaceAll("<NOMBRE-PROYECTO>", form.nombre);
+}
+
 /** Degradación elegante cuando no hay VERCEL_TOKEN: pasos manuales exactos en TAREAS-MANUALES.md. */
 export function agregarTareaManualVercel(tareasMd: string, slug: string, repoFullName: string): string {
   const bloque = `
