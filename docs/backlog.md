@@ -295,6 +295,13 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
      el template) como si fuera un reporte real, porque el filtro solo exigía `.endsWith(".md")` y
      ese README es el único `.md` de la carpeta hasta el primer tick real. Fix: el dashboard ahora
      filtra por el patrón real de un reporte (`<YYYY-MM-DD>-...md`).
+- 2026-07-18: **hallazgo adicional al corregir `calculadora` a mano**: los 7 agentes de
+  `.claude/agents/` también nacían con `<NOMBRE-PROYECTO>` sin rellenar — el fix anterior del paso
+  "cimientos" no los cubría. Corregido `calculadora` directamente (commit `2027af1` en ese repo) y
+  extendido el paso "cimientos" de `/api/crear-proyecto` para que también reemplace el placeholder
+  en los 7 agentes (`personalizarAgente` nueva en `src/lib/formulario-proyecto.ts`, 2 tests). Con
+  esto, todo proyecto creado desde el formulario nace con sus cimientos (CLAUDE.md,
+  TAREAS-MANUALES.md, y los 7 agentes) completamente libres de placeholders del template.
 
 - (vacío)
 
