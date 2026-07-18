@@ -124,6 +124,23 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   fuente compartidos entre sí (`formulario-proyecto.ts`+`nuevo-proyecto/page.tsx` / `backlog.ts`+
   `cron.ts`+`ColaProyecto.tsx` / `burndown.ts`+`github.ts`+`Burndown.tsx`), delegadas en paralelo a
   tres subagentes `implementador` en worktrees separados.
+- 2026-07-18 (08:15 UTC): segundo disparo de `routine-fabrica-consola`. Anti-solape: último
+  commit de `main` (`fe0a2d6`, el sync docs-only del tick anterior) con ~2h de antigüedad, working
+  tree limpio, sin worktrees huérfanos → tick procedió con normalidad. Inbox: `(vacío)` → sin
+  triaje. Entorno verificado de nuevo (`npm install` + gate completo): lint ✅, test:run
+  **107/107** ✅, build ✅ — coincide con el estado real de `main` (el lote P1 del tick de 06:15
+  sigue sin mergear, ver fila de Registro de trabajo actualizada abajo con su estado real). Cola
+  no-P0 revisada: P1 no tiene ítems nuevos (los tres ya están `[x]` en la rama pendiente); P2 se
+  evaluó ítem por ítem y ninguno es delegable sin decisión/acción del usuario ahora mismo:
+  "Refinado instantáneo" requiere reponer la tarea manual de `ANTHROPIC_API_KEY` (retirada
+  explícitamente); "Playwright E2E del flujo completo" implicaría crear un repo de GitHub y un
+  proyecto Vercel REALES de prueba vía la API — un efecto de lado externo y difícil de revertir
+  que esta routine no está autorizada a decidir sola (no es una migración de datos ni un deploy de
+  config, pero sí "actúa sobre recursos reales fuera del repo propio" en un sentido análogo);
+  queda estacionada como pregunta para el usuario en vez de ejecutarse a ciegas; "Motor B" está
+  marcado explícitamente "no es v1". Resultado: **sin trabajo nuevo delegable este disparo** —
+  no es cierre de campaña porque sigue pendiente el merge del lote P1 y la decisión de Playwright
+  E2E podría reabrir la cola. Reporte: `docs/reportes/2026-07-18-0815-rutina.md`.
 
 ## 📥 Inbox
 
@@ -343,6 +360,13 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   después?
 - **Nombre del producto**: el repo y el `package.json` usan el nombre técnico "fabrica-consola".
   ¿Hay un nombre de producto distinto que prefieras mostrar en la UI (título, `<title>`, etc.)?
+- **Playwright E2E del flujo completo (P2, estacionada 2026-07-18):** la tarea tal como está
+  escrita implica correr el formulario contra un repo de prueba real — es decir, crear un repo de
+  GitHub y (si hay `VERCEL_TOKEN`) un proyecto Vercel reales vía la API en cada corrida del spec.
+  ¿Autorizas que la routine cree y reutilice/limpie un repo de prueba dedicado (p. ej.
+  `fabrica-consola-e2e-fixture`, sin topic `fabrica-agentes` para que no aparezca en el dropdown
+  real) para este fin, o prefieres que el E2E use mocks de la API de GitHub/Vercel en vez de
+  recursos reales?
 
 ## Registro de trabajo
 
@@ -353,4 +377,5 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 | 2026-07-17 | Eliminar proyecto (Zona de peligro) | claude/factory-console-backlog-7jafgw | bcd92e7 | lint ✅ test:run 80/80 ✅ build ✅ | Mergeado a main (488cab0) |
 | 2026-07-17 | Esqueletos por stack (vite/estático/otro) | claude/factory-console-backlog-7jafgw | 61d7ceb..f129c0a | lint ✅ test:run 100/100 ✅ build ✅ | Mergeado a main (2ac3276) |
 | 2026-07-17 | Estado del deploy en preview + aviso claro de routine pendiente | claude/factory-console-backlog-7jafgw | 22967ec / 6520bd4 | lint ✅ test:run 104/104 ✅ build ✅ | Mergeado a main (6520bd4) — corregido 2026-07-18, el registro anterior lo daba por pendiente |
-| 2026-07-18 | Tick 06:15 UTC: primer disparo real de `routine-fabrica-consola` — auditoría del backlog (fila anterior corregida), gate re-verificado, toma lote P1 (Gem, cola/tiempos, burndown) | claude/rutina-2026-07-18-0615-p1-batch | (inicio de tick) | lint ✅ test:run 107/107 ✅ build ✅ | En curso |
+| 2026-07-18 | Tick 06:15 UTC: primer disparo real de `routine-fabrica-consola` — lote P1 completo (Gem, cola/tiempos, burndown), 3 subagentes + 1 de integración de conflicto | claude/rutina-2026-07-18-0615-p1-batch | 8158d1d (Gem) · 69ba763 (cola/tiempos) · f80f0f5 (burndown+integración) · 21ca51a (cierre) | lint ✅ test:run 143/143 ✅ build ✅ | Completo en la rama — **pendiente de merge por el usuario** (toca código, `fabrica-sync.yml` no la auto-mergea) |
+| 2026-07-18 | Tick 08:15 UTC: segundo disparo — Inbox vacío, sin trabajo P1 nuevo (ya `[x]` en rama pendiente), P2 auditado sin ítems delegables (E2E estacionado, ver Decisiones [USUARIO]); solo documentación | claude/rutina-2026-07-18-0815-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
