@@ -203,6 +203,21 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   bloqueados/estacionados — ver fila de abajo); tomado como el lote de este disparo (marcado 🔄).
   Corregido además el `Ancla de rollback` de CLAUDE.md, que seguía apuntando a `9c510d7` pese a que
   `main` ya llevaba el lote P1 y el peldaño 4 mergeados desde la sesión interactiva.
+- 2026-07-18: **decisión del usuario — el Motor A-pool (despachadora + rutinas trabajadoras) es
+  ahora el motor DEFAULT para proyectos nuevos, no una alternativa opcional.** Se retira de la
+  consola todo el flujo de "instalar routine dedicada" como paso esperado tras crear un proyecto:
+  quitada la sección "🏭 Instalar la routine" del dashboard (y el cálculo de `promptRoutine` que
+  la alimentaba), y corregido el banner post-creación — ya NO dice "falta 1 paso, instala la
+  routine (~1 min)"; ahora dice "ya está en el catálogo, la despachadora lo tomará sola". Motivo:
+  con el pool activo, un proyecto nuevo no necesita ningún trigger propio — nace con el topic
+  `fabrica-agentes` y sin `trigger_id`, y cualquier tick de `rutina-despachadora` (corriendo desde
+  hoy, ver §4 Motor A-pool) lo descubre y asigna automáticamente. Cero trabajo manual. La routine
+  DEDICADA (bloque A de `docs/plantilla-routine-prompt.md`, `parametrizarPromptRoutine` en
+  `src/lib/routine-prompt.ts`) NO se elimina del código — sigue siendo una opción válida para
+  proyectos con volumen propio sostenido (ej. la propia fabrica-consola, que la usa) — pero deja
+  de ofrecerse/promoverse en la UI de la consola: quien la quiera, la crea a mano vía `/schedule`
+  como ya se hizo aquí. `EstadoPool` (dashboard) queda como la única señal de estado del proyecto
+  para quien no tiene routine dedicada.
 
 ## 📥 Inbox
 
