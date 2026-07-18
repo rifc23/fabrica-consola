@@ -218,8 +218,16 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   de ofrecerse/promoverse en la UI de la consola: quien la quiera, la crea a mano vía `/schedule`
   como ya se hizo aquí. `EstadoPool` (dashboard) queda como la única señal de estado del proyecto
   para quien no tiene routine dedicada.
-
-## 📥 Inbox
+- 2026-07-18: **`routine-madre-fabrica` actualizada a v4** (prompt reescrito en
+  `docs/routine-madre-prompt.md` y aplicado en vivo al trigger real vía `RemoteTrigger`/`update`).
+  Se retiran los PASOs 2-3 de v3 (preparar prompt de instalación de routine dedicada como tarea
+  manual) — ya no aplican con el pool como default. Se agrega un PASO 4 nuevo: **despacho de
+  emergencia para el pool** — si un proyecto SIN `trigger_id` tiene trabajo pendiente y ninguna
+  rutina lo tiene asignado (`lock`), la madre (que corre cada hora, más seguido que el ciclo de 2h
+  del pool) le asigna el `lock` ella misma a una `rutina-trabajadora-N` libre y la dispara con
+  `fire_trigger` de inmediato — baja la latencia de "hasta 2h" a minutos para proyectos recién
+  creados o con feedback nuevo. El PASO 3 (despacho de routines DEDICADAS vía Inbox) se mantiene
+  sin cambios. Historia completa de v1-v4 documentada en el propio `routine-madre-prompt.md`.
 
 - (vacío)
 
