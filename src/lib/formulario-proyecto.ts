@@ -159,6 +159,64 @@ ${form.notificacionesTelegram ? `Telegram chat_id: ${form.notificacionesTelegram
 `;
 }
 
+/**
+ * Rellena los placeholders `<...>` del `CLAUDE.md` del template (Fase 1 del método `/fabrica`,
+ * ver docs/metodo-fabrica-agentes.md) con los datos reales del formulario — sin esto, el proyecto
+ * nace con el propio texto instructivo del template ("<2-3 párrafos: qué hace...>") en vez de sus
+ * specs reales, y cualquier rutina que lo lea como "fuente de verdad" no tiene contexto real
+ * (bug detectado 2026-07-18: `calculadora` nació con CLAUDE.md y TAREAS-MANUALES.md sin rellenar).
+ * Solo toca los placeholders con dato NO ambiguo (nombre, rama, comandos de gate) — el resto
+ * (reglas de dominio, decisiones arquitectónicas) los sigue completando la routine en su primer
+ * tick, que ya tiene la regla "primer tick = producto funcional".
+ */
+export function personalizarClaudeMd(
+  claudeMd: string,
+  form: FormularioProyectoValidado,
+  comandosGate: string,
+): string {
+  const comandos = comandosGate.split("&&").map((c) => c.trim());
+  const [comandoLint, comandoBuild, comandoTests] = [
+    comandos.find((c) => c.includes("lint")) ?? comandosGate,
+    comandos.find((c) => c.includes("build")) ?? comandosGate,
+    comandos.find((c) => c.includes("test")) ?? comandosGate,
+  ];
+
+  return claudeMd
+    .replaceAll("<NOMBRE-PROYECTO>", form.nombre)
+    .replaceAll("<RAMA-PRINCIPAL>", "main")
+    .replace(
+      "<2-3 párrafos: qué hace, para quién, modelo de negocio si aplica.>",
+      form.objetivo,
+    )
+    .replace("**Stack:** <frontend · backend · base de datos · hosting/deploy>", `**Stack:** ${form.stack}`)
+    .replace(
+      '**Deploy:** <cómo se despliega; qué dispara el deploy — ej. "push a main despliega vía X">',
+      "**Deploy:** push a `main` despliega vía integración GitHub↔Vercel (deploy automático por push).",
+    )
+    .replaceAll("<COMANDO-TESTS>            # ej. npm run test:run", comandoTests)
+    .replaceAll("<COMANDO-LINT-O-RATCHET>   # ej. npm run lint", comandoLint)
+    .replaceAll("<COMANDO-BUILD>            # ej. npm run build", comandoBuild)
+    .replace(
+      "- **Gate:** <comandos exactos, repetidos aquí para grep-abilidad>.",
+      `- **Gate:** \`${comandosGate}\`.`,
+    );
+}
+
+/**
+ * Rellena el encabezado de `docs/TAREAS-MANUALES.md` del template con el nombre real del
+ * proyecto (mismo bug que `personalizarClaudeMd`) y reemplaza el cuerpo instructivo genérico
+ * (`<sembrar en la Fase 1 con: ...>`) por un placeholder neutro — las tareas manuales reales
+ * (Vercel, key de IA, stack "Otro") ya se agregan encima vía `agregarTareaManual*`.
+ */
+export function personalizarTareasManuales(tareasMd: string, form: FormularioProyectoValidado): string {
+  return tareasMd
+    .replaceAll("<NOMBRE-PROYECTO>", form.nombre)
+    .replace(
+      "<sembrar en la Fase 1 con: crear cuentas/keys del stack, configurar secretos en el store, dominio,\nverificaciones en prod de cada feature mergeada>",
+      "(vacío por ahora — las tareas manuales de este proyecto aparecen aquí cuando algún paso de\nla creación o del trabajo de la routine requiera una acción tuya).",
+    );
+}
+
 /** Degradación elegante cuando no hay VERCEL_TOKEN: pasos manuales exactos en TAREAS-MANUALES.md. */
 export function agregarTareaManualVercel(tareasMd: string, slug: string, repoFullName: string): string {
   const bloque = `

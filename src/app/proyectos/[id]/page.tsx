@@ -56,8 +56,11 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
   const colaPendientes = obtenerColaPendientes(backlogMd);
   const serieBurndown = calcularSerieBurndown(historialBacklog);
 
+  // Solo archivos con el patrón real de un reporte (<YYYY-MM-DD>-...md) — descarta README.md y
+  // cualquier otro doc no fechado que viaje en docs/reportes/ del template (bug 2026-07-18: se
+  // mostraba el README explicativo del template como si fuera "el reporte más reciente").
   const nombreReporteReciente = nombresReportes
-    .filter((n) => n.endsWith(".md"))
+    .filter((n) => /^\d{4}-\d{2}-\d{2}-.+\.md$/.test(n))
     .sort()
     .reverse()[0];
   const reporteArchivo = nombreReporteReciente

@@ -13,7 +13,7 @@ export interface ProyectoCreado {
   degradadoVercel: boolean;
 }
 
-type PasoId = "repo" | "esqueleto" | "vercel" | "manifest" | "backlog";
+type PasoId = "repo" | "cimientos" | "esqueleto" | "vercel" | "manifest" | "backlog";
 type EstadoPaso = "pendiente" | "en-progreso" | "ok" | "omitido" | "error";
 
 type EventoProgreso =
@@ -32,6 +32,7 @@ interface InfoPaso {
 function pasosPara(stack: string): { id: PasoId; etiqueta: string }[] {
   return [
     { id: "repo", etiqueta: "Creando el repo desde el template + topic fabrica-agentes" },
+    { id: "cimientos", etiqueta: "Personalizando CLAUDE.md y TAREAS-MANUALES.md con tus specs" },
     { id: "esqueleto", etiqueta: `Sembrando esqueleto ${stackEfectivo(stack)} (${stack})` },
     { id: "vercel", etiqueta: "Conectando el proyecto a Vercel" },
     { id: "manifest", etiqueta: "Commiteando .fabrica.json y docs/SPECS.md" },

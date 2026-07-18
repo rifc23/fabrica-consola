@@ -19,6 +19,8 @@ import {
   generarContenidoProyecto,
   agregarTareaManualVercel,
   agregarTareaManualClaveIA,
+  personalizarClaudeMd,
+  personalizarTareasManuales,
   type FormularioProyectoValidado,
 } from "@/lib/formulario-proyecto";
 import {
@@ -83,6 +85,45 @@ async function ejecutarCreacion(
     emitir({ tipo: "paso", paso: "repo", estado: "error", error: mensajeError(err) });
     emitir({ tipo: "fin", ok: false, error: "No se pudo crear el repo desde el template." });
     return;
+  }
+
+  // Paso 1.2: personalizar CLAUDE.md y TAREAS-MANUALES.md con las specs reales (Fase 1 del
+  // método /fabrica) — sin esto, el proyecto nace con los placeholders <...> del template
+  // intactos y cualquier rutina que lea CLAUDE.md como "fuente de verdad" no tiene contexto real
+  // (bug detectado 2026-07-18). No es fatal si falla: el proyecto sigue siendo usable con los
+  // placeholders sin rellenar, así que un error aquí solo se reporta, no aborta la creación.
+  emitir({ tipo: "paso", paso: "cimientos", estado: "en-progreso" });
+  try {
+    const [claudeMdActual, tareasActual] = await Promise.all([
+      leerArchivo(token, owner, repo, "CLAUDE.md"),
+      leerArchivo(token, owner, repo, "docs/TAREAS-MANUALES.md"),
+    ]);
+    if (claudeMdActual) {
+      await escribirArchivo(
+        token,
+        owner,
+        repo,
+        "CLAUDE.md",
+        personalizarClaudeMd(claudeMdActual.contenido, body, GATE_POR_DEFECTO),
+        "docs: personaliza CLAUDE.md con las specs del formulario",
+        claudeMdActual.sha,
+      );
+    }
+    if (tareasActual) {
+      await escribirArchivo(
+        token,
+        owner,
+        repo,
+        "docs/TAREAS-MANUALES.md",
+        personalizarTareasManuales(tareasActual.contenido, body),
+        "docs: personaliza TAREAS-MANUALES.md con el nombre del proyecto",
+        tareasActual.sha,
+      );
+    }
+    emitir({ tipo: "paso", paso: "cimientos", estado: "ok" });
+  } catch (err) {
+    emitir({ tipo: "paso", paso: "cimientos", estado: "error", error: mensajeError(err) });
+    // No abortamos: el proyecto sigue siendo usable con los placeholders sin rellenar.
   }
 
   // Paso 1.5: sembrar el esqueleto del stack elegido (el template solo trae el de Next). Ocurre

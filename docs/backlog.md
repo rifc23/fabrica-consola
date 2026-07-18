@@ -282,6 +282,19 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   producción, único P2 accionable (fix ESLint/Vitest de worktrees) ya resuelto, el resto
   estacionado en espera de decisión del usuario. Ningún cambio de estado desde el tick anterior —
   no se reabre la campaña. Reporte: `docs/reportes/2026-07-18-2015-rutina.md`.
+- 2026-07-18: **2 bugs corregidos en la creación de proyectos** (detectados por el usuario en
+  `calculadora`, el primer proyecto real creado desde el formulario):
+  1. **`CLAUDE.md` y `docs/TAREAS-MANUALES.md` nacían con los placeholders `<...>` del template
+     SIN rellenar** (`<NOMBRE-PROYECTO>`, `<2-3 párrafos: qué hace...>`, comandos del gate, etc.)
+     — el flujo de creación nunca ejecutaba el paso "Fase 1: cimientos" del método `/fabrica`.
+     Fix: nuevo paso "cimientos" en `/api/crear-proyecto` (`personalizarClaudeMd` /
+     `personalizarTareasManuales` en `src/lib/formulario-proyecto.ts`) que reemplaza los
+     placeholders con dato no ambiguo (nombre, objetivo, stack, rama `main`, comandos reales del
+     gate) justo después de crear el repo — no aborta la creación si falla, solo lo reporta.
+  2. **"📝 Último reporte" mostraba `docs/reportes/README.md`** (el doc explicativo que viaja en
+     el template) como si fuera un reporte real, porque el filtro solo exigía `.endsWith(".md")` y
+     ese README es el único `.md` de la carpeta hasta el primer tick real. Fix: el dashboard ahora
+     filtra por el patrón real de un reporte (`<YYYY-MM-DD>-...md`).
 
 - (vacío)
 
