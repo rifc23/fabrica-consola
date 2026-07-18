@@ -154,6 +154,15 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   (`claude/rutina-2026-07-18-0615-p1-batch`) sigue sin mergear — van 4 ticks consecutivos
   (~5h39min desde su cierre en `21ca51a`) esperando el merge manual del usuario; sigue siendo el
   único paso que falta para reabrir la cola. Reporte: `docs/reportes/2026-07-18-1215-rutina.md`.
+- 2026-07-18 (14:15 UTC): quinto disparo — mismo diagnóstico que los tres anteriores: Inbox
+  `(vacío)`, sin triaje; trigger verificado contra `list_triggers` sin discrepancias; gate real en
+  verde (lint ✅, test:run 107/107 ✅, build ✅); sin trabajo P1/P2 nuevo delegable (P1 ya `[x]`
+  en la rama pendiente, P2 sin ítems delegables sin decisión del usuario). El lote P1
+  (`claude/rutina-2026-07-18-0615-p1-batch`) sigue sin mergear — van **5 ticks consecutivos**
+  (~7h39min desde su cierre en `21ca51a`, casi 8h) esperando el merge manual del usuario; sigue
+  siendo el único paso que falta para reabrir la cola. Dado el tiempo transcurrido, este tick
+  notificó al usuario fuera de banda (push/email) en vez de esperar un sexto tick silencioso.
+  Reporte: `docs/reportes/2026-07-18-1415-rutina.md`.
 
 ## 📥 Inbox
 
@@ -394,3 +403,4 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 | 2026-07-18 | Tick 08:15 UTC: segundo disparo — Inbox vacío, sin trabajo P1 nuevo (ya `[x]` en rama pendiente), P2 auditado sin ítems delegables (E2E estacionado, ver Decisiones [USUARIO]); solo documentación | claude/rutina-2026-07-18-0815-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
 | 2026-07-18 | Tick 10:15 UTC: tercer disparo — mismo diagnóstico (Inbox vacío, sin P1/P2 nuevo delegable); lote P1 sigue sin mergear (~3h39min); trigger verificado sin discrepancias; solo documentación | claude/rutina-2026-07-18-1015-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
 | 2026-07-18 | Tick 12:15 UTC: cuarto disparo — mismo diagnóstico (Inbox vacío, sin P1/P2 nuevo delegable); lote P1 sigue sin mergear (~5h39min); trigger verificado sin discrepancias; solo documentación | claude/rutina-2026-07-18-1215-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
+| 2026-07-18 | Tick 14:15 UTC: quinto disparo — mismo diagnóstico (Inbox vacío, sin P1/P2 nuevo delegable); lote P1 sigue sin mergear (~7h39min, casi 8h); trigger verificado sin discrepancias; usuario notificado fuera de banda por el tiempo transcurrido; solo documentación | claude/rutina-2026-07-18-1415-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
