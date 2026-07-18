@@ -108,6 +108,22 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   UI del dashboard mostrando `lock` — queda en P1/P2, priorizar cuando el catálogo de proyectos
   hijos crezca lo suficiente para justificarlo). Documentado también en el template
   (`fabrica-agentes-template`) para que cualquier proyecto nuevo herede el diseño ya explicado.
+- 2026-07-18 (06:15 UTC): primer disparo real de `routine-fabrica-consola`. Inbox vacío → sin
+  triaje que hacer. Auditoría del estado real: `main` no tenía trabajo a medias (working tree
+  limpio, sin worktrees ni ramas huérfanas), gate completo corrido de verdad en el entorno (lint
+  ✅, test:run **107/107** ✅, build ✅ con Node v22.22.2) — el entorno SÍ puede correr el gate,
+  ninguna instalación previa necesaria más allá de `npm install`. Hallazgo corregido: la fila del
+  Registro de trabajo del lote "estado del deploy en preview" decía "pendiente de merge por el
+  usuario" pero `git log` confirma que ya está en `main` desde el 2026-07-17 (`6520bd4`) — fila
+  corregida con el hash real. `CLAUDE.md` § Ancla de rollback también estaba desactualizado
+  (apuntaba al commit inicial de Fase 0-1); actualizado al HEAD real de `main`. No hay
+  `.fabrica.json` en la raíz de este repo (correcto: la consola no se autogestiona como proyecto
+  hijo, ese manifest es para los repos que ELLA crea) — el paso "actualizar `ultimo_tick`" de la
+  plantilla de routine no aplica aquí y se omite sin sustituto. Toma el lote P1 completo (única
+  cola no-P0 pendiente): Gem, Vista de cola/tiempos, Burn-down — las tres marcadas 🔄, sin archivos
+  fuente compartidos entre sí (`formulario-proyecto.ts`+`nuevo-proyecto/page.tsx` / `backlog.ts`+
+  `cron.ts`+`ColaProyecto.tsx` / `burndown.ts`+`github.ts`+`Burndown.tsx`), delegadas en paralelo a
+  tres subagentes `implementador` en worktrees separados.
 
 ## 📥 Inbox
 
@@ -254,7 +270,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 
 ## P1 — Siguientes
 
-- [ ] **Tipo de proyecto "Gem" en el formulario (decisión del usuario, 2026-07-17 — primera de
+- [ ] 🔄 **Tipo de proyecto "Gem" en el formulario (decisión del usuario, 2026-07-17 — primera de
   la cola P1).** Checkbox "🤖 Gem (chatbot con rol)" en `/nuevo-proyecto`; al marcarse muestra
   textarea "Rol del bot" y las features MVP manuales se sustituyen por el blueprint Gem de
   `docs/diseno-consola-web.md` §1.1 (CRUD de Gems, chat streaming con el rol SIEMPRE como
@@ -282,7 +298,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   sembrado: `src/lib/ia/proveedor.ts` (interfaz), `src/lib/ia/gemini.ts`, `src/lib/ia/anthropic.ts`
   (adaptadores — los construye la routine del proyecto siguiendo el blueprint).
 
-- [ ] **Vista de cola y tiempos en el dashboard** (decisión del usuario, 2026-07-17; requiere el
+- [ ] 🔄 **Vista de cola y tiempos en el dashboard** (decisión del usuario, 2026-07-17; requiere el
   dashboard P0). Renderiza los pendientes del backlog como cola numerada en su orden real (el
   orden del archivo ES la cola — regla 6 del protocolo del template); badge "🏭 trabajando ahora"
   cuando hay tareas marcadas `🔄` (con `ultimo_tick` del manifest como inicio); countdown al
@@ -295,7 +311,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   **Archivos previstos:** `src/lib/backlog.ts` (extender parser: orden + marcador `🔄`, tests),
   `src/lib/cron.ts` (próximo disparo de una expresión cron de 5 campos, tests),
   `src/components/ColaProyecto.tsx`.
-- [ ] **Burn-down del backlog** (decisión del usuario, 2026-07-17). Gráfica de tareas pendientes
+- [ ] 🔄 **Burn-down del backlog** (decisión del usuario, 2026-07-17). Gráfica de tareas pendientes
   vs tiempo para ver desde cuándo "se rebaja" el backlog: historial de commits de
   `docs/backlog.md` (GitHub Commits API, muestreado — máx ~30 puntos), conteo de checkboxes
   pendientes por versión, render SVG propio sin librería de gráficas.
@@ -336,4 +352,5 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 | 2026-07-17 | Lote v1: las 5 P0 (formulario+Vercel, dropdown, dashboard, Inbox, decisiones) | claude/factory-console-backlog-7jafgw | 5cd4910..3f20eb1 | lint ✅ test:run 74/74 ✅ build ✅ | Mergeado a main (7f2644f) |
 | 2026-07-17 | Eliminar proyecto (Zona de peligro) | claude/factory-console-backlog-7jafgw | bcd92e7 | lint ✅ test:run 80/80 ✅ build ✅ | Mergeado a main (488cab0) |
 | 2026-07-17 | Esqueletos por stack (vite/estático/otro) | claude/factory-console-backlog-7jafgw | 61d7ceb..f129c0a | lint ✅ test:run 100/100 ✅ build ✅ | Mergeado a main (2ac3276) |
-| 2026-07-17 | Estado del deploy en preview + aviso claro de routine pendiente | claude/factory-console-backlog-7jafgw | (este lote) | lint ✅ test:run 104/104 ✅ build ✅ | Pendiente de merge por el usuario |
+| 2026-07-17 | Estado del deploy en preview + aviso claro de routine pendiente | claude/factory-console-backlog-7jafgw | 22967ec / 6520bd4 | lint ✅ test:run 104/104 ✅ build ✅ | Mergeado a main (6520bd4) — corregido 2026-07-18, el registro anterior lo daba por pendiente |
+| 2026-07-18 | Tick 06:15 UTC: primer disparo real de `routine-fabrica-consola` — auditoría del backlog (fila anterior corregida), gate re-verificado, toma lote P1 (Gem, cola/tiempos, burndown) | claude/rutina-2026-07-18-0615-p1-batch | (inicio de tick) | lint ✅ test:run 107/107 ✅ build ✅ | En curso |
