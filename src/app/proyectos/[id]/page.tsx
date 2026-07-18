@@ -4,21 +4,17 @@ import { calcularProgreso, extraerDecisiones, obtenerColaPendientes } from "@/li
 import { calcularSerieBurndown } from "@/lib/burndown";
 import { derivarBrief, esperaEstimadaTicks } from "@/lib/brief";
 import { renderMarkdownSanitizado } from "@/lib/markdown";
-import { parametrizarPromptRoutine } from "@/lib/routine-prompt";
 import { obtenerEstadoDeploy, obtenerDominioProduccion } from "@/lib/vercel";
 import BotonActualizar from "@/components/BotonActualizar";
 import NuevaTarea from "@/components/NuevaTarea";
 import EliminarProyecto from "@/components/EliminarProyecto";
 import DecisionCard from "@/components/DecisionCard";
-import CopiarBoton from "@/components/CopiarBoton";
 import ColaProyecto from "@/components/ColaProyecto";
 import EstadoPool from "@/components/EstadoPool";
 import Burndown from "@/components/Burndown";
 import styles from "./dashboard.module.css";
 
 export const dynamic = "force-dynamic";
-
-const GATE_POR_DEFECTO = "npm run lint && npm run build && npm run test:run";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -68,18 +64,6 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
     ? await leerArchivo(token, owner, repo, `docs/reportes/${nombreReporteReciente}`)
     : null;
 
-  let promptRoutine: string | null = null;
-  if (!manifest?.trigger_id) {
-    const plantilla = await leerArchivo(token, owner, repo, "docs/plantilla-routine-prompt.md");
-    if (plantilla) {
-      promptRoutine = parametrizarPromptRoutine(plantilla.contenido, {
-        nombreProyecto: manifest?.nombre || repo,
-        repoUrl: htmlUrl,
-        comandosGate: GATE_POR_DEFECTO,
-      });
-    }
-  }
-
   const generadoEn = new Date().toISOString();
   const creadoBanner = sp.creado === "1";
   const previewDesdeQuery = typeof sp.preview === "string" ? sp.preview : undefined;
@@ -122,8 +106,9 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
           )}
           {!manifest?.trigger_id && (
             <span>
-              ⚠️ <strong>Falta 1 paso para que la fábrica trabaje:</strong> instala la routine del
-              proyecto (~1 min) — ve a la sección &quot;🏭 Instalar la routine&quot; más abajo.
+              🤖 Ya está en el catálogo de la fábrica — la próxima ronda de la routine
+              despachadora lo tomará sola, sin ningún paso tuyo. Ver estado en
+              &quot;🕐 Cola y tiempos&quot; más abajo.
             </span>
           )}
         </div>
@@ -251,24 +236,6 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
           <p>Sin TAREAS-MANUALES.md en este repo.</p>
         )}
       </section>
-
-      {promptRoutine && (
-        <section className={styles.seccion} aria-labelledby="titulo-instalar-routine">
-          <h2 id="titulo-instalar-routine">🏭 Instalar la routine (pendiente — sin esto la fábrica NO trabaja este proyecto)</h2>
-          <p>
-            El backlog de este proyecto no avanzará solo hasta que su routine exista. Es una vez y
-            toma ~1 min: copia el prompt de abajo, pégalo como routine nueva en claude.ai (sesión
-            nueva por disparo, con este repo como source) con cadencia{" "}
-            {manifest?.cadencia_cron ?? "cada 2 horas"}. Su primer tick construirá la idea
-            principal completa.
-          </p>
-          <details className={styles.detallesInstalacion} open>
-            <summary>Ver prompt parametrizado</summary>
-            <pre>{promptRoutine}</pre>
-            <CopiarBoton texto={promptRoutine} etiqueta="📋 Copiar prompt" />
-          </details>
-        </section>
-      )}
 
       <section className={styles.seccion} aria-labelledby="titulo-inbox">
         <h2 id="titulo-inbox">＋ Nueva tarea / feedback</h2>
