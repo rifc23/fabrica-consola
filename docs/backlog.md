@@ -302,6 +302,19 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   en los 7 agentes (`personalizarAgente` nueva en `src/lib/formulario-proyecto.ts`, 2 tests). Con
   esto, todo proyecto creado desde el formulario nace con sus cimientos (CLAUDE.md,
   TAREAS-MANUALES.md, y los 7 agentes) completamente libres de placeholders del template.
+- 2026-07-18: **decisión del usuario — "expansión del requerimiento antes de implementar"** en
+  `docs/plantilla-routine-prompt.md` (bloques A y B), motivada por un caso concreto: una feature
+  cruda tipo "una calculadora con 20 dígitos y un botón de borrar" tomada LITERAL se satisface con
+  una interfaz sin operaciones aritméticas — cumple la letra, incumple la intención evidente del
+  objetivo ("Crea una calculadora..."). Nueva regla obligatoria para TODA tarea (no solo el primer
+  tick): antes de implementar, la rutina lee `docs/SPECS.md` completo (el objetivo original, no
+  solo el ítem P0 aislado), redacta ELLA MISMA criterios de aceptación que cubran la intención
+  completa del dominio, y solo entonces delega al subagente 'implementador' — nunca le pasa el
+  texto crudo del usuario esperando que él haga la expansión. Límite explícito: expandir intención
+  ≠ agregar features no pedidas (gold-plating sigue prohibido, va a P1/P2 como sugerencia). Prompt
+  real actualizado en vivo (`rutina-trabajadora-1` `trig_01TsS9F4RyUip1fnes4Usu8B` y
+  `rutina-trabajadora-2` `trig_016W7TsmYFgbRx7ABgLQ21x9`, vía RemoteTrigger/update) — aplica desde
+  ya al proyecto `calculadora`, que tiene el lock de `rutina-trabajadora-1` vigente.
 
 - (vacío)
 
