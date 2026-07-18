@@ -155,7 +155,7 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
 
       <section className={styles.seccion} aria-labelledby="titulo-cola">
         <h2 id="titulo-cola">🕐 Cola y tiempos</h2>
-        {!manifest?.trigger_id && <EstadoPool lock={manifest?.lock} />}
+        {!manifest?.trigger_id && <EstadoPool owner={owner} repo={repo} lock={manifest?.lock} />}
         <ColaProyecto
           cola={colaPendientes}
           cadenciaCron={manifest?.cadencia_cron}

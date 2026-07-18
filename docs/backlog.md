@@ -223,11 +223,27 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   Se retiran los PASOs 2-3 de v3 (preparar prompt de instalación de routine dedicada como tarea
   manual) — ya no aplican con el pool como default. Se agrega un PASO 4 nuevo: **despacho de
   emergencia para el pool** — si un proyecto SIN `trigger_id` tiene trabajo pendiente y ninguna
-  rutina lo tiene asignado (`lock`), la madre (que corre cada hora, más seguido que el ciclo de 2h
-  del pool) le asigna el `lock` ella misma a una `rutina-trabajadora-N` libre y la dispara con
-  `fire_trigger` de inmediato — baja la latencia de "hasta 2h" a minutos para proyectos recién
-  creados o con feedback nuevo. El PASO 3 (despacho de routines DEDICADAS vía Inbox) se mantiene
-  sin cambios. Historia completa de v1-v4 documentada en el propio `routine-madre-prompt.md`.
+  rutina lo tiene asignado (`lock`), la madre (que corre cada hora) le asigna el `lock` ella misma
+  a una `rutina-trabajadora-N` libre y la dispara con `fire_trigger` de inmediato — baja la
+  latencia para proyectos recién creados o con feedback nuevo. El PASO 3 (despacho de routines
+  DEDICADAS vía Inbox) se mantiene sin cambios. Historia completa de v1-v4 documentada en el
+  propio `routine-madre-prompt.md`.
+- 2026-07-18: **decisión del usuario — ciclo del pool reducido de 2h a 1h.** `rutina-despachadora`
+  ahora corre a `:05` de cada hora, `rutina-trabajadora-1` a `:10`, `rutina-trabajadora-2` a `:40`
+  (antes `*/2` en todos). Motivo: bajar la espera normal del pool sin chocar con el mínimo real de
+  la plataforma de rutinas (1 tick/hora — confirmado con un 400 real al intentar `*/5 * * * *`,
+  ningún cron por debajo de esa cadencia es válido). Actualizadas las constantes en `src/lib/
+  cron.ts` (`CRON_DESPACHADORA_POOL`, `CRON_TRABAJADORAS_POOL`) para que `EstadoPool` siga
+  calculando el countdown correcto.
+- 2026-07-18: **botón "🔧 Asignar ahora" en el dashboard** (endpoint `/api/asignar-proyecto`,
+  helper puro `trabajadorasLibres` en `src/lib/github.ts`). Como la consola no tiene acceso a
+  `list_triggers`/`fire_trigger` (esa API requiere el token OAuth de la sesión de claude.ai, que
+  nunca puede vivir en un servidor público), "trabajadora libre" se infiere leyendo el `lock` de
+  todos los proyectos del catálogo — si ninguno tiene el nombre de una `rutina-trabajadora-N` con
+  lock vigente, esa trabajadora está libre. El botón deja el proyecto ASIGNADO (escribe el `lock`)
+  para que esa trabajadora lo tome en su PRÓXIMO tick normal — no lo dispara al instante; el
+  usuario ve de inmediato "asignado a rutina-trabajadora-N — corre en ~X min" en vez de "esperando
+  asignación". Visible solo para proyectos sin routine dedicada y sin asignación vigente.
 
 - (vacío)
 

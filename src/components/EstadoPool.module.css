@@ -25,3 +25,24 @@
   border: 1px solid rgba(127, 127, 127, 0.35);
   color: rgba(127, 127, 127, 0.95);
 }
+
+.botonAsignar {
+  min-height: 44px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 160, 67, 0.5);
+  background: rgba(46, 160, 67, 0.1);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.botonAsignar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  width: 100%;
+  color: #c00;
+  font-size: 0.85rem;
+}
