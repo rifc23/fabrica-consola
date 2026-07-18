@@ -45,6 +45,18 @@
   flex: 0 0 auto;
 }
 
+.blueprintGem {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .feature {
   border: 1px solid rgba(127, 127, 127, 0.35);
   border-radius: 10px;
