@@ -193,6 +193,16 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   lint + test:run + build) sobre el resultado del merge; solo publica si pasa. El merge manual
   del usuario deja de ser cuello de botella; las ramas que tocan `.github/**` siguen siendo
   merge humano (límite de GITHUB_TOKEN). Ver CLAUDE.md § Decisiones Arquitectónicas.
+- 2026-07-18 (16:15 UTC): sexto disparo — Inbox `(vacío)`, sin triaje; trigger verificado contra
+  `list_triggers` sin discrepancias (`trig_01NduNpiSB2NsJNuCPxmpQQp`, `last_fired_at` coincide con
+  este tick); entorno verificado de nuevo con `npm install` + gate real en verde (lint ✅,
+  test:run 143/143 ✅, build ✅) sobre el HEAD real de `main` (`15cebdb`, ya incluye el lote P1 y
+  el peldaño 4 — confirmado con `git branch -r` + `git merge-base --is-ancestor` que las 6 ramas
+  `claude/*` viejas ya están contenidas en `main`, sin trabajo huérfano). Auditoría de P2: el único
+  ítem delegable sin decisión de usuario es el fix de `globalIgnores` de ESLint (los demás siguen
+  bloqueados/estacionados — ver fila de abajo); tomado como el lote de este disparo (marcado 🔄).
+  Corregido además el `Ancla de rollback` de CLAUDE.md, que seguía apuntando a `9c510d7` pese a que
+  `main` ya llevaba el lote P1 y el peldaño 4 mergeados desde la sesión interactiva.
 
 ## 📥 Inbox
 
@@ -406,7 +416,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 - [ ] Promover `tipo?: "gem"` (hoy tipado localmente en `src/app/api/crear-proyecto/route.ts` como
   `FabricaManifest & { tipo?: "gem" }`) a campo real en `FabricaManifest` (`src/lib/github.ts`) si
   se agregan más tipos de proyecto además de "gem" — hallazgo del lote P1, 2026-07-18.
-- [ ] `eslint.config.*` usa `globalIgnores(".next/**")` (anclado a raíz, no `**/.next/**`): los
+- [ ] 🔄 `eslint.config.*` usa `globalIgnores(".next/**")` (anclado a raíz, no `**/.next/**`): los
   builds hechos dentro de worktrees de subagentes (`.claude/worktrees/agent-*/.next/`) no quedan
   ignorados y contaminan `npm run lint` corrido desde el checkout principal si esos worktrees
   siguen presentes. Ampliar el patrón (o excluir `.claude/**`) para que el gate sea robusto sin

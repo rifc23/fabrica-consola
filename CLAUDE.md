@@ -204,13 +204,11 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-18 06:xx UTC, primer tick real de
-  `routine-fabrica-consola`):** `main` en `9c510d7` (diseño Motor A-pool) — las 5 P0 del MVP
-  completas y mergeadas (formulario+Vercel, dropdown, dashboard, Inbox+decisiones, eliminar
-  proyecto, esqueletos por stack), más el fix del dominio real de Vercel (Error Conocido #4) y el
-  badge de estado del deploy en preview. Gate en verde: `npm run lint && npm run test:run &&
-  npm run build` → lint ✅, test:run **107/107** ✅, build ✅ (Next.js 16.2.10 / Turbopack, Node
-  v22.22.2). Corrección de este tick: el registro de trabajo del backlog daba por "pendiente de
-  merge por el usuario" el lote del badge de deploy — ya estaba mergeado a main (`6520bd4`) desde
-  el 2026-07-17; era un registro desactualizado, no un hecho falso (a diferencia del Error
-  Conocido #2 de la routine).
+- **Último estado bueno (verificado 2026-07-18 16:15 UTC, sexto tick de
+  `routine-fabrica-consola`):** `main` en `15cebdb` — incluye el lote P1 completo (Gem, cola/
+  tiempos, burn-down) y la activación del **peldaño 4** (`fabrica-sync.yml` auto-mergea también
+  ramas con código tras gate completo en CI). Gate en verde: `npm run lint && npm run test:run &&
+  npm run build` → lint ✅, test:run **143/143** ✅, build ✅ (Next.js 16.2.10 / Turbopack, Node
+  v22.22.2). Corrección de este tick: la entrada anterior de esta sección seguía apuntando a
+  `9c510d7` (estado previo al merge del lote P1) — desactualizada desde la sesión interactiva que
+  mergeó `399111d` y activó el peldaño 4; corregida al HEAD real de `main`.
