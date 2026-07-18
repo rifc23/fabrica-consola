@@ -248,14 +248,13 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-18 18:15 UTC, séptimo tick de
-  `routine-fabrica-consola`):** base `main` en `3155ca3` (Motor A-pool completo: lock optimista,
-  estado del pool en el dashboard, pool como motor DEFAULT, routine madre v4 con despacho de
-  emergencia, botón "Asignar ahora", ciclo del pool a 1h — ver Decisiones Arquitectónicas). Gate
-  en verde: `npm run lint && npm run test:run && npm run build` → lint ✅, test:run **161/161** ✅,
-  build ✅ (Next.js 16.2.10 / Turbopack, Node v22.22.2). Corrección de este tick: esta sección
-  seguía apuntando a `15cebdb` (tick 16:15 UTC) pese a que `main` ya llevaba 20 commits más del
-  Motor A-pool mergeados en una sesión interactiva del usuario que no dejó rastro aquí — corregida
-  al HEAD real de `main`. Mismo tick: se descubrió y corrigió que la sección `📥 Inbox` de
-  `docs/backlog.md` no existía realmente pese a que esta misma ancla y seis reportes de tick
-  previos la daban por presente y vacía (ver `docs/backlog.md` § Estado general para el detalle).
+- **Último estado bueno (verificado 2026-07-18 20:15 UTC, octavo tick de
+  `routine-fabrica-consola`):** base `main` en `a3908c3` (fabrica-sync del tick 18:15: fix de la
+  sección `📥 Inbox` faltante en `docs/backlog.md` + esta misma ancla — ver fila anterior. Sin
+  cambios de producto desde el Motor A-pool completo: lock optimista, estado del pool en el
+  dashboard, pool como motor DEFAULT, routine madre v4 con despacho de emergencia, botón "Asignar
+  ahora", ciclo del pool a 1h — ver Decisiones Arquitectónicas). Gate en verde:
+  `npm run lint && npm run test:run && npm run build` → lint ✅, test:run **161/161** ✅,
+  build ✅ (Next.js 16.2.10 / Turbopack, Node v22.22.2). Este tick: sin ramas huérfanas (solo
+  `origin/main` en el remoto), trigger verificado sin discrepancias contra `list_triggers`, sin
+  trabajo P1/P2 nuevo delegable — mismo estado que `docs/reportes/CAMPANA-2026-07-18-FINAL.md`.
