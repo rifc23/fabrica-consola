@@ -18,7 +18,9 @@ import {
   lockEstaLibre,
   reclamarProyecto,
   liberarProyecto,
+  trabajadorasLibres,
   type FabricaManifest,
+  type FabricaProyecto,
 } from "./github";
 
 function jsonResponse(body: unknown, ok = true, status = 200) {
@@ -604,5 +606,46 @@ describe("liberarProyecto", () => {
 
     await liberarProyecto("tok", "rifc23", "mi-calculadora", fetchMock);
     expect(intentosPut).toBe(2);
+  });
+});
+
+function proyectoConLock(repo: string, lock: FabricaManifest["lock"]): FabricaProyecto {
+  return {
+    repo,
+    owner: "rifc23",
+    fullName: `rifc23/${repo}`,
+    htmlUrl: `https://github.com/rifc23/${repo}`,
+    manifest: manifestBase({ lock }),
+  };
+}
+
+describe("trabajadorasLibres", () => {
+  it("devuelve las dos trabajadoras si ningún proyecto tiene lock", () => {
+    const proyectos = [proyectoConLock("a", null), proyectoConLock("b", undefined)];
+    expect(trabajadorasLibres(proyectos)).toEqual(["rutina-trabajadora-1", "rutina-trabajadora-2"]);
+  });
+
+  it("excluye una trabajadora cuyo lock está vigente en algún proyecto", () => {
+    const ahora = new Date().toISOString();
+    const proyectos = [
+      proyectoConLock("a", { rutina: "rutina-trabajadora-1", desde: ahora }),
+      proyectoConLock("b", null),
+    ];
+    expect(trabajadorasLibres(proyectos)).toEqual(["rutina-trabajadora-2"]);
+  });
+
+  it("no excluye una trabajadora cuyo lock está huérfano (>90 min)", () => {
+    const hace2h = new Date(Date.now() - 120 * 60000).toISOString();
+    const proyectos = [proyectoConLock("a", { rutina: "rutina-trabajadora-1", desde: hace2h })];
+    expect(trabajadorasLibres(proyectos)).toEqual(["rutina-trabajadora-1", "rutina-trabajadora-2"]);
+  });
+
+  it("devuelve [] si ambas trabajadoras están ocupadas", () => {
+    const ahora = new Date().toISOString();
+    const proyectos = [
+      proyectoConLock("a", { rutina: "rutina-trabajadora-1", desde: ahora }),
+      proyectoConLock("b", { rutina: "rutina-trabajadora-2", desde: ahora }),
+    ];
+    expect(trabajadorasLibres(proyectos)).toEqual([]);
   });
 });

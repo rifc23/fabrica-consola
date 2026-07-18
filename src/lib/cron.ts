@@ -22,14 +22,16 @@ export const CRON_DESPACHADOR_MADRE = "50 * * * *";
 
 /**
  * Cadencias reales del pool de rutinas genéricas (Motor A-pool, ver docs/diseno-consola-web.md
- * §4): la despachadora asigna ANTES de que corra cada trabajadora en el mismo ciclo de 2h.
- * `CRON_TRABAJADORAS_POOL` está indexado por el sufijo numérico del nombre de la rutina
- * (`rutina-trabajadora-1` → índice 1) — si se agrega una tercera rutina, se agrega aquí también.
+ * §4): la despachadora asigna ANTES de que corra cada trabajadora en el mismo ciclo (reducido de
+ * 2h a 1h el 2026-07-18 — decisión del usuario). `CRON_TRABAJADORAS_POOL` está indexado por el
+ * sufijo numérico del nombre de la rutina (`rutina-trabajadora-1` → índice 1) — si se agrega una
+ * tercera rutina, se agrega aquí también. MANTENER EN SYNC con los triggers reales (verificar con
+ * RemoteTrigger/list_triggers si se sospecha desalineación — esta constante no se autoactualiza).
  */
-export const CRON_DESPACHADORA_POOL = "5 */2 * * *";
+export const CRON_DESPACHADORA_POOL = "5 * * * *";
 export const CRON_TRABAJADORAS_POOL: Record<number, string> = {
-  1: "10 */2 * * *",
-  2: "40 */2 * * *",
+  1: "10 * * * *",
+  2: "40 * * * *",
 };
 
 /** Cron fijo de la rutina trabajadora del pool cuyo nombre es `nombreRutina` (busca su índice

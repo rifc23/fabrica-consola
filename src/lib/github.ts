@@ -1,3 +1,5 @@
+import { CRON_TRABAJADORAS_POOL } from "./cron";
+
 export const FABRICA_TOPIC = "fabrica-agentes";
 
 export interface FabricaManifestLock {
@@ -385,6 +387,26 @@ export function lockEstaLibre(
   if (Number.isNaN(desde)) return true;
   const minutosTranscurridos = (ahora.getTime() - desde) / 60000;
   return minutosTranscurridos > LOCK_HUERFANO_MINUTOS;
+}
+
+/**
+ * Nombres de las `rutina-trabajadora-N` (derivados de `CRON_TRABAJADORAS_POOL`, la única fuente
+ * de verdad de qué trabajadoras existen) que NO tienen actualmente el `lock` de ningún proyecto
+ * de la lista dada. La consola no tiene acceso a `list_triggers` (esa API requiere el token OAuth
+ * de la sesión de claude.ai, que nunca vive en el servidor de una app pública) — así que "libre"
+ * se infiere de los propios manifests: si ninguno de los `proyectos` tiene `lock.rutina` igual a
+ * ese nombre con lock vigente (`lockEstaLibre` en falso), esa trabajadora está libre para que el
+ * usuario le asigne un proyecto manualmente desde el dashboard.
+ */
+export function trabajadorasLibres(proyectos: FabricaProyecto[]): string[] {
+  const nombresTrabajadoras = Object.keys(CRON_TRABAJADORAS_POOL).map((n) => `rutina-trabajadora-${n}`);
+  const ocupadas = new Set(
+    proyectos
+      .map((p) => p.manifest?.lock)
+      .filter((lock): lock is FabricaManifestLock => !!lock && !lockEstaLibre(lock))
+      .map((lock) => lock.rutina),
+  );
+  return nombresTrabajadoras.filter((nombre) => !ocupadas.has(nombre));
 }
 
 /**
