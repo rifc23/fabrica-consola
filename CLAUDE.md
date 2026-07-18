@@ -110,6 +110,27 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   rojo. El usuario supervisa por los reportes/consola y puede revertir (`git revert` del merge o
   Instant Rollback de Vercel). Excepción permanente: las ramas que tocan `.github/**` siguen
   requiriendo merge humano (GITHUB_TOKEN no puede pushear workflows).
+- **Motor A-pool es el motor DEFAULT para proyectos nuevos** (decisión del usuario, 2026-07-18 —
+  implementado en sesión interactiva entre los ticks 16:15 y 18:15 UTC de `routine-fabrica-consola`,
+  ver diseño completo en `docs/diseno-consola-web.md` §4 y `docs/routine-madre-prompt.md` v4). N
+  routines genéricas (`rutina-despachadora` + `rutina-trabajadora-N`) reclaman cualquier proyecto
+  del catálogo con trabajo pendiente vía **lock optimista**: campo `lock` en `.fabrica.json`
+  (commit atómico con `sha`, la propia API de GitHub arbitra el empate si dos rutinas reclaman a la
+  vez — helpers en `src/lib/github.ts`: `trabajadorasLibres` y compañía). Un proyecto nuevo nace
+  SIN `trigger_id` y sin ningún paso manual: la despachadora lo descubre y asigna sola. La consola
+  ya NO ofrece/promueve instalar una routine dedicada al crear un proyecto (se retiró de la UI de
+  `/nuevo-proyecto`); una routine dedicada (bloque A de `docs/plantilla-routine-prompt.md`, la que
+  usa esta propia fabrica-consola) sigue siendo válida para proyectos con volumen propio sostenido,
+  pero es opt-in manual vía `/schedule`, no el camino ofrecido. Ciclo del pool: `5 * * * *`
+  (despachadora) / offsets propios por trabajadora en `CRON_DESPACHADORA_POOL` y
+  `CRON_TRABAJADORAS_POOL` (`src/lib/cron.ts`) — reducido de 2h a 1h el 2026-07-18 (1 tick/hora es
+  el mínimo real de la plataforma de rutinas, confirmado con un 400 al intentar `*/5 * * * *`). La
+  routine madre (v4) agrega un PASO 4 de **despacho de emergencia**: si un proyecto sin
+  `trigger_id` tiene trabajo pendiente y ninguna trabajadora lo tiene bloqueado, la madre le asigna
+  el lock ella misma y dispara con `fire_trigger` de inmediato. El dashboard expone `EstadoPool`
+  (quién tiene el lock y cuándo corre) y el botón **"🔧 Asignar ahora"** (`/api/asignar-proyecto`,
+  helper puro `trabajadorasLibres`) para asignar manualmente un proyecto sin atender a la próxima
+  trabajadora libre — no lo dispara al instante, solo lo deja listo para su próximo tick normal.
 - **Input inteligente = patrón "Inbox + triaje en el cron"** (decisión del usuario, 2026-07-17).
   La consola commitea el feedback/idea/spec del usuario TAL CUAL, SOLO dentro de la sección
   `📥 Inbox` del backlog del proyecto; toda la inteligencia (wording, criterios de aceptación,
@@ -184,6 +205,20 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   test runners, bundlers de análisis) debe excluir `.claude/**` explícitamente en su config, el
   mismo patrón que estos dos fixes establecieron.
 
+- **(2026-07-18, tick 18:15 UTC) Segunda vez que un registro de "ya está hecho" resulta falso y
+  tarda ticks/sesiones en detectarse.** Síntoma: `docs/backlog.md` afirmaba desde el 2026-07-18
+  (hallazgo del trigger fantasma) que se había "agregado la sección `📥 Inbox` que faltaba en este
+  backlog" — pero la sección nunca se agregó. Seis ticks consecutivos de `routine-fabrica-consola`
+  (06:15 a 16:15 UTC del mismo día) reportaron "Inbox: (vacío)" sobre una sección que en realidad
+  no existía (`src/lib/backlog.ts::insertarEnInbox` exige un encabezado `/^##\s.*Inbox/` y lanza
+  error si falta). No causó daño porque fabrica-consola no lleva el topic `fabrica-agentes` (nunca
+  aparece en su propio dropdown, así que nadie pudo intentar escribirle desde el dashboard), pero
+  el patrón — declarar un fix como hecho sin verificar el resultado — es el mismo que el del
+  trigger `trig_01XJA8ejJVsh1aQE4fZFdeN1` que nunca se creó. **Regla: ninguna sesión (routine o
+  interactiva) marca algo como agregado/corregido/hecho en el backlog o en `CLAUDE.md` sin haber
+  verificado el resultado en el diff real del commit** (grep/leer el archivo tras el cambio, no
+  solo confiar en la intención de la instrucción que se le dio al agente/subagente).
+
 ## Modelo de datos
 
 No hay base de datos. "Modelo de datos" = contrato de archivos leídos/escritos en los repos de
@@ -213,12 +248,14 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-18 16:15 UTC, sexto tick de
-  `routine-fabrica-consola`, sobre rama `claude/rutina-2026-07-18-1615-eslint-ignore` pendiente de
-  publicar vía `fabrica-sync`):** base `main` en `15cebdb` (lote P1 completo + peldaño 4) más el
-  fix de `globalIgnores`/`exclude` de ESLint y Vitest para `.claude/**` (ver Errores Conocidos).
-  Gate en verde: `npm run lint && npm run test:run && npm run build` → lint ✅, test:run
-  **143/143** ✅, build ✅ (Next.js 16.2.10 / Turbopack, Node v22.22.2). Corrección del tick
-  anterior: esta sección seguía apuntando a `9c510d7` (estado previo al merge del lote P1) pese a
-  que `main` ya llevaba `399111d` y el peldaño 4 mergeados desde la sesión interactiva —
-  corregida entonces al HEAD real de `main`, y ahora extendida con el trabajo de este tick.
+- **Último estado bueno (verificado 2026-07-18 18:15 UTC, séptimo tick de
+  `routine-fabrica-consola`):** base `main` en `3155ca3` (Motor A-pool completo: lock optimista,
+  estado del pool en el dashboard, pool como motor DEFAULT, routine madre v4 con despacho de
+  emergencia, botón "Asignar ahora", ciclo del pool a 1h — ver Decisiones Arquitectónicas). Gate
+  en verde: `npm run lint && npm run test:run && npm run build` → lint ✅, test:run **161/161** ✅,
+  build ✅ (Next.js 16.2.10 / Turbopack, Node v22.22.2). Corrección de este tick: esta sección
+  seguía apuntando a `15cebdb` (tick 16:15 UTC) pese a que `main` ya llevaba 20 commits más del
+  Motor A-pool mergeados en una sesión interactiva del usuario que no dejó rastro aquí — corregida
+  al HEAD real de `main`. Mismo tick: se descubrió y corrigió que la sección `📥 Inbox` de
+  `docs/backlog.md` no existía realmente pese a que esta misma ancla y seis reportes de tick
+  previos la daban por presente y vacía (ver `docs/backlog.md` § Estado general para el detalle).

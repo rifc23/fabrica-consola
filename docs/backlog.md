@@ -55,6 +55,16 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   fuera un hecho. Consecuencia: nadie ha iterado el backlog P1/P2 de forma autónoma; todo el
   avance de P0 lo hizo la sesión interactiva. Aprovechado el mismo hallazgo para agregar la
   sección `📥 Inbox` que faltaba en este backlog (la madre también notó que no existía).
+  **CORRECCIÓN 2026-07-18 (tick 18:15 UTC): esa frase también era falsa.** La sección nunca se
+  agregó — seis ticks consecutivos de `routine-fabrica-consola` (06:15 a 16:15 UTC) reportaron
+  "Inbox: (vacío)" sobre una sección que, en realidad, no existía en el archivo (`insertarEnInbox`
+  en `src/lib/backlog.ts` exige un encabezado `/^##\s.*Inbox/` y lanza error si falta). No era
+  explotable hoy: este repo no lleva el topic `fabrica-agentes` (confirmado vía API en este mismo
+  tick), así que `obtenerProyectos`/`FABRICA_TOPIC` nunca lista a fabrica-consola en su propio
+  dropdown y `POST /api/tareas` la bloquea igual — pero la afirmación era falsa y quedó sin
+  detectar seis ticks. Agregada de verdad esta vez (ver sección abajo); regla para el futuro:
+  ninguna sesión (routine o interactiva) declara "agregado"/"hecho" sin verificar el resultado en
+  el propio diff del commit.
 - 2026-07-18: `routine-fabrica-consola` creada de verdad vía `/schedule`
   (`trig_01NduNpiSB2NsJNuCPxmpQQp`, cron `15 */2 * * *`, peldaño 3, conector Claude_Code_Remote).
   Primer disparo: 06:15 UTC del mismo día. A partir de su primer tick con reporte en
@@ -244,6 +254,39 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   para que esa trabajadora lo tome en su PRÓXIMO tick normal — no lo dispara al instante; el
   usuario ve de inmediato "asignado a rutina-trabajadora-N — corre en ~X min" en vez de "esperando
   asignación". Visible solo para proyectos sin routine dedicada y sin asignación vigente.
+- 2026-07-18 (18:15 UTC): séptimo disparo de `routine-fabrica-consola`. Anti-solape: último commit
+  de `main` (`3155ca3`, ~28 min de antigüedad) sin working tree sucio ni worktrees huérfanos → tick
+  procedió con normalidad. Auditoría de estado real (regla del prompt: corregir hechos
+  documentados que no se puedan verificar): `main` había avanzado 20 commits desde la última ancla
+  de rollback verificada (tick 16:15, `15cebdb`) sin que `CLAUDE.md` lo reflejara — el Motor A-pool
+  completo (lock optimista, estado del pool en el dashboard, pool como motor DEFAULT, routine
+  madre v4, botón "Asignar ahora", ciclo del pool a 1h) se implementó y mergeó a `main` en una
+  sesión interactiva del usuario entre el cierre del tick anterior y este disparo — sin reporte de
+  routine porque no la ejecutó la routine. Ya estaba narrado en los bullets de arriba, pero la
+  tabla de Registro de trabajo y la Ancla de rollback de `CLAUDE.md` no tenían ninguna fila/mención
+  — ambas corregidas en este tick. Hallazgo más importante: **la sección `📥 Inbox` de este mismo
+  backlog no existía** pese a que el protocolo de cabecera, `CLAUDE.md` y seis reportes de tick
+  previos (06:15 a 16:15 UTC) la daban por existente y "(vacío)" — ver la corrección exacta más
+  arriba y la sección nueva agregada este tick. Entorno re-verificado con `npm install` + gate
+  completo real: lint ✅, test:run **161/161** ✅ (subieron de 143 por el Motor A-pool), build ✅
+  sobre Node v22.22.2. P1/P2 revisados ítem por ítem: sin trabajo nuevo delegable (mismos bloqueos
+  por decisión de usuario que los ticks anteriores — ver Decisiones estacionadas). Reporte:
+  `docs/reportes/2026-07-18-1815-rutina.md`.
+
+- (vacío)
+
+## 📥 Inbox — entradas del usuario (sin triaje)
+
+Buzón donde la consola commitea TAL CUAL (sin LLM) el feedback/idea/spec que el usuario deja desde
+el dashboard de un proyecto, y las respuestas a decisiones `[USUARIO]` (formato `Respuesta a
+decisión "...": ...`). La única inteligencia sobre estas entradas la aplica el paso "TRIAJE DEL
+INBOX" de la routine orquestadora en su siguiente disparo (mejora wording, redacta criterios de
+aceptación, deduplica, prioriza o estaciona) — nunca la consola. Agregada 2026-07-18 (tick 18:15
+UTC): esta sección no existía realmente en este archivo pese a que el protocolo de cabecera y seis
+reportes de tick previos la daban por existente y vacía (ver corrección en Estado general arriba).
+Hoy no es alcanzable desde el dashboard propio (fabrica-consola no lleva el topic
+`fabrica-agentes`, así que no aparece en su propio dropdown) — queda lista para cuando/si este repo
+se gestione a sí mismo como proyecto.
 
 - (vacío)
 
@@ -501,3 +544,5 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 | 2026-07-18 | Tick 14:15 UTC: quinto disparo — mismo diagnóstico (Inbox vacío, sin P1/P2 nuevo delegable); lote P1 sigue sin mergear (~7h39min, casi 8h); trigger verificado sin discrepancias; usuario notificado fuera de banda por el tiempo transcurrido; solo documentación | claude/rutina-2026-07-18-1415-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
 | 2026-07-18 | Merge del lote P1 a main + activación peldaño 4 (autopiloto en fabrica-sync.yml) | main / claude/factory-console-backlog-7jafgw | 399111d (merge) | lint ✅ test:run 143/143 ✅ build ✅ (local, sobre el merge) | Completado — en producción |
 | 2026-07-18 | Tick 16:15 UTC: sexto disparo — Inbox vacío; fix de `globalIgnores` de ESLint (P2) + hallazgo hermano del mismo tick en `vitest.config.ts` (misma causa raíz: worktrees de agentes duplicaban tests), + `.gitignore` para `.claude/worktrees/`; 2 subagentes `implementador` en worktrees separados (sin archivos compartidos), commits reautorados en el checkout principal tras integrar; ancla de rollback y Errores Conocidos actualizados | claude/rutina-2026-07-18-1615-eslint-ignore | 921b772 (marca 🔄 + ancla) · bd01f2d (.gitignore) · b8e2933 (fix eslint) · 88579dd (fix vitest) | lint ✅ test:run 143/143 ✅ build ✅ | Toca código — peldaño 4: `fabrica-sync.yml` la mergea a main tras gate completo en CI, sin acción del usuario |
+| 2026-07-18 (~16:18–17:47 UTC) | **Motor A-pool implementado** (sesión interactiva del usuario, fuera de un tick de routine — sin reporte en `docs/reportes/`): helpers de lock optimista (`trabajadorasLibres` + lock por SHA en `src/lib/github.ts`), estado del pool en la cola del dashboard (`EstadoPool`), decisión "el pool es el motor DEFAULT" (quita el flujo de instalar routine dedicada de la UI de creación), `routine-madre-fabrica` a v4 (PASO 4: despacho de emergencia — asigna lock y dispara con `fire_trigger` si un proyecto sin `trigger_id` no tiene trabajadora asignada), botón "🔧 Asignar ahora" (`/api/asignar-proyecto`) y ciclo del pool reducido de 2h a 1h (`CRON_DESPACHADORA_POOL`/`CRON_TRABAJADORAS_POOL` en `src/lib/cron.ts`, mínimo real de la plataforma de rutinas confirmado en 1 tick/hora). Mergeado directo a `main` por la sesión interactiva (no pasa por `fabrica-sync`). Narrado ya en Estado general arriba; fila agregada aquí en el tick 18:15 UTC porque no tenía registro en esta tabla. | main (merges directos) | 0a29aa2 (lock) · f3ea492/b0181c7 (merges lock+dashboard) · 40ef813/0f74141 (estado del pool) · df09850/29bfb96 (pool DEFAULT) · 878b80d/52626e7 (madre v4) · 3180ac2/3155ca3 (Asignar ahora + ciclo 1h) | lint ✅ test:run 161/161 ✅ build ✅ (verificado por este tick sobre el HEAD real) | Completado — en producción |
+| 2026-07-18 | Tick 18:15 UTC: séptimo disparo — Inbox: la sección `📥 Inbox` **no existía** en este archivo (bug real, no explotable hoy — ver corrección en Estado general y sección Inbox nueva arriba); agregada de verdad, sin entradas que triajar. Auditoría de estado real: `main` había avanzado 20 commits desde la última ancla de rollback documentada (Motor A-pool completo, fila de arriba) sin que `CLAUDE.md` lo reflejara — ancla de rollback y Decisiones Arquitectónicas corregidas. P1/P2 revisados: sin ítems nuevos delegables (mismos bloqueos por decisión de usuario que ticks anteriores). Solo documentación. | claude/rutina-2026-07-18-1815-auditoria | (solo docs) | lint ✅ test:run 161/161 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
