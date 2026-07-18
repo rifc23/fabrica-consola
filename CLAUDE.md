@@ -163,17 +163,26 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   manifest, auto-corrigiendo proyectos ya creados). Regla: NUNCA construir URLs de Vercel por
   concatenación — siempre preguntarle a la API.
 
-- **(2026-07-18) `npm run lint` reporta miles de falsos positivos si quedan worktrees de
-  subagentes con build propio.** Síntoma: gate final del orquestador con 640+ errores de lint que
-  no existían en el diff real. Causa: `eslint.config.*` ignora `.next/**` anclado a la raíz del
-  repo; los worktrees creados por `Agent(..., isolation:'worktree')` viven DENTRO del repo
-  (`.claude/worktrees/agent-*/`) y, si un subagente corrió `npm run build` ahí, su `.next/` propio
-  NO queda cubierto por ese ignore (haría falta `**/.next/**`) — el lint del checkout principal lo
-  escanea igual. Solución/regla: antes de correr el gate final de un lote, el orquestador limpia
-  con `git worktree remove` los worktrees de subagentes ya integrados (mergeados, sin cambios
-  pendientes) — nunca antes de confirmar que su rama ya se mergeó. Corrección de raíz (ampliar el
-  ignore de ESLint o excluir `.claude/**`) anotada en el backlog P2, no se toca en caliente durante
-  un lote de features para no mezclar alcance.
+- **(2026-07-18, RESUELTO el mismo día en el tick 16:15 UTC) `npm run lint` reporta miles de
+  falsos positivos si quedan worktrees de subagentes con build propio.** Síntoma: gate final del
+  orquestador con 640+ errores de lint que no existían en el diff real. Causa: `eslint.config.*`
+  ignora `.next/**` anclado a la raíz del repo; los worktrees creados por
+  `Agent(..., isolation:'worktree')` viven DENTRO del repo (`.claude/worktrees/agent-*/`) y, si un
+  subagente corrió `npm run build` ahí, su `.next/` propio NO quedaba cubierto por ese ignore
+  (hacía falta `**/.next/**`) — el lint del checkout principal lo escaneaba igual. **Solución
+  desplegada:** `eslint.config.mjs` amplía los patrones a `**/.next/**`/`**/out/**`/`**/build/**`
+  y agrega `.claude/**` a `globalIgnores`. **Hallazgo hermano del mismo tick:** `vitest` tenía
+  EXACTAMENTE el mismo problema — un worktree de agente presente duplicaba `npm run test:run` de
+  143 a 286 tests (recolectaba también `.claude/worktrees/agent-*/src/**/*.test.ts` como si fueran
+  tests propios del checkout principal). Corregido con
+  `exclude: [...configDefaults.exclude, ".claude/**"]` en `vitest.config.ts`. Además, `.gitignore`
+  gana `/.claude/worktrees/` — esos directorios son trabajo transitorio de subagentes y nunca deben
+  aparecer como untracked/trackeados en el repo principal. **Regla vigente para el futuro:** el
+  orquestador sigue limpiando con `git worktree remove` los worktrees de subagentes ya integrados
+  antes del gate final (defensa en profundidad), pero el gate ya NO depende de esa limpieza para
+  dar un resultado correcto — cualquier herramienta nueva que recorra el árbol del repo (linters,
+  test runners, bundlers de análisis) debe excluir `.claude/**` explícitamente en su config, el
+  mismo patrón que estos dos fixes establecieron.
 
 ## Modelo de datos
 
@@ -205,10 +214,11 @@ proyectos vía GitHub Contents API:
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
 - **Último estado bueno (verificado 2026-07-18 16:15 UTC, sexto tick de
-  `routine-fabrica-consola`):** `main` en `15cebdb` — incluye el lote P1 completo (Gem, cola/
-  tiempos, burn-down) y la activación del **peldaño 4** (`fabrica-sync.yml` auto-mergea también
-  ramas con código tras gate completo en CI). Gate en verde: `npm run lint && npm run test:run &&
-  npm run build` → lint ✅, test:run **143/143** ✅, build ✅ (Next.js 16.2.10 / Turbopack, Node
-  v22.22.2). Corrección de este tick: la entrada anterior de esta sección seguía apuntando a
-  `9c510d7` (estado previo al merge del lote P1) — desactualizada desde la sesión interactiva que
-  mergeó `399111d` y activó el peldaño 4; corregida al HEAD real de `main`.
+  `routine-fabrica-consola`, sobre rama `claude/rutina-2026-07-18-1615-eslint-ignore` pendiente de
+  publicar vía `fabrica-sync`):** base `main` en `15cebdb` (lote P1 completo + peldaño 4) más el
+  fix de `globalIgnores`/`exclude` de ESLint y Vitest para `.claude/**` (ver Errores Conocidos).
+  Gate en verde: `npm run lint && npm run test:run && npm run build` → lint ✅, test:run
+  **143/143** ✅, build ✅ (Next.js 16.2.10 / Turbopack, Node v22.22.2). Corrección del tick
+  anterior: esta sección seguía apuntando a `9c510d7` (estado previo al merge del lote P1) pese a
+  que `main` ya llevaba `399111d` y el peldaño 4 mergeados desde la sesión interactiva —
+  corregida entonces al HEAD real de `main`, y ahora extendida con el trabajo de este tick.
