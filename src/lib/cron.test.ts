@@ -5,7 +5,9 @@ import {
   proximoDespachoEfectivo,
   generarCadenciaEscalonada,
   derivarCadenciaMinutos,
+  cronDeTrabajadoraPool,
   CRON_DESPACHADOR_MADRE,
+  CRON_DESPACHADORA_POOL,
 } from "./cron";
 
 describe("parsearCron", () => {
@@ -121,5 +123,30 @@ describe("generarCadenciaEscalonada", () => {
 
   it("manual no genera cron (null)", () => {
     expect(generarCadenciaEscalonada("manual", 0)).toBeNull();
+  });
+});
+
+describe("cronDeTrabajadoraPool", () => {
+  it("devuelve el cron fijo de una trabajadora conocida", () => {
+    expect(cronDeTrabajadoraPool("rutina-trabajadora-1")).toBe("10 */2 * * *");
+    expect(cronDeTrabajadoraPool("rutina-trabajadora-2")).toBe("40 */2 * * *");
+  });
+
+  it("devuelve null si el nombre no sigue el patrón esperado", () => {
+    expect(cronDeTrabajadoraPool("rutina-despachadora")).toBeNull();
+    expect(cronDeTrabajadoraPool("routine-fabrica-consola")).toBeNull();
+    expect(cronDeTrabajadoraPool("")).toBeNull();
+  });
+
+  it("devuelve null si el número no está registrado en CRON_TRABAJADORAS_POOL", () => {
+    expect(cronDeTrabajadoraPool("rutina-trabajadora-99")).toBeNull();
+  });
+
+  it("la despachadora corre antes que ambas trabajadoras en el mismo ciclo de 2h", () => {
+    const despachadora = parsearCron(CRON_DESPACHADORA_POOL);
+    const trabajadora1 = parsearCron(cronDeTrabajadoraPool("rutina-trabajadora-1")!);
+    const trabajadora2 = parsearCron(cronDeTrabajadoraPool("rutina-trabajadora-2")!);
+    expect(Number(despachadora.minuto)).toBeLessThan(Number(trabajadora1.minuto));
+    expect(Number(despachadora.minuto)).toBeLessThan(Number(trabajadora2.minuto));
   });
 });

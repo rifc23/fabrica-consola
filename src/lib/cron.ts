@@ -20,6 +20,27 @@ export interface CronExpresion {
 /** El despachador de la routine madre revisa los Inbox cada hora a los :50 (ver CLAUDE.md). */
 export const CRON_DESPACHADOR_MADRE = "50 * * * *";
 
+/**
+ * Cadencias reales del pool de rutinas genéricas (Motor A-pool, ver docs/diseno-consola-web.md
+ * §4): la despachadora asigna ANTES de que corra cada trabajadora en el mismo ciclo de 2h.
+ * `CRON_TRABAJADORAS_POOL` está indexado por el sufijo numérico del nombre de la rutina
+ * (`rutina-trabajadora-1` → índice 1) — si se agrega una tercera rutina, se agrega aquí también.
+ */
+export const CRON_DESPACHADORA_POOL = "5 */2 * * *";
+export const CRON_TRABAJADORAS_POOL: Record<number, string> = {
+  1: "10 */2 * * *",
+  2: "40 */2 * * *",
+};
+
+/** Cron fijo de la rutina trabajadora del pool cuyo nombre es `nombreRutina` (busca su índice
+ *  numérico en CRON_TRABAJADORAS_POOL), o null si no coincide con el patrón esperado o no está
+ *  registrada ahí (rutina nueva agregada sin actualizar la constante). */
+export function cronDeTrabajadoraPool(nombreRutina: string): string | null {
+  const match = nombreRutina.match(/^rutina-trabajadora-(\d+)$/);
+  if (!match) return null;
+  return CRON_TRABAJADORAS_POOL[Number(match[1])] ?? null;
+}
+
 const OFFSETS_ESCALONADOS = [0, 15, 30, 45];
 
 export function parsearCron(expr: string): CronExpresion {

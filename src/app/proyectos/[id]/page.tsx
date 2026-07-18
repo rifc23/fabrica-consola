@@ -12,6 +12,7 @@ import EliminarProyecto from "@/components/EliminarProyecto";
 import DecisionCard from "@/components/DecisionCard";
 import CopiarBoton from "@/components/CopiarBoton";
 import ColaProyecto from "@/components/ColaProyecto";
+import EstadoPool from "@/components/EstadoPool";
 import Burndown from "@/components/Burndown";
 import styles from "./dashboard.module.css";
 
@@ -169,6 +170,7 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
 
       <section className={styles.seccion} aria-labelledby="titulo-cola">
         <h2 id="titulo-cola">🕐 Cola y tiempos</h2>
+        {!manifest?.trigger_id && <EstadoPool lock={manifest?.lock} />}
         <ColaProyecto
           cola={colaPendientes}
           cadenciaCron={manifest?.cadencia_cron}
