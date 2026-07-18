@@ -416,12 +416,19 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 - [ ] Promover `tipo?: "gem"` (hoy tipado localmente en `src/app/api/crear-proyecto/route.ts` como
   `FabricaManifest & { tipo?: "gem" }`) a campo real en `FabricaManifest` (`src/lib/github.ts`) si
   se agregan más tipos de proyecto además de "gem" — hallazgo del lote P1, 2026-07-18.
-- [ ] 🔄 `eslint.config.*` usa `globalIgnores(".next/**")` (anclado a raíz, no `**/.next/**`): los
+- [x] `eslint.config.*` usa `globalIgnores(".next/**")` (anclado a raíz, no `**/.next/**`): los
   builds hechos dentro de worktrees de subagentes (`.claude/worktrees/agent-*/.next/`) no quedan
   ignorados y contaminan `npm run lint` corrido desde el checkout principal si esos worktrees
   siguen presentes. Ampliar el patrón (o excluir `.claude/**`) para que el gate sea robusto sin
   depender de que el orquestador limpie los worktrees a mano antes de lintear — hallazgo del lote
-  P1, 2026-07-18.
+  P1, 2026-07-18. **Resuelto 2026-07-18 (tick 16:15 UTC):** `eslint.config.mjs` amplía a
+  `**/.next/**`/`**/out/**`/`**/build/**` y agrega `.claude/**` a `globalIgnores`. Auditoría del
+  mismo tick encontró que `vitest` tenía EXACTAMENTE el mismo problema (un worktree de agente
+  presente duplicaba `npm run test:run` de 143 a 286 tests, recolectando también sus
+  `src/**/*.test.ts`) — se corrigió también `vitest.config.ts` con
+  `exclude: [...configDefaults.exclude, ".claude/**"]`, y `.gitignore` gana
+  `/.claude/worktrees/` (esos directorios nunca deben trackearse en el repo principal). Ver
+  CLAUDE.md § Errores Conocidos.
 
 ## Decisiones estacionadas [USUARIO]
 
@@ -454,3 +461,4 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 | 2026-07-18 | Tick 12:15 UTC: cuarto disparo — mismo diagnóstico (Inbox vacío, sin P1/P2 nuevo delegable); lote P1 sigue sin mergear (~5h39min); trigger verificado sin discrepancias; solo documentación | claude/rutina-2026-07-18-1215-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
 | 2026-07-18 | Tick 14:15 UTC: quinto disparo — mismo diagnóstico (Inbox vacío, sin P1/P2 nuevo delegable); lote P1 sigue sin mergear (~7h39min, casi 8h); trigger verificado sin discrepancias; usuario notificado fuera de banda por el tiempo transcurrido; solo documentación | claude/rutina-2026-07-18-1415-auditoria | (solo docs) | lint ✅ test:run 107/107 ✅ build ✅ | Solo-estado, auto-mergeable por fabrica-sync |
 | 2026-07-18 | Merge del lote P1 a main + activación peldaño 4 (autopiloto en fabrica-sync.yml) | main / claude/factory-console-backlog-7jafgw | 399111d (merge) | lint ✅ test:run 143/143 ✅ build ✅ (local, sobre el merge) | Completado — en producción |
+| 2026-07-18 | Tick 16:15 UTC: sexto disparo — Inbox vacío; fix de `globalIgnores` de ESLint (P2) + hallazgo hermano del mismo tick en `vitest.config.ts` (misma causa raíz: worktrees de agentes duplicaban tests), + `.gitignore` para `.claude/worktrees/`; 2 subagentes `implementador` en worktrees separados (sin archivos compartidos), commits reautorados en el checkout principal tras integrar; ancla de rollback y Errores Conocidos actualizados | claude/rutina-2026-07-18-1615-eslint-ignore | 921b772 (marca 🔄 + ancla) · bd01f2d (.gitignore) · b8e2933 (fix eslint) · 88579dd (fix vitest) | lint ✅ test:run 143/143 ✅ build ✅ | Toca código — peldaño 4: `fabrica-sync.yml` la mergea a main tras gate completo en CI, sin acción del usuario |
