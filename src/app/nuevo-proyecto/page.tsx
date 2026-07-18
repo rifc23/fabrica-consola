@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./nuevo-proyecto.module.css";
 import ProgresoCreacion, { type ProyectoCreado } from "@/components/ProgresoCreacion";
-import type { Cadencia, FeatureMVP, FormularioProyecto } from "@/lib/formulario-proyecto";
+import { featuresBlueprintGem, type Cadencia, type FeatureMVP, type FormularioProyecto } from "@/lib/formulario-proyecto";
 
 interface FeatureFormulario extends FeatureMVP {
   id: string;
@@ -36,6 +36,8 @@ export default function NuevoProyectoPage() {
 
   const [nombre, setNombre] = useState("");
   const [objetivo, setObjetivo] = useState("");
+  const [esGem, setEsGem] = useState(false);
+  const [rolGem, setRolGem] = useState("");
   const [features, setFeatures] = useState<FeatureFormulario[]>([nuevaFeature()]);
   const [queNoEsV1, setQueNoEsV1] = useState("");
   const [stackSeleccionado, setStackSeleccionado] = useState(OPCIONES_STACK[0]);
@@ -85,7 +87,11 @@ export default function NuevoProyectoPage() {
       setErrorValidacion("El objetivo es obligatorio.");
       return;
     }
-    if (featuresLimpias.length === 0) {
+    if (esGem && !rolGem.trim()) {
+      setErrorValidacion("El rol del bot es obligatorio para un proyecto Gem.");
+      return;
+    }
+    if (!esGem && featuresLimpias.length === 0) {
       setErrorValidacion("Agrega al menos una feature MVP con nombre.");
       return;
     }
@@ -106,6 +112,8 @@ export default function NuevoProyectoPage() {
       visibilidad,
       cadencia,
       notificacionesTelegram: notificacionesTelegram.trim() || undefined,
+      esGem,
+      rolGem: esGem ? rolGem.trim() : undefined,
     });
     setEnviando(true);
   }
@@ -142,7 +150,37 @@ export default function NuevoProyectoPage() {
           </div>
 
           <div className={styles.campo}>
-            <label>3. Features MVP</label>
+            <label className={styles.opcionCheckbox}>
+              <input type="checkbox" checked={esGem} onChange={(e) => setEsGem(e.target.checked)} />
+              🤖 Gem (chatbot con rol)
+            </label>
+            <span className={styles.ayuda}>
+              Chatbot con un rol persistente (p. ej. &quot;entrenador fitness&quot;). Siembra el
+              proyecto con el blueprint Gem fijo (CRUD de Gems, chat con streaming, botón
+              &quot;Mejorar rol&quot;, capa de abstracción de IA) en vez de las features MVP a
+              mano — igual puedes agregar features extra abajo.
+            </span>
+            {esGem && (
+              <div className={styles.campo}>
+                <label htmlFor="rol-gem">Rol del bot</label>
+                <textarea
+                  id="rol-gem"
+                  placeholder="Eres un entrenador fitness y me darás dietas con estos ingredientes: aguacate, cebolla…"
+                  value={rolGem}
+                  onChange={(e) => setRolGem(e.target.value)}
+                  required
+                />
+                <ul className={styles.blueprintGem}>
+                  {featuresBlueprintGem().map((f) => (
+                    <li key={f.nombre}>✅ {f.nombre}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.campo}>
+            <label>3. Features MVP{esGem ? " extra (opcional — el blueprint Gem ya cubre las P0)" : ""}</label>
             {features.map((f, i) => (
               <div className={styles.feature} key={f.id}>
                 <div className={styles.featureCabecera}>

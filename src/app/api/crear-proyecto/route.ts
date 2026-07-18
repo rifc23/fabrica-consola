@@ -16,8 +16,9 @@ import { sembrarBacklogNuevoProyecto } from "@/lib/backlog";
 import { generarCadenciaEscalonada } from "@/lib/cron";
 import {
   validarFormulario,
-  generarSpecsMd,
+  generarContenidoProyecto,
   agregarTareaManualVercel,
+  agregarTareaManualClaveIA,
   type FormularioProyectoValidado,
 } from "@/lib/formulario-proyecto";
 import {
@@ -169,12 +170,15 @@ async function ejecutarCreacion(
   // Paso 3: manifest + SPECS.md (+ tarea manual de Vercel si aplica)
   emitir({ tipo: "paso", paso: "manifest", estado: "en-progreso" });
   let manifestId = "";
+  // §1.1 del diseño: para un Gem, SPECS.md lleva el rol del usuario íntegro y el blueprint fijo
+  // se suma a las features del backlog. Para el resto, es la generación genérica de siempre.
+  const contenido = generarContenidoProyecto(body);
   try {
     const proyectosExistentes = await obtenerProyectos(token);
     const indice = proyectosExistentes.length; // offset escalonado por orden de creación
     const cadenciaCron = generarCadenciaEscalonada(body.cadencia, indice);
     manifestId = `fab-${slug}`;
-    const manifest: FabricaManifest = {
+    const manifest: FabricaManifest & { tipo?: "gem" } = {
       id: manifestId,
       nombre: body.nombre,
       creado: new Date().toISOString().slice(0, 10),
@@ -182,6 +186,7 @@ async function ejecutarCreacion(
       estado: "iterando",
       ...(cadenciaCron ? { cadencia_cron: cadenciaCron } : {}),
       ...(previewUrl ? { preview_url: previewUrl } : {}),
+      ...(body.esGem ? { tipo: "gem" as const } : {}),
     };
     await escribirArchivo(
       token,
@@ -196,7 +201,7 @@ async function ejecutarCreacion(
       owner,
       repo,
       "docs/SPECS.md",
-      generarSpecsMd(body),
+      contenido.specsMd,
       "docs: SPECS.md desde el formulario de la consola",
     );
 
@@ -210,6 +215,16 @@ async function ejecutarCreacion(
         (actual) => agregarTareaManualVercel(actual, slug, `${owner}/${repo}`),
       );
     }
+    if (contenido.esGem) {
+      await actualizarArchivoConReintento(
+        token,
+        owner,
+        repo,
+        "docs/TAREAS-MANUALES.md",
+        "docs: tarea manual — key del proveedor de IA del Gem",
+        (actual) => agregarTareaManualClaveIA(actual),
+      );
+    }
     emitir({ tipo: "paso", paso: "manifest", estado: "ok", detalle: { id: manifestId } });
   } catch (err) {
     emitir({ tipo: "paso", paso: "manifest", estado: "error", error: mensajeError(err) });
@@ -217,7 +232,7 @@ async function ejecutarCreacion(
     return;
   }
 
-  // Paso 4: siembra del backlog P0 con las features del formulario
+  // Paso 4: siembra del backlog P0 con las features del formulario (blueprint Gem + extras, si aplica)
   emitir({ tipo: "paso", paso: "backlog", estado: "en-progreso" });
   try {
     await actualizarArchivoConReintento(
@@ -232,7 +247,7 @@ async function ejecutarCreacion(
           fechaCreacion: new Date().toISOString().slice(0, 10),
           repoUrl: htmlUrl,
           comandosGate: GATE_POR_DEFECTO,
-          features: body.features,
+          features: contenido.featuresBacklog,
           decisionesReservadas: body.decisionesReservadas,
         }),
     );

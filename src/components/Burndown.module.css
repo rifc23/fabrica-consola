@@ -1,0 +1,40 @@
+.contenedor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  max-width: 640px;
+}
+
+.guia {
+  stroke: rgba(127, 127, 127, 0.2);
+  stroke-width: 1;
+}
+
+.linea {
+  stroke: #2ea043;
+  stroke-width: 2;
+}
+
+.punto {
+  fill: #2ea043;
+}
+
+.etiquetaEje {
+  font-size: 9px;
+  fill: currentColor;
+  opacity: 0.75;
+}
+
+.resumen {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.vacio {
+  opacity: 0.8;
+}

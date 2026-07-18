@@ -4,6 +4,7 @@ import {
   proximaEjecucion,
   proximoDespachoEfectivo,
   generarCadenciaEscalonada,
+  derivarCadenciaMinutos,
   CRON_DESPACHADOR_MADRE,
 } from "./cron";
 
@@ -41,6 +42,45 @@ describe("proximaEjecucion", () => {
     const desde = new Date("2026-07-17T06:51:00Z");
     const proxima = proximaEjecucion(CRON_DESPACHADOR_MADRE, desde);
     expect(proxima.toISOString()).toBe("2026-07-17T07:50:00.000Z");
+  });
+
+  it("cadencia diaria '0 9 * * *' cae a las 9:00 del mismo día si aún no pasó, si no al día siguiente", () => {
+    const antes = new Date("2026-07-17T06:00:00Z");
+    expect(proximaEjecucion("0 9 * * *", antes).toISOString()).toBe("2026-07-17T09:00:00.000Z");
+    const despues = new Date("2026-07-17T10:00:00Z");
+    expect(proximaEjecucion("0 9 * * *", despues).toISOString()).toBe("2026-07-18T09:00:00.000Z");
+  });
+});
+
+describe("derivarCadenciaMinutos", () => {
+  it("deriva minutos de un paso en horas ('15 */2 * * *' -> 120)", () => {
+    expect(derivarCadenciaMinutos("15 */2 * * *")).toBe(120);
+  });
+
+  it("deriva minutos de un paso en horas mayor ('30 */6 * * *' -> 360)", () => {
+    expect(derivarCadenciaMinutos("30 */6 * * *")).toBe(360);
+  });
+
+  it("deriva minutos de una cadencia por hora en punto ('50 * * * *' -> 60)", () => {
+    expect(derivarCadenciaMinutos(CRON_DESPACHADOR_MADRE)).toBe(60);
+  });
+
+  it("deriva minutos de una cadencia diaria ('0 9 * * *' -> 1440)", () => {
+    expect(derivarCadenciaMinutos("0 9 * * *")).toBe(1440);
+  });
+
+  it("deriva minutos de un paso en minutos ('*/15 * * * *' -> 15)", () => {
+    expect(derivarCadenciaMinutos("*/15 * * * *")).toBe(15);
+  });
+
+  it("devuelve null para patrones no simples (listas, rangos, día/mes específico) en vez de inventar", () => {
+    expect(derivarCadenciaMinutos("15,45 * * * *")).toBeNull();
+    expect(derivarCadenciaMinutos("0 9 * * 1-5")).toBeNull();
+    expect(derivarCadenciaMinutos("0 9 1 * *")).toBeNull();
+  });
+
+  it("devuelve null para una expresión cron inválida en vez de lanzar", () => {
+    expect(derivarCadenciaMinutos("no-es-cron")).toBeNull();
   });
 });
 

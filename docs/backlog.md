@@ -124,6 +124,28 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   fuente compartidos entre sí (`formulario-proyecto.ts`+`nuevo-proyecto/page.tsx` / `backlog.ts`+
   `cron.ts`+`ColaProyecto.tsx` / `burndown.ts`+`github.ts`+`Burndown.tsx`), delegadas en paralelo a
   tres subagentes `implementador` en worktrees separados.
+- 2026-07-18 (cierre del lote P1): las tres tareas completadas con gate en verde (lint ✅
+  test:run 143/143 ✅ build ✅) en `claude/rutina-2026-07-18-0615-p1-batch` — pendiente de merge
+  por el usuario (peldaño 3, la rama toca código). Hallazgo durante la integración: `src/lib/cron.ts`
+  YA existía (creado en el P0 de "Cards de decisiones respondibles" para el countdown de
+  `DecisionCard`) — el subagente de cola/tiempos lo detectó y extendió (`derivarCadenciaMinutos`)
+  en vez de duplicarlo, siguiendo la regla de fuente única. El conflicto esperado en
+  `src/app/proyectos/[id]/page.tsx` (cola/tiempos y burndown añadiendo cada uno su sección) se
+  resolvió de forma aditiva por un cuarto subagente `implementador` — ambas secciones conviven,
+  orden final: Progreso → Cola y tiempos → Burndown → Decisiones → Brief → Reporte → Tareas
+  manuales → Inbox → Zona de peligro. Nota para el futuro (del reporte de la tarea Gem,
+  `docs/reportes/2026-07-18-feat-gem-tipo-proyecto.md`): el campo `tipo:"gem"` del manifest se
+  tipó localmente en `crear-proyecto/route.ts` (`FabricaManifest & { tipo?: "gem" }`) para no
+  arriesgar colisión con las tareas hermanas sobre `github.ts`; si se agregan más tipos de
+  proyecto, promoverlo a campo real de `FabricaManifest` (anotado como P2 abajo). También se
+  detectó y limpió infraestructura: los worktrees de los subagentes (`.claude/worktrees/agent-*`,
+  con sus propios `.next/` de build) viven DENTRO del repo y no están cubiertos por el
+  `globalIgnores(".next/**")` de `eslint.config.*` (patrón anclado a raíz, no `**/.next/**`) — un
+  `npm run lint` corrido con worktrees de agentes aún presentes reporta miles de falsos positivos
+  sobre esos artefactos de build ajenos. Este tick los limpió (`git worktree remove`, ya sin
+  cambios pendientes) antes de correr el gate real; si el problema reaparece, la corrección de
+  raíz es ampliar el ignore de ESLint (o excluir `.claude/**` directamente) — queda anotado en P2
+  en vez de tocarlo en este tick para no mezclarlo con el lote de features.
 - 2026-07-18 (08:15 UTC): segundo disparo de `routine-fabrica-consola`. Anti-solape: último
   commit de `main` (`fe0a2d6`, el sync docs-only del tick anterior) con ~2h de antigüedad, working
   tree limpio, sin worktrees huérfanos → tick procedió con normalidad. Inbox: `(vacío)` → sin
@@ -309,7 +331,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
 
 ## P1 — Siguientes
 
-- [ ] 🔄 **Tipo de proyecto "Gem" en el formulario (decisión del usuario, 2026-07-17 — primera de
+- [x] **Tipo de proyecto "Gem" en el formulario (decisión del usuario, 2026-07-17 — primera de
   la cola P1).** Checkbox "🤖 Gem (chatbot con rol)" en `/nuevo-proyecto`; al marcarse muestra
   textarea "Rol del bot" y las features MVP manuales se sustituyen por el blueprint Gem de
   `docs/diseno-consola-web.md` §1.1 (CRUD de Gems, chat streaming con el rol SIEMPRE como
@@ -337,7 +359,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   sembrado: `src/lib/ia/proveedor.ts` (interfaz), `src/lib/ia/gemini.ts`, `src/lib/ia/anthropic.ts`
   (adaptadores — los construye la routine del proyecto siguiendo el blueprint).
 
-- [ ] 🔄 **Vista de cola y tiempos en el dashboard** (decisión del usuario, 2026-07-17; requiere el
+- [x] **Vista de cola y tiempos en el dashboard** (decisión del usuario, 2026-07-17; requiere el
   dashboard P0). Renderiza los pendientes del backlog como cola numerada en su orden real (el
   orden del archivo ES la cola — regla 6 del protocolo del template); badge "🏭 trabajando ahora"
   cuando hay tareas marcadas `🔄` (con `ultimo_tick` del manifest como inicio); countdown al
@@ -350,7 +372,7 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   **Archivos previstos:** `src/lib/backlog.ts` (extender parser: orden + marcador `🔄`, tests),
   `src/lib/cron.ts` (próximo disparo de una expresión cron de 5 campos, tests),
   `src/components/ColaProyecto.tsx`.
-- [ ] 🔄 **Burn-down del backlog** (decisión del usuario, 2026-07-17). Gráfica de tareas pendientes
+- [x] **Burn-down del backlog** (decisión del usuario, 2026-07-17). Gráfica de tareas pendientes
   vs tiempo para ver desde cuándo "se rebaja" el backlog: historial de commits de
   `docs/backlog.md` (GitHub Commits API, muestreado — máx ~30 puntos), conteo de checkboxes
   pendientes por versión, render SVG propio sin librería de gráficas.
@@ -373,6 +395,15 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   desktop y móvil ~390×844 (regla Multiplataforma de CLAUDE.md).
 - [ ] Motor B (GitHub Actions + Agent SDK) — instalación 100% automática, ver §4 de
   diseno-consola-web.md. No es v1.
+- [ ] Promover `tipo?: "gem"` (hoy tipado localmente en `src/app/api/crear-proyecto/route.ts` como
+  `FabricaManifest & { tipo?: "gem" }`) a campo real en `FabricaManifest` (`src/lib/github.ts`) si
+  se agregan más tipos de proyecto además de "gem" — hallazgo del lote P1, 2026-07-18.
+- [ ] `eslint.config.*` usa `globalIgnores(".next/**")` (anclado a raíz, no `**/.next/**`): los
+  builds hechos dentro de worktrees de subagentes (`.claude/worktrees/agent-*/.next/`) no quedan
+  ignorados y contaminan `npm run lint` corrido desde el checkout principal si esos worktrees
+  siguen presentes. Ampliar el patrón (o excluir `.claude/**`) para que el gate sea robusto sin
+  depender de que el orquestador limpie los worktrees a mano antes de lintear — hallazgo del lote
+  P1, 2026-07-18.
 
 ## Decisiones estacionadas [USUARIO]
 

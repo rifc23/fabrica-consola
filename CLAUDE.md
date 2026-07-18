@@ -153,6 +153,18 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   manifest, auto-corrigiendo proyectos ya creados). Regla: NUNCA construir URLs de Vercel por
   concatenación — siempre preguntarle a la API.
 
+- **(2026-07-18) `npm run lint` reporta miles de falsos positivos si quedan worktrees de
+  subagentes con build propio.** Síntoma: gate final del orquestador con 640+ errores de lint que
+  no existían en el diff real. Causa: `eslint.config.*` ignora `.next/**` anclado a la raíz del
+  repo; los worktrees creados por `Agent(..., isolation:'worktree')` viven DENTRO del repo
+  (`.claude/worktrees/agent-*/`) y, si un subagente corrió `npm run build` ahí, su `.next/` propio
+  NO queda cubierto por ese ignore (haría falta `**/.next/**`) — el lint del checkout principal lo
+  escanea igual. Solución/regla: antes de correr el gate final de un lote, el orquestador limpia
+  con `git worktree remove` los worktrees de subagentes ya integrados (mergeados, sin cambios
+  pendientes) — nunca antes de confirmar que su rama ya se mergeó. Corrección de raíz (ampliar el
+  ignore de ESLint o excluir `.claude/**`) anotada en el backlog P2, no se toca en caliente durante
+  un lote de features para no mezclar alcance.
+
 ## Modelo de datos
 
 No hay base de datos. "Modelo de datos" = contrato de archivos leídos/escritos en los repos de

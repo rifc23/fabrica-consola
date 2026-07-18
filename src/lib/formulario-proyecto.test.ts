@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { slugificar, validarFormulario, generarSpecsMd, agregarTareaManualVercel } from "./formulario-proyecto";
+import {
+  slugificar,
+  validarFormulario,
+  generarSpecsMd,
+  agregarTareaManualVercel,
+  featuresBlueprintGem,
+  generarSpecsMdGem,
+  agregarTareaManualClaveIA,
+  generarContenidoProyecto,
+} from "./formulario-proyecto";
 
 describe("slugificar", () => {
   it("normaliza acentos, minúsculas y separadores", () => {
@@ -77,5 +86,102 @@ describe("agregarTareaManualVercel", () => {
     expect(resultado).toContain("- algo previo");
     expect(resultado).toContain("Conectar mi-calc a Vercel manualmente");
     expect(resultado).toContain("rifc23/mi-calc");
+  });
+});
+
+const BODY_GEM = {
+  nombre: "Entrenador IA",
+  objetivo: "Un chatbot que me arme rutinas de gym",
+  features: [],
+  queNoEsV1: "",
+  stack: "Next.js+Vercel",
+  presupuesto: "Capa gratuita estricta",
+  decisionesReservadas: ["diseño visual"],
+  visibilidad: "private",
+  cadencia: "cada-2h",
+  esGem: true,
+  rolGem: "Eres un entrenador fitness y me darás dietas con estos ingredientes: aguacate, cebolla…",
+};
+
+describe("validarFormulario — tipo Gem", () => {
+  it("acepta un Gem con rol y sin features (el blueprint cubre las P0)", () => {
+    const resultado = validarFormulario(BODY_GEM);
+    expect(resultado.esGem).toBe(true);
+    expect(resultado.rolGem).toContain("entrenador fitness");
+    expect(resultado.features).toHaveLength(0);
+  });
+
+  it("rechaza un Gem sin rol", () => {
+    expect(() => validarFormulario({ ...BODY_GEM, rolGem: "  " })).toThrow(/rol/i);
+  });
+
+  it("no exige features cuando esGem es true (a diferencia del caso normal)", () => {
+    expect(() => validarFormulario({ ...BODY_GEM, features: [] })).not.toThrow();
+  });
+});
+
+describe("featuresBlueprintGem", () => {
+  it("incluye la capa de abstracción de IA como P0 fija", () => {
+    const nombres = featuresBlueprintGem().map((f) => f.nombre);
+    expect(nombres).toContain("Capa de abstracción de IA (ProveedorIA)");
+    expect(nombres.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe("generarSpecsMdGem", () => {
+  it("incluye el rol del usuario ÍNTEGRO en la sección Rol inicial", () => {
+    const md = generarSpecsMdGem(validarFormulario(BODY_GEM));
+    expect(md).toContain("## Rol inicial");
+    expect(md).toContain(
+      "Eres un entrenador fitness y me darás dietas con estos ingredientes: aguacate, cebolla…",
+    );
+  });
+
+  it("menciona la capa de abstracción de IA y el proveedor default", () => {
+    const md = generarSpecsMdGem(validarFormulario(BODY_GEM));
+    expect(md).toContain("ProveedorIA");
+    expect(md).toContain("IA_PROVEEDOR");
+    expect(md).toContain("gemini");
+  });
+});
+
+describe("agregarTareaManualClaveIA", () => {
+  it("agrega el bloque 🔴 bloqueante de la key de IA al final del documento", () => {
+    const resultado = agregarTareaManualClaveIA("# Tareas manuales\n\n- algo previo\n");
+    expect(resultado).toContain("- algo previo");
+    expect(resultado).toContain("🔴");
+    expect(resultado).toContain("GEMINI_API_KEY");
+    expect(resultado).toContain("aistudio.google.com");
+  });
+});
+
+describe("generarContenidoProyecto", () => {
+  it("caso Gem con rol: featuresBacklog = blueprint fijo (sin features extra)", () => {
+    const contenido = generarContenidoProyecto(validarFormulario(BODY_GEM));
+    expect(contenido.esGem).toBe(true);
+    expect(contenido.featuresBacklog).toHaveLength(featuresBlueprintGem().length);
+    expect(contenido.specsMd).toContain("## Rol inicial");
+  });
+
+  it("caso Gem con rol + features extra: featuresBacklog = blueprint + extras (nunca las reemplaza)", () => {
+    const bodyConExtra = {
+      ...BODY_GEM,
+      features: [{ nombre: "Exportar chat", descripcion: "Exportar la conversación a texto plano" }],
+    };
+    const contenido = generarContenidoProyecto(validarFormulario(bodyConExtra));
+    expect(contenido.featuresBacklog).toHaveLength(featuresBlueprintGem().length + 1);
+    expect(contenido.featuresBacklog.map((f) => f.nombre)).toContain("Exportar chat");
+    expect(contenido.featuresBacklog.map((f) => f.nombre)).toContain("CRUD de Gems");
+    expect(contenido.specsMd).toContain("Exportar chat");
+  });
+
+  it("caso no-Gem: se comporta igual que la generación genérica de siempre, sin ningún campo Gem", () => {
+    const form = validarFormulario(BODY_VALIDO);
+    const contenido = generarContenidoProyecto(form);
+    expect(contenido.esGem).toBe(false);
+    expect(contenido.featuresBacklog).toEqual(form.features);
+    expect(contenido.specsMd).toBe(generarSpecsMd(form));
+    expect(contenido.specsMd).not.toContain("Rol inicial");
+    expect(contenido.specsMd).not.toContain("ProveedorIA");
   });
 });

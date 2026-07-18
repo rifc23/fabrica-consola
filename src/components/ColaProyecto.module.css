@@ -1,0 +1,72 @@
+.cola {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.estado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.trabajando {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(46, 160, 67, 0.15);
+  border: 1px solid rgba(46, 160, 67, 0.5);
+  font-size: 0.85rem;
+}
+
+.countdown {
+  font-size: 0.9rem;
+  color: rgba(127, 127, 127, 0.95);
+}
+
+.lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.lista li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.2);
+  overflow-wrap: anywhere;
+  min-height: 44px;
+}
+
+.itemEnCurso {
+  background: rgba(46, 160, 67, 0.08);
+}
+
+.posicion {
+  font-weight: 600;
+  min-width: 2.5em;
+}
+
+.texto {
+  flex: 1 1 auto;
+}
+
+.badgeEnCurso {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(46, 160, 67, 0.2);
+}
+
+.espera {
+  font-size: 0.8rem;
+  color: rgba(127, 127, 127, 0.95);
+  white-space: nowrap;
+}
