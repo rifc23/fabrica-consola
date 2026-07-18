@@ -35,13 +35,21 @@ madre de todos los demás.
        "nombre": "Mi Calculadora",
        "creado": "2026-07-14",
        "peldano": 3,
-       "trigger_id": "trig_...",          // la routine cloud (para deep-link a claude.ai/code/routines/<id>)
-       "cadencia_cron": "0 */2 * * *",    // cadencia de la routine — la consola calcula el próximo tick sin APIs
-       "ultimo_tick": "2026-07-17T06:00:00Z", // lo actualiza la routine al INICIAR cada tick con trabajo
+       "trigger_id": "trig_...",          // la routine cloud DEDICADA de este proyecto, si tiene una (para deep-link a claude.ai/code/routines/<id>) — null/ausente si lo atiende el pool (ver §4 Motor A-pool)
+       "cadencia_cron": "0 */2 * * *",    // cadencia de la routine dedicada — la consola calcula el próximo tick sin APIs
+       "ultimo_tick": "2026-07-17T06:00:00Z", // lo actualiza la routine (dedicada o del pool) al INICIAR cada tick con trabajo
        "preview_url": "https://...",
-       "estado": "iterando|esperando-decisiones|completado"
+       "estado": "iterando|esperando-decisiones|completado",
+       "lock": {                          // presente SOLO mientras una rutina del pool trabaja este proyecto — ver §4 Motor A-pool
+         "rutina": "rutina-trabajadora-2",
+         "desde": "2026-07-18T14:15:00Z"
+       }
      }
      ```
+     `trigger_id` y `lock` son mutuamente informativos, no excluyentes: un proyecto puede tener
+     su propia routine dedicada (`trigger_id`) O ser atendido por el pool de rutinas genéricas
+     (reclamado vía `lock` en cada tick, sin `trigger_id` propio) — nunca ambos a la vez para el
+     mismo tick, pero un proyecto puede migrar de uno a otro modelo sin romper el esquema.
 
 ## 1. Formulario "Nuevo proyecto" (los inputs)
 
@@ -239,6 +247,65 @@ honesta de §3). Dos caminos:
    GitHub. Por token (v3 del roadmap).
 Mientras tanto, v1 mantiene la pantalla de arranque (prompt pre-rellenado + copiar/pegar en
 /schedule, ~1 min por proyecto, una vez).
+
+### Motor A-pool — N routines genéricas compartiendo el catálogo de proyectos (diseño 2026-07-18)
+
+**Matiza la regla "UNA routine POR proyecto" de arriba**: esa regla sigue siendo el default para
+proyectos con volumen propio (la propia fabrica-consola, o cualquier proyecto con backlog grande y
+sostenido). Pero para el caso común — muchos proyectos hijos pequeños, cada uno con backlog
+modesto — instalar una routine dedicada por proyecto vuelve a depender del paso manual de
+`/schedule` (~1 min) cada vez que nace un proyecto, el mismo cuello de botella que la "routine
+madre" (arriba) intenta mitigar sin poder eliminar del todo (no puede instalar routines con
+escritura vía `create_trigger` — Error Conocido: los triggers creados programáticamente nacen sin
+permisos de escritura en los repos). El pool es la alternativa: un número FIJO y chico de routines
+(empezar con 2) creadas UNA VEZ por el usuario, que en cada tick reclaman y trabajan CUALQUIER
+proyecto de la fábrica que tenga trabajo pendiente y no esté siendo atendido — sin instalar nada
+nuevo por proyecto nuevo.
+
+**Por qué es técnicamente posible pese al límite de permisos:** el repo fuente de un trigger
+(`session_context.sources`) es fijo en su configuración — una rutina no puede "cambiar" su repo
+autorizado en tiempo de ejecución, y ahí es donde vive el límite de permisos de escritura. Pero
+dentro de esa sesión, un `git clone`/`git push` normal por Bash contra OTRO repo usa las
+credenciales git del entorno, no el mecanismo de `outcomes` del trigger — es el mismo patrón que
+ya usa la routine madre en su PASO 3 (clona repos candidatos y commitea directo a su rama
+principal sin ser su repo fuente). El pool generaliza ese patrón: cada rutina del pool tiene como
+repo fuente `fabrica-consola` (o cualquier repo de control), pero su trabajo real ocurre clonando
+el proyecto que reclamó.
+
+**Protocolo de reclamo (lock optimista sobre `.fabrica.json`, sin infraestructura nueva):**
+1. **Descubrimiento** — igual que la routine madre: `search_repositories` por topic
+   `fabrica-agentes`, leer `.fabrica.json` de cada uno.
+2. **Filtrar libres**: proyectos cuyo campo `lock` (ver esquema en Conceptos clave) está ausente,
+   o cuyo `lock.desde` tiene más de ~90 minutos (lock huérfano — la rutina que lo tomó murió a
+   medio tick; 90 min da margen sobre cualquier tick normal antes de considerarlo abandonado).
+3. **Elegir candidato** de los libres CON backlog pendiente real (Inbox no vacío, o P0/P1/P2 con
+   ítems sin `[x]`) — orden determinista, ej. el de `ultimo_tick` más antiguo primero (el que
+   lleva más tiempo esperando atención).
+4. **Reclamar con un commit atómico**: escribir `lock: {rutina: "<nombre-propio>", desde: "<ahora
+   ISO8601>"}` en el `.fabrica.json` de ESE repo y pushear a su rama principal, usando el `sha`
+   actual del archivo. Si el commit falla por conflicto de `sha` (409): otra rutina ganó la
+   carrera — descartar candidato y probar el siguiente. **Esto ES el lock real**: no hace falta
+   coordinación adicional, la propia API de Contents de GitHub arbitra el empate por rutina.
+5. Con el lock propio confirmado: clonar el repo, trabajar su backlog con el MISMO protocolo que
+   cualquier routine dedicada (triaje de Inbox, gate, rama `claude/<algo>`, fabrica-sync para
+   docs-only, peldaño 3 para código).
+6. **Liberar el lock** al terminar el tick (o si el contexto se agota a medio trabajo, dejando el
+   estado consistente): otro commit poniendo `lock: null` en ese `.fabrica.json`.
+
+**Cuándo usar cada modelo:**
+| | Routine dedicada (1:1) | Pool (N:M) |
+|---|---|---|
+| Instalación | manual por proyecto (~1 min c/u) | manual UNA vez (crear el pool) |
+| Encaja mejor con | proyectos con volumen propio sostenido | muchos proyectos chicos/intermitentes |
+| Latencia por proyecto | su propia cadencia fija | depende de cuántos proyectos compiten por el pool en ese momento |
+| Riesgo | ninguno nuevo | un proyecto grande puede "acaparar" una rutina varios ticks — mitigar limitando ticks consecutivos por proyecto antes de rotar |
+
+**Rol de la routine madre con el pool activo:** su PASO 3 (preparar prompt de instalación por
+proyecto) deja de ser necesario para los proyectos que el pool ya cubre — se simplifica a solo
+PASO 4 (despacho de Inboxes, que sigue aplicando igual: `fire_trigger` funciona sobre cualquier
+routine existente, dedicada o del pool). No es una migración de todo o nada: un proyecto puede
+vivir con routine dedicada (`trigger_id` en el manifest) mientras otros conviven atendidos por el
+pool (`lock` en vez de `trigger_id`) — la consola y la madre soportan ambos a la vez.
 
 ### Motor B — GitHub Actions + Claude Agent SDK (instalación 100% automática) ⭐ para la consola
 

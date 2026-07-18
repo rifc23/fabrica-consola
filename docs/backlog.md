@@ -98,6 +98,16 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   SHA, countdown sin links a claude.ai, UI mobile-first. Reporte:
   `docs/reportes/2026-07-17-lote-v1-consola.md`. Verificado además fabrica-sync en vivo: main
   recibió `7f1fe03` automáticamente.
+- 2026-07-18: diseño nuevo — **Motor A-pool** (docs/diseno-consola-web.md §4): N routines
+  genéricas ("rutinas-trabajadora-N") que reclaman CUALQUIER proyecto de la fábrica con trabajo
+  pendiente vía lock optimista (campo `lock` nuevo en `.fabrica.json` — commit atómico con `sha`,
+  la propia API de GitHub arbitra el empate si dos rutinas reclaman a la vez). Alternativa a
+  instalar una routine dedicada por cada proyecto nuevo — mejor para proyectos chicos/intermitentes;
+  convive con routines dedicadas (`trigger_id`) para proyectos con volumen propio. Prompt B en
+  `docs/plantilla-routine-prompt.md`. Aún NO implementado (helpers de lock en `src/lib/github.ts`,
+  UI del dashboard mostrando `lock` — queda en P1/P2, priorizar cuando el catálogo de proyectos
+  hijos crezca lo suficiente para justificarlo). Documentado también en el template
+  (`fabrica-agentes-template`) para que cualquier proyecto nuevo herede el diseño ya explicado.
 
 ## 📥 Inbox
 
