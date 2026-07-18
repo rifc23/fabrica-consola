@@ -47,12 +47,16 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   Vercel y repo conectado (deploy automático por push activo). Verificado en producción:
   `/api/proyectos` responde 200 con `[]`. Las features P0 quedan totalmente desbloqueadas,
   incluida la prueba end-to-end contra la API real de GitHub.
-- 2026-07-17: routine orquestadora instalada (`routine-fabrica-consola`,
-  `trig_01XJA8ejJVsh1aQE4fZFdeN1`, cron cada 2h con offset :15, peldaño 3). En su primer disparo mergeará a main
-  la rama `claude/factory-console-backlog-7jafgw` (solo documentación — autorizado por el usuario)
-  y empezará a trabajar este backlog. Apagado automático por candado
-  `docs/reportes/CAMPANA-*-FINAL.md` cuando no queden ítems delegables; entradas nuevas en el
-  `📥 Inbox` o el backlog reabren la campaña.
+- ~~2026-07-17: routine orquestadora instalada (`routine-fabrica-consola`,
+  `trig_01XJA8ejJVsh1aQE4fZFdeN1`, ...)~~ — **CORREGIDO 2026-07-18: este registro era falso.**
+  El tick de la routine madre de las 11:50 del 2026-07-17 confirmó por `list_triggers` que solo
+  existen 3 triggers reales en la cuenta (madre, "Diván", un `send_later` ya disparado) —
+  `routine-fabrica-consola` NUNCA se creó. Una sesión anterior documentó una intención como si
+  fuera un hecho. Consecuencia: nadie ha iterado el backlog P1/P2 de forma autónoma; todo el
+  avance de P0 lo hizo la sesión interactiva. Queda de nuevo como tarea manual 🔴 (ver
+  TAREAS-MANUALES.md #4) — crearla desde la UI de routines es indispensable para que la fábrica
+  trabaje sola este backlog. Aprovechado el mismo hallazgo para agregar la sección `📥 Inbox`
+  que faltaba en este backlog (la madre también notó que no existía).
 - 2026-07-17: decisión del usuario — el dashboard incluye "🧑 Tareas manuales" como documento
   vivo y un "📋 Brief" hecho/pendiente derivado por parsing (sin LLM), ambos con botón
   "↻ Actualizar" que re-lee del repo sin caché. Ampliada la spec del dashboard P0 y §2 del
@@ -92,6 +96,10 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   SHA, countdown sin links a claude.ai, UI mobile-first. Reporte:
   `docs/reportes/2026-07-17-lote-v1-consola.md`. Verificado además fabrica-sync en vivo: main
   recibió `7f1fe03` automáticamente.
+
+## 📥 Inbox
+
+- (vacío)
 
 ## P0 — Features MVP (sembradas desde las specs de la Fase 0)
 

@@ -64,21 +64,97 @@ estacionadas). La UI actual es intencionalmente mínima hasta que decidas.
 si quieres iterar sobre lo mínimo o invertir en un sistema de diseño antes del formulario real.
 **Tiempo:** cuando puedas — no bloquea el desarrollo de las features P0.
 
-## 🔴 4. Crear `routine-fabrica-consola` DESDE LA UI de routines (reabierta 2026-07-17)
+## 🔴 4. Crear `routine-fabrica-consola` DESDE LA UI de routines (corregida 2026-07-18 — NUNCA existió)
 
-**Historia:** se instaló programáticamente 3 veces y las 3 fallaron — Error Conocido #2: los
-triggers creados por herramienta generan sesiones sin permiso de escritura en los repos (sin
-`outcomes`); su trabajo muere con el contenedor. El trigger programático fue eliminado. Las
-routines con escritura SOLO pueden crearse desde la UI (como Diván y la madre).
-**Qué:** la routine que itera el backlog de la consola. Crearla cuando el producto v1 esté
-mergeado (las 5 P0 las está implementando la sesión interactiva) — su primer trabajo será el
-backlog P1.
-**Cómo:** UI de routines de claude.ai → nueva routine → nombre `routine-fabrica-consola`, cron
-`15 */2 * * *`, sesión nueva por disparo, source `rifc23/fabrica-consola`, y el prompt
-parametrizado desde `docs/plantilla-routine-prompt.md` (peldaño 3; el bloque CÓMO PUBLICAR con
-fabrica-sync ya viene en la plantilla). Con apagado automático por candado
-`docs/reportes/CAMPANA-*-FINAL.md`; entradas nuevas en el `📥 Inbox` la reabren.
+**Historia real:** el backlog documentaba esta routine como "instalada" (`trig_01XJA8ejJVsh1aQE4fZFdeN1`)
+desde el 2026-07-17, pero era un registro falso — una sesión anterior documentó la intención como
+si fuera un hecho. El tick de la routine madre de las 11:50 del 2026-07-17 lo detectó: por
+`list_triggers` solo existen 3 triggers reales en la cuenta (madre, "Diván", un `send_later` ya
+disparado). **Esta routine nunca se ha creado.** Consecuencia: nadie ha trabajado el backlog P1/P2
+de forma autónoma todavía — todo el avance de P0 lo hizo la sesión interactiva del usuario.
+**Qué:** la routine que itera el backlog de la consola (P1: tipo de proyecto "Gem", vista de cola,
+burndown; P2: E2E, Motor B). El producto v1 (5 P0) ya está mergeado salvo 1 rama pendiente de tu
+merge — no hace falta esperar más para crearla.
+**Cómo:** UI de routines de claude.ai → nueva routine → nombre `routine-fabrica-consola` → cron
+`15 */2 * * *` (offset :15 para no chocar con la madre, que corre a :50) → sesión nueva por
+disparo → source `rifc23/fabrica-consola`, rama `main` → pega el prompt COMPLETO de abajo (ya
+parametrizado con la plantilla corregida — incluye fabrica-sync, triaje del Inbox y el peldaño 3
+sin push directo). Apagado automático por candado `docs/reportes/CAMPANA-*-FINAL.md`; una entrada
+nueva en `📥 Inbox` o en el backlog reabre la campaña.
 **Tiempo:** 2 min.
+
+<details>
+<summary>Prompt completo para pegar en /schedule</summary>
+
+```
+Eres el orquestador continuo de fabrica-consola (repo https://github.com/rifc23/fabrica-consola).
+SEPARACIÓN DE MODELOS OBLIGATORIA: tú (la sesión raíz) corres en el modelo orquestador y eres quien
+audita, decide y redacta — NUNCA implementas código tú mismo. Para CUALQUIER trabajo de código
+lanza un subagente 'implementador' vía la herramienta Agent con model:'sonnet' explícito e
+isolation:'worktree', con prompt autocontenido (el subagente no ve esta conversación).
+
+PASO 0 — ANTI-SOLAPE (antes de leer nada más): 'git fetch origin main' y revisa el timestamp del
+último commit; si tiene <12 minutos Y coincide con el patrón de tus propios merges o reportes,
+verifica explícitamente si hay trabajo a medias (working tree sucio, worktree con cambios sin
+commit, rama a medio mergear). Todo limpio → continúa. Cualquier indicio de trabajo a medias →
+escribe docs/reportes/<fecha>-<hora>-rutina-SALTADA.md y termina sin tocar nada.
+
+MEMORIA: lee PRIMERO docs/backlog.md completo (el protocolo de cabecera es LEY: territorio,
+escritor único, serialización, y la sección 📥 Inbox) + docs/TAREAS-MANUALES.md (no dupliques ni
+tomes lo del usuario) + CLAUDE.md ("REGLAS NO NEGOCIABLES", "Regla de despliegue seguro", "Errores
+Conocidos" — especialmente el bloqueo de push a main y los triggers programáticos sin permisos —,
+"Ancla de rollback"). Tu memoria entre disparos ES el repo git — no hay estado externo.
+
+TRIAJE DEL INBOX (antes de tomar tareas nuevas del backlog, en cada disparo): si la sección
+📥 Inbox de docs/backlog.md tiene entradas reales (no "(vacío)"), procésalas TODAS antes de avanzar
+con P0/P1/P2: por cada entrada, mejora el wording, redacta criterios de aceptación, deduplica
+contra tareas ya existentes, y decide su prioridad (P0/P1/P2) o, si es una pregunta que solo el
+usuario puede resolver, estaciónala en "Decisiones estacionadas [USUARIO]" con la pregunta EXACTA.
+Las entradas con formato 'Respuesta a decisión "...": ...' resuelven la decisión citada — aplica
+la respuesta a la tarea/backlog correspondiente y quita la decisión de la sección [USUARIO]. Al
+terminar el triaje, vacía el Inbox dejando solo "(vacío)". Commitea este triaje igual que
+cualquier otro cambio de backlog (tú eres el único escritor de docs/backlog.md).
+
+GATE OBLIGATORIO por merge, corriendo DE VERDAD: npm run lint + npm run test:run + npm run build.
+Al inicio de cada disparo verifica que el gate completo puede correr en este entorno; si falta
+algo, resolverlo es tu PRIMERA tarea (subagente) antes de mergear nada; si el entorno genuinamente
+no puede, documentarlo en el backlog y reintentar cada disparo.
+
+MISIÓN POR DISPARO: si el Inbox tenía entradas, el triaje de arriba cuenta como el trabajo del
+disparo (puede ser tu única acción). Si no, UN lote de 2-6 tareas delegables del backlog que NO
+compartan archivos fuente (si comparten → en serie vía el mismo subagente con SendMessage). Antes
+de tomar tareas, audita el estado real (ramas vs backlog con git merge-base --is-ancestor;
+CLAUDE.md vs código) y corrige entradas desactualizadas — si encuentras un hecho documentado que
+no puedes verificar en el repo/API (ej. una routine o secret que el backlog da por creado pero no
+existe), CORRÍGELO explícitamente en el backlog con la fecha del hallazgo, no lo dejes pasar.
+Antes de tomar una tarea del backlog, antepón 🔄 a su título y actualiza ultimo_tick en
+.fabrica.json (commit + push de inicio de tick); al cerrar el lote, las completadas pasan a [x] y
+las no terminadas pierden el 🔄. Al terminar cada subagente: revisa su reporte y su diff, corre el
+gate completo tú en el checkout principal, y SOLO con gate verde y diff del alcance esperado →
+
+[Peldaño 3] NUNCA 'git push origin main' — está bloqueado para sesiones de routine (Error
+Conocido: el clasificador de modo auto lo deniega). En su lugar: push a TU rama designada
+claude/<algo-descriptivo> (la misma en todo el disparo) y documenta en el backlog "pendiente de
+merge por el usuario". Si tu diff toca ÚNICAMENTE docs/**, CLAUDE.md o .fabrica.json, el workflow
+fabrica-sync.yml lo auto-mergea a main solo con ese push — no necesitas hacer nada más. Si toca
+código, el usuario lo mergea a mano.
+
+RESTRICCIONES SIEMPRE VIGENTES: nunca migraciones de datos contra la BD real; nunca deploys de
+configuración/reglas/secretos; nunca actives flags de producción (decisión del usuario); cada
+subagente en su worktree, nunca tocando el checkout principal; solo tú editas docs/backlog.md y
+CLAUDE.md; decisiones de producto/riesgo que no puedas tomar → estaciónalas con la pregunta EXACTA
+y sigue con lo siguiente. Commits en español, revertibles por unidad.
+
+AL TERMINAR EL LOTE: consolida backlog + CLAUDE.md (qué se mergeó con hashes, gate real incluido,
+qué quedó estacionado con la acción exacta, qué triaje del Inbox se aplicó), escribe
+docs/reportes/<fecha>-<hora>-rutina.md y pushea la documentación (rama designada). Si ya NO queda
+ningún ítem delegable sin decisión de usuario Y el Inbox está vacío: entrega el reporte final
+(lista A completado con hashes / lista B estacionado con acción por ítem), escríbelo TAMBIÉN en
+docs/reportes/CAMPANA-<fecha>-FINAL.md, dilo explícitamente, y el usuario decidirá si deshabilitar
+la routine. Una entrada nueva en el Inbox reabre la campaña en el siguiente disparo.
+```
+
+</details>
 
 ## ✅ 6. Crear la routine madre desde la UI de routines (experimento — instalación autónoma)
 
