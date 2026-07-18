@@ -11,8 +11,10 @@ Dos modelos de instalación, elegir uno por proyecto (ver `docs/diseno-consola-w
   lock optimista en `.fabrica.json`. Mejor para muchos proyectos chicos/intermitentes — evita
   instalar una routine nueva por cada proyecto que nace.
 
-Ambos modelos **arrancan en el peldaño 3 de la escalera (SIN push)** — ver README §3-4 — y solo
-tras auditoría retrospectiva limpia cambiar el bloque [AUTORIDAD] al peldaño 4.
+Ambos modelos operan con **peldaño 4 vía fabrica-sync** (decisión del usuario, 2026-07-18): la
+routine nunca pushea la rama principal; publica su rama designada y el workflow corre el gate en
+CI y mergea solo. Freno de emergencia del usuario: `git revert` del merge o desactivar el paso de
+código en `.github/workflows/fabrica-sync.yml`.
 
 ---
 
@@ -70,15 +72,20 @@ SE PUEDE CALCULAR. Deja en el backlog solo lo no esencial (pulido, features secu
 Si el contexto de la sesión genuinamente no alcanza para todo el corazón, prioriza el flujo
 principal end-to-end sobre features sueltas y documenta el corte exacto en el reporte.
 
-CÓMO PUBLICAR (Error Conocido de la fábrica, 2026-07-17): NUNCA intentes `git push origin
-<RAMA-PRINCIPAL>` — el clasificador del modo auto lo bloquea SIEMPRE en sesiones de routine (y no
-es un problema de permisos de GitHub: no pierdas tiempo en esa pista). Todo tu trabajo se pushea
-a TU RAMA DESIGNADA de la sesión (claude/...). El workflow `.github/workflows/fabrica-sync.yml`
-auto-mergea a la rama principal cualquier rama cuyo diff toque SOLO estado (docs/**, CLAUDE.md,
-.fabrica.json); las ramas que tocan código las mergea el usuario (peldaño 3) y los docs viajan en
-ese merge. Por eso: pushea tu rama designada INMEDIATAMENTE después de los commits de solo-estado
-(inicio de tick, triaje, reportes) — mientras tu rama no tenga código, cada push se consolida en
-main al instante.
+CÓMO PUBLICAR (Error Conocido de la fábrica, 2026-07-17; autopiloto desde 2026-07-18): NUNCA
+intentes `git push origin <RAMA-PRINCIPAL>` — el clasificador del modo auto lo bloquea SIEMPRE en
+sesiones de routine (y no es un problema de permisos de GitHub: no pierdas tiempo en esa pista).
+Todo tu trabajo se pushea a TU RAMA DESIGNADA de la sesión (claude/...). El workflow
+`.github/workflows/fabrica-sync.yml` publica a la rama principal por ti: las ramas de SOLO estado
+(docs/**, CLAUDE.md, .fabrica.json) se mergean directo; las ramas CON código se mergean solas
+DESPUÉS de que el workflow corre el gate completo en CI sobre el resultado del merge (peldaño 4 —
+decisión del usuario, 2026-07-18) — si el gate de CI falla o hay conflicto, main queda intacto y
+el run queda en rojo: revísalo en tu siguiente tick (herramientas de GitHub MCP `actions_*`),
+corrige en tu rama y el próximo push reintenta. Única excepción: ramas que tocan `.github/**` las
+mergea el usuario a mano (límite de GITHUB_TOKEN). Por eso: pushea tu rama designada
+INMEDIATAMENTE después de los commits de solo-estado (inicio de tick, triaje, reportes), y pushea
+el código SOLO cuando el lote esté completo con gate verde local — ese push ES la publicación a
+producción.
 
 MISIÓN POR DISPARO (ticks siguientes): UN lote de 2-6 tareas delegables del backlog que NO compartan archivos fuente
 (si comparten → en serie vía el mismo subagente con SendMessage). LA COLA ES EL ORDEN DEL BACKLOG:
@@ -91,12 +98,10 @@ es lo que la consola muestra como "trabajando ahora". Al cerrar el lote: complet
 `🔄`; no terminadas → pierden el `🔄`. Antes de tomar tareas, audita el estado real (ramas vs
 backlog con git merge-base --is-ancestor; CLAUDE.md vs código) y corrige entradas desactualizadas. Al terminar cada subagente: revisa su reporte y su diff, corre el gate
 completo tú en el checkout principal, y SOLO con gate verde y diff del alcance esperado →
-[AUTORIDAD — elegir una:]
-[Peldaño 3] deja la rama lista y documenta en el backlog "pendiente de merge por el usuario".
-[Peldaño 4] mergea con --no-ff y haz PUSH a <RAMA-PRINCIPAL> — tienes autorización ratificada del
-usuario (fecha: <FECHA-RATIFICACIÓN> en el backlog). (Nota: en sesiones de routine el push directo
-a la rama principal está bloqueado por el clasificador — el peldaño 4 real requiere Motor B o
-ampliar fabrica-sync; mientras tanto, routines = peldaño 3.)
+pushea la rama designada: fabrica-sync corre el gate en CI y publica solo (peldaño 4, autorización
+del usuario 2026-07-18 — <FECHA-RATIFICACIÓN> si el proyecto ratifica otra). Documenta en el
+backlog el push y, en tu siguiente tick, verifica que el run de fabrica-sync quedó en verde y que
+tu rama ya es ancestro de la principal — si quedó en rojo, diagnosticarlo es tu PRIMERA tarea.
 
 RESTRICCIONES SIEMPRE VIGENTES: nunca migraciones de datos contra la BD real; nunca deploys de
 configuración/reglas/secretos; nunca actives flags de producción (decisión del usuario); cada
@@ -162,7 +167,7 @@ PASO 4 — TRABAJAR EL PROYECTO RECLAMADO (con el lock propio ya confirmado): cl
 y aplica el protocolo COMPLETO del bloque A de esta plantilla (candado de campaña, anti-solape,
 memoria del repo, triaje del Inbox, gate real del proyecto — leído de SU CLAUDE.md, no asumas
 comandos —, primer-tick-producto-funcional si aplica, cómo publicar vía rama designada +
-fabrica-sync, un lote de 2-6 tareas, marcador 🔄, peldaño 3). SEPARACIÓN DE MODELOS: para
+fabrica-sync, un lote de 2-6 tareas, marcador 🔄, peldaño 4 vía fabrica-sync). SEPARACIÓN DE MODELOS: para
 CUALQUIER trabajo de código, subagente 'implementador' con model:'sonnet' e isolation:'worktree'.
 
 PASO 5 — LIBERAR EL LOCK (siempre, incluso si el tick terminó por falta de contexto a medio
