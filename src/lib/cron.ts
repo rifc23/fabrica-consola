@@ -110,6 +110,43 @@ export function proximoDespachoEfectivo(
   return { fecha, minutos };
 }
 
+const COMODIN_TOTAL = (c: CronExpresion) => c.diaMes === "*" && c.mes === "*" && c.diaSemana === "*";
+
+/**
+ * Deriva el intervalo TÍPICO (en minutos) de una `cadencia_cron` simple de la fábrica — usado
+ * para la espera estimada por posición en la cola (`ceil(posicion/4) × cadencia`, ver §2.2 del
+ * diseño). Solo reconoce los patrones que de hecho genera `generarCadenciaEscalonada` (minuto
+ * fijo + paso en horas con notación asterisco-barra-N, minuto fijo + hora fija diaria, minuto
+ * fijo cada hora, paso asterisco-barra-N en minutos) — cualquier otra forma (rangos, listas,
+ * día/mes específico…) devuelve `null` para que el caller muestre "—" en vez de inventar un
+ * número.
+ */
+export function derivarCadenciaMinutos(expr: string): number | null {
+  let cron: CronExpresion;
+  try {
+    cron = parsearCron(expr);
+  } catch {
+    return null;
+  }
+  if (!COMODIN_TOTAL(cron)) return null;
+
+  const minutoEsPaso = cron.minuto.match(/^\*\/(\d+)$/);
+  const minutoEsFijo = /^\d+$/.test(cron.minuto);
+  const horaEsPaso = cron.hora.match(/^\*\/(\d+)$/);
+  const horaEsFija = /^\d+$/.test(cron.hora);
+
+  // "*/N * * * *" — cada N minutos.
+  if (minutoEsPaso && cron.hora === "*") return Number(minutoEsPaso[1]);
+  // "M */N * * *" — cada N horas con offset de minuto fijo.
+  if (minutoEsFijo && horaEsPaso) return Number(horaEsPaso[1]) * 60;
+  // "M * * * *" — cada hora en punto de minuto M.
+  if (minutoEsFijo && cron.hora === "*") return 60;
+  // "M H * * *" — una vez al día.
+  if (minutoEsFijo && horaEsFija) return 24 * 60;
+
+  return null;
+}
+
 /**
  * Genera la cadencia cron de un proyecto nuevo con offset de minutos escalonado (0/15/30/45,
  * rotando por índice de proyecto) para que N routines no se disparen todas a la misma hora

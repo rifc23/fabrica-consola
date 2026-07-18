@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { obtenerProyectos, leerArchivo, listarArchivosDirectorio } from "@/lib/github";
-import { calcularProgreso, extraerDecisiones } from "@/lib/backlog";
+import { calcularProgreso, extraerDecisiones, obtenerColaPendientes } from "@/lib/backlog";
 import { derivarBrief, esperaEstimadaTicks } from "@/lib/brief";
 import { renderMarkdownSanitizado } from "@/lib/markdown";
 import { parametrizarPromptRoutine } from "@/lib/routine-prompt";
@@ -10,6 +10,7 @@ import NuevaTarea from "@/components/NuevaTarea";
 import EliminarProyecto from "@/components/EliminarProyecto";
 import DecisionCard from "@/components/DecisionCard";
 import CopiarBoton from "@/components/CopiarBoton";
+import ColaProyecto from "@/components/ColaProyecto";
 import styles from "./dashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +51,7 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
   const progreso = calcularProgreso(backlogMd);
   const decisiones = extraerDecisiones(backlogMd);
   const brief = derivarBrief(backlogMd);
+  const colaPendientes = obtenerColaPendientes(backlogMd);
 
   const nombreReporteReciente = nombresReportes
     .filter((n) => n.endsWith(".md"))
@@ -157,6 +159,15 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
           ))}
           {progreso.items.length === 0 && <li>Sin tareas en el backlog todavía.</li>}
         </ul>
+      </section>
+
+      <section className={styles.seccion} aria-labelledby="titulo-cola">
+        <h2 id="titulo-cola">🕐 Cola y tiempos</h2>
+        <ColaProyecto
+          cola={colaPendientes}
+          cadenciaCron={manifest?.cadencia_cron}
+          ultimoTick={manifest?.ultimo_tick}
+        />
       </section>
 
       <section className={styles.seccion} aria-labelledby="titulo-decisiones">
