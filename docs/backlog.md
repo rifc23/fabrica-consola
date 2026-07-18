@@ -53,10 +53,12 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   existen 3 triggers reales en la cuenta (madre, "Diván", un `send_later` ya disparado) —
   `routine-fabrica-consola` NUNCA se creó. Una sesión anterior documentó una intención como si
   fuera un hecho. Consecuencia: nadie ha iterado el backlog P1/P2 de forma autónoma; todo el
-  avance de P0 lo hizo la sesión interactiva. Queda de nuevo como tarea manual 🔴 (ver
-  TAREAS-MANUALES.md #4) — crearla desde la UI de routines es indispensable para que la fábrica
-  trabaje sola este backlog. Aprovechado el mismo hallazgo para agregar la sección `📥 Inbox`
-  que faltaba en este backlog (la madre también notó que no existía).
+  avance de P0 lo hizo la sesión interactiva. Aprovechado el mismo hallazgo para agregar la
+  sección `📥 Inbox` que faltaba en este backlog (la madre también notó que no existía).
+- 2026-07-18: `routine-fabrica-consola` creada de verdad vía `/schedule`
+  (`trig_01NduNpiSB2NsJNuCPxmpQQp`, cron `15 */2 * * *`, peldaño 3, conector Claude_Code_Remote).
+  Primer disparo: 06:15 UTC del mismo día. A partir de su primer tick con reporte en
+  `docs/reportes/`, el backlog P1 (Gems, cola/tiempos, burndown) puede avanzar de forma autónoma.
 - 2026-07-17: decisión del usuario — el dashboard incluye "🧑 Tareas manuales" como documento
   vivo y un "📋 Brief" hecho/pendiente derivado por parsing (sin LLM), ambos con botón
   "↻ Actualizar" que re-lee del repo sin caché. Ampliada la spec del dashboard P0 y §2 del

@@ -64,24 +64,20 @@ estacionadas). La UI actual es intencionalmente mínima hasta que decidas.
 si quieres iterar sobre lo mínimo o invertir en un sistema de diseño antes del formulario real.
 **Tiempo:** cuando puedas — no bloquea el desarrollo de las features P0.
 
-## 🔴 4. Crear `routine-fabrica-consola` DESDE LA UI de routines (corregida 2026-07-18 — NUNCA existió)
+## ✅ 4. Crear `routine-fabrica-consola` (corregido 2026-07-18 — creada de verdad vía API)
 
-**Historia real:** el backlog documentaba esta routine como "instalada" (`trig_01XJA8ejJVsh1aQE4fZFdeN1`)
-desde el 2026-07-17, pero era un registro falso — una sesión anterior documentó la intención como
-si fuera un hecho. El tick de la routine madre de las 11:50 del 2026-07-17 lo detectó: por
-`list_triggers` solo existen 3 triggers reales en la cuenta (madre, "Diván", un `send_later` ya
-disparado). **Esta routine nunca se ha creado.** Consecuencia: nadie ha trabajado el backlog P1/P2
-de forma autónoma todavía — todo el avance de P0 lo hizo la sesión interactiva del usuario.
-**Qué:** la routine que itera el backlog de la consola (P1: tipo de proyecto "Gem", vista de cola,
-burndown; P2: E2E, Motor B). El producto v1 (5 P0) ya está mergeado salvo 1 rama pendiente de tu
-merge — no hace falta esperar más para crearla.
-**Cómo:** UI de routines de claude.ai → nueva routine → nombre `routine-fabrica-consola` → cron
-`15 */2 * * *` (offset :15 para no chocar con la madre, que corre a :50) → sesión nueva por
-disparo → source `rifc23/fabrica-consola`, rama `main` → pega el prompt COMPLETO de abajo (ya
-parametrizado con la plantilla corregida — incluye fabrica-sync, triaje del Inbox y el peldaño 3
-sin push directo). Apagado automático por candado `docs/reportes/CAMPANA-*-FINAL.md`; una entrada
-nueva en `📥 Inbox` o en el backlog reabre la campaña.
-**Tiempo:** 2 min.
+**Completada 2026-07-18:** creada vía `/schedule` (API `RemoteTrigger`, no la UI manual — la API
+sí puede crear triggers con escritura cuando el usuario la invoca interactivamente desde Claude
+Code, a diferencia de `create_trigger` llamado por OTRA routine sin supervisión, que es lo que
+falló en el Error Conocido #2). Trigger real: `trig_01NduNpiSB2NsJNuCPxmpQQp`, cron `15 */2 * * *`,
+modelo `claude-sonnet-5`, conector `Claude_Code_Remote` adjunto automáticamente. Primer disparo:
+2026-07-18 06:15 UTC. URL: https://claude.ai/code/routines/trig_01NduNpiSB2NsJNuCPxmpQQp
+
+**Historia del error previo:** el backlog había documentado esta routine como "instalada"
+(`trig_01XJA8ejJVsh1aQE4fZFdeN1`) desde el 2026-07-17, pero era un registro falso — una sesión
+anterior documentó la intención como si fuera un hecho. El tick de la routine madre de las 11:50
+del 2026-07-17 lo detectó por `list_triggers`. Verificar en su primer tick real (06:15 UTC) que
+deja reporte en `docs/reportes/` y actualiza `.fabrica.json` de este repo si aplica.
 
 <details>
 <summary>Prompt completo para pegar en /schedule</summary>
