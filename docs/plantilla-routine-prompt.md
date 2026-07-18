@@ -66,16 +66,49 @@ cada disparo verifica que el gate completo puede correr en este entorno; si falt
 es tu PRIMERA tarea (subagente) antes de mergear nada; si el entorno genuinamente no puede,
 documentarlo en el backlog y reintentar cada disparo.
 
+EXPANSIÓN DEL REQUERIMIENTO ANTES DE IMPLEMENTAR (decisión del usuario, 2026-07-18 — aplica a TODA
+tarea que tomes, no solo al primer tick): las features que llegan del formulario o del Inbox son
+texto libre del usuario, a veces muy corto ("una calculadora con 20 dígitos y un botón de
+borrar") — tu trabajo NO es satisfacer la letra literal, es entender la INTENCIÓN detrás y
+completar lo que cualquier persona razonable asumiría incluido, sin que el usuario tenga que
+deletrearlo. Antes de escribir una sola línea de código (o de instruir al subagente
+'implementador'), para cada tarea del lote:
+1. Lee `docs/SPECS.md` completo (el objetivo original del proyecto, no solo el ítem aislado del
+   backlog) — el ítem P0 vive DENTRO de ese objetivo, nunca en el vacío. Un "botón de borrar" en
+   un proyecto cuyo objetivo es "Crea una calculadora" implica TODA la funcionalidad mínima de
+   una calculadora (operaciones aritméticas básicas +−×÷, mostrar resultado), aunque el texto de
+   la feature no mencione "suma" ni "resta" — eso NO es agregar alcance no pedido, es completar
+   lo que la palabra "calculadora" ya prometía. Entregar solo la interfaz del botón sin
+   operaciones sería satisfacer la letra e incumplir la intención.
+2. Redacta TÚ MISMO (antes de delegar al subagente) una lista corta de criterios de aceptación
+   concretos que cubran esa intención completa — el mismo ejercicio que ya haces en el TRIAJE DEL
+   INBOX, aplicado también a las features del formulario que nunca pasaron por ahí. Si el texto
+   original menciona algo ambiguo o específico del dominio (ej. "reglas de paréntesis" en una
+   calculadora — ¿anidados? ¿con qué precedencia?), resuélvelo con la interpretación estándar más
+   común del dominio (paréntesis anidados con precedencia matemática normal) en vez de preguntar
+   o de omitirlo — solo estaciona una pregunta a `[USUARIO]` si la ambigüedad es genuinamente de
+   PRODUCTO (ej. "¿debe soportar números negativos?" cuando el objetivo no lo aclara y cambia el
+   diseño de forma sustancial), nunca por pereza de decidir un detalle técnico estándar.
+3. Dale esos criterios explícitos al subagente 'implementador' en su prompt — nunca le pases el
+   texto crudo del usuario esperando que él haga la expansión; esa interpretación es TUYA, el
+   subagente solo ejecuta.
+4. Límite: expandir la intención NO es agregar features que el usuario no pidió ni implicó (ej.
+   historial de operaciones, temas visuales, exportar a PDF) — eso sigue siendo gold-plating y va
+   al backlog como sugerencia P1/P2, nunca al lote actual sin que el usuario lo haya pedido.
+
 PRIMER TICK = PRODUCTO FUNCIONAL (regla de la fábrica, decisión del usuario 2026-07-17): si
 docs/reportes/ aún NO contiene ningún reporte de rutina (*-rutina.md), este es el primer disparo
 con trabajo del proyecto y tu misión NO es un lote incremental — es entregar la IDEA PRINCIPAL de
-las specs funcionando de punta a punta. Toma TODAS las features P0 que constituyen el corazón del
+las specs funcionando de punta a punta (con la intención YA EXPANDIDA del paso anterior, no la
+letra literal del formulario). Toma TODAS las features P0 que constituyen el corazón del
 producto (en serie vía el mismo subagente donde compartan archivos), monta el esqueleto del stack
 si aún falta, y cierra el disparo con una rama (o la rama principal, según tu autoridad) cuyo
 preview muestre un producto USABLE: si el proyecto es una calculadora, al final de este disparo
-SE PUEDE CALCULAR. Deja en el backlog solo lo no esencial (pulido, features secundarias, deuda).
-Si el contexto de la sesión genuinamente no alcanza para todo el corazón, prioriza el flujo
-principal end-to-end sobre features sueltas y documenta el corte exacto en el reporte.
+SE PUEDE CALCULAR DE VERDAD (sumar, restar, multiplicar, dividir, paréntesis) — no solo ver un
+display con un botón de borrar. Deja en el backlog solo lo no esencial (pulido, features
+secundarias, deuda). Si el contexto de la sesión genuinamente no alcanza para todo el corazón,
+prioriza el flujo principal end-to-end sobre features sueltas y documenta el corte exacto en el
+reporte.
 
 CÓMO PUBLICAR (Error Conocido de la fábrica, 2026-07-17; autopiloto desde 2026-07-18): NUNCA
 intentes `git push origin <RAMA-PRINCIPAL>` — el clasificador del modo auto lo bloquea SIEMPRE en
@@ -153,10 +186,12 @@ corrida).
 
 PASO 2 — TRABAJAR EL PROYECTO ASIGNADO: clona ese repo aparte y aplica el protocolo COMPLETO del
 bloque A de esta plantilla (candado de campaña, anti-solape, memoria del repo, triaje del Inbox,
-gate real del proyecto — leído de SU CLAUDE.md, no asumas comandos —, primer-tick-producto-
-funcional si aplica, cómo publicar vía rama designada + fabrica-sync, un lote de 2-6 tareas,
-marcador 🔄, peldaño 4 vía fabrica-sync). SEPARACIÓN DE MODELOS: para CUALQUIER trabajo de código,
-subagente 'implementador' con model:'sonnet' e isolation:'worktree'.
+EXPANSIÓN DEL REQUERIMIENTO antes de implementar — lee docs/SPECS.md completo y completa la
+intención de cada feature, nunca solo su letra literal —, gate real del proyecto leído de SU
+CLAUDE.md (no asumas comandos), primer-tick-producto-funcional si aplica, cómo publicar vía rama
+designada + fabrica-sync, un lote de 2-6 tareas, marcador 🔄, peldaño 4 vía fabrica-sync).
+SEPARACIÓN DE MODELOS: para CUALQUIER trabajo de código, subagente 'implementador' con
+model:'sonnet' e isolation:'worktree'.
 
 PASO 3 — LIBERAR EL LOCK (siempre, incluso si el tick terminó por falta de contexto a medio
 trabajo — nunca dejes el lock puesto, la despachadora depende de verlo libre para reasignar):
