@@ -12,6 +12,9 @@ import {
   escribirArchivo,
   actualizarArchivoConReintento,
   borrarArchivo,
+  historialCommitsArchivo,
+  muestrearUniforme,
+  obtenerHistorialArchivo,
 } from "./github";
 
 function jsonResponse(body: unknown, ok = true, status = 200) {
@@ -203,6 +206,24 @@ describe("leerArchivo", () => {
     const archivo = await leerArchivo("fake-token", "rifc23", "mi-calculadora", "no-existe.md", fetchMock);
     expect(archivo).toBeNull();
   });
+
+  it("agrega ?ref=<sha> a la URL cuando se pasa un ref (retro-compatible: sin ref, HEAD)", async () => {
+    const encoded = Buffer.from("# Backlog viejo", "utf-8").toString("base64");
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ content: encoded, encoding: "base64", sha: "sha-vieja" }));
+    const archivo = await leerArchivo(
+      "fake-token",
+      "rifc23",
+      "mi-calculadora",
+      "docs/backlog.md",
+      fetchMock,
+      "abc123",
+    );
+    expect(archivo?.contenido).toBe("# Backlog viejo");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.github.com/repos/rifc23/mi-calculadora/contents/docs/backlog.md?ref=abc123",
+      expect.any(Object),
+    );
+  });
 });
 
 describe("listarArchivosDirectorio", () => {
@@ -359,5 +380,101 @@ describe("borrarArchivo", () => {
       .mockResolvedValueOnce(jsonResponse({ content: Buffer.from("hola").toString("base64"), encoding: "base64", sha: "sha-actual" }))
       .mockResolvedValueOnce(jsonResponse({ message: "conflicto" }, false, 409));
     await expect(borrarArchivo("tok", "rifc23", "x", "y.ts", "chore: borra", fetchMock)).rejects.toThrow("409");
+  });
+});
+
+// Simula la API de GitHub: `shas` viene más reciente primero, así que el PRIMERO de la lista
+// recibe la fecha MÁS RECIENTE (igual que un historial real).
+function commitsResponse(shas: string[]) {
+  const n = shas.length;
+  return jsonResponse(
+    shas.map((sha, i) => ({
+      sha,
+      commit: { author: { date: `2026-07-${String(n - i).padStart(2, "0")}T10:00:00Z` } },
+    })),
+  );
+}
+
+describe("historialCommitsArchivo", () => {
+  it("devuelve los commits de una sola página (más reciente primero, como la API)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(commitsResponse(["c3", "c2", "c1"]));
+    const commits = await historialCommitsArchivo("tok", "rifc23", "mi-calculadora", "docs/backlog.md", fetchMock);
+    expect(commits).toEqual([
+      { sha: "c3", fecha: "2026-07-03T10:00:00Z" },
+      { sha: "c2", fecha: "2026-07-02T10:00:00Z" },
+      { sha: "c1", fecha: "2026-07-01T10:00:00Z" },
+    ]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("commits?path=docs%2Fbacklog.md"),
+      expect.any(Object),
+    );
+  });
+
+  it("pagina cuando hay 100+ commits (una página llena implica pedir la siguiente)", async () => {
+    const primeraPagina = Array.from({ length: 100 }, (_, i) => `c${i}`);
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("page=2")) return Promise.resolve(commitsResponse(["c100"]));
+      return Promise.resolve(commitsResponse(primeraPagina));
+    });
+    const commits = await historialCommitsArchivo("tok", "rifc23", "x", "docs/backlog.md", fetchMock);
+    expect(commits).toHaveLength(101);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("lanza si la API de GitHub responde con error", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}, false, 403));
+    await expect(historialCommitsArchivo("tok", "rifc23", "x", "docs/backlog.md", fetchMock)).rejects.toThrow("403");
+  });
+});
+
+describe("muestrearUniforme", () => {
+  it("con menos elementos que el máximo, los devuelve todos tal cual", () => {
+    const items = [1, 2, 3, 4, 5];
+    expect(muestrearUniforme(items, 30)).toEqual(items);
+  });
+
+  it("con más elementos que el máximo, muestrea uniformemente sin superar el máximo", () => {
+    const items = Array.from({ length: 100 }, (_, i) => i);
+    const muestra = muestrearUniforme(items, 30);
+    expect(muestra.length).toBeLessThanOrEqual(30);
+    expect(muestra.length).toBeGreaterThan(20); // "~30 distribuidos"
+    // Siempre incluye el primero y el último (cubre todo el rango, no solo los recientes).
+    expect(muestra[0]).toBe(0);
+    expect(muestra[muestra.length - 1]).toBe(99);
+    // Distribuido: no son solo los últimos 30.
+    expect(muestra.some((v) => v < 70)).toBe(true);
+  });
+});
+
+describe("obtenerHistorialArchivo", () => {
+  it("con 5 commits, pide el contenido de los 5 (menos que el máximo)", async () => {
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/commits")) return Promise.resolve(commitsResponse(["c5", "c4", "c3", "c2", "c1"]));
+      const encoded = Buffer.from("# Backlog\n- [ ] tarea\n", "utf-8").toString("base64");
+      return Promise.resolve(jsonResponse({ content: encoded, encoding: "base64", sha: "sha" }));
+    });
+    const puntos = await obtenerHistorialArchivo("tok", "rifc23", "mi-calculadora", "docs/backlog.md", fetchMock);
+    expect(puntos).toHaveLength(5);
+    // Orden cronológico: el commit más antiguo (fecha menor) primero.
+    expect(puntos[0].fecha < puntos[puntos.length - 1].fecha).toBe(true);
+    const llamadasContenido = fetchMock.mock.calls.filter((c) => (c[0] as string).includes("/contents/"));
+    expect(llamadasContenido).toHaveLength(5);
+  });
+
+  it("con 100 commits, muestrea a lo más 30 y nunca pide más contenidos que eso", async () => {
+    const shas = Array.from({ length: 100 }, (_, i) => `c${i}`);
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/commits")) {
+        // Una sola página llena; la siguiente página (real: vacía) evita el loop de paginación.
+        return Promise.resolve(url.includes("page=2") ? commitsResponse([]) : commitsResponse(shas));
+      }
+      const encoded = Buffer.from("# Backlog\n", "utf-8").toString("base64");
+      return Promise.resolve(jsonResponse({ content: encoded, encoding: "base64", sha: "sha" }));
+    });
+    const puntos = await obtenerHistorialArchivo("tok", "rifc23", "x", "docs/backlog.md", fetchMock);
+    expect(puntos.length).toBeLessThanOrEqual(30);
+    const llamadasContenido = fetchMock.mock.calls.filter((c) => (c[0] as string).includes("/contents/"));
+    expect(llamadasContenido.length).toBeLessThanOrEqual(30);
+    expect(llamadasContenido.length).toBe(puntos.length);
   });
 });

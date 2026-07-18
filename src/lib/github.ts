@@ -210,15 +210,24 @@ export interface ArchivoRepo {
   sha: string;
 }
 
-/** Lee un archivo de texto de un repo vía Contents API. Devuelve null si no existe (404). */
+/**
+ * Lee un archivo de texto de un repo vía Contents API. Devuelve null si no existe (404).
+ * `ref` es opcional (nuevo parámetro AL FINAL, tras `fetchImpl`, para no romper ninguna llamada
+ * posicional existente): sha/branch/tag a leer; sin él lee la default branch (HEAD), igual que
+ * antes. Usado por `obtenerHistorialArchivo` para leer el contenido en un commit puntual.
+ */
 export async function leerArchivo(
   token: string,
   owner: string,
   repo: string,
   path: string,
   fetchImpl: typeof fetch = fetch,
+  ref?: string,
 ): Promise<ArchivoRepo | null> {
-  const res = await fetchImpl(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+  const url = ref
+    ? `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(ref)}`
+    : `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+  const res = await fetchImpl(url, {
     headers: githubHeaders(token),
     cache: "no-store",
   } as RequestInit);
@@ -349,4 +358,97 @@ export async function actualizarArchivoConReintento(
     }
   }
   throw ultimoError instanceof Error ? ultimoError : new Error("No se pudo actualizar el archivo tras reintentos");
+}
+
+export interface CommitArchivo {
+  sha: string;
+  fecha: string;
+}
+
+/**
+ * `GET /repos/{owner}/{repo}/commits?path=...` paginado (100/página) — todos los commits que
+ * tocaron `path`, más reciente primero (orden nativo de la API de GitHub).
+ */
+export async function historialCommitsArchivo(
+  token: string,
+  owner: string,
+  repo: string,
+  path: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<CommitArchivo[]> {
+  const commits: CommitArchivo[] = [];
+  let page = 1;
+  for (;;) {
+    const res = await fetchImpl(
+      `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}&per_page=100&page=${page}`,
+      { headers: githubHeaders(token), cache: "no-store" } as RequestInit,
+    );
+    if (!res.ok) {
+      throw new Error(`GitHub API respondió ${res.status} listando el historial de ${path}`);
+    }
+    const data = (await res.json()) as Array<{
+      sha: string;
+      commit: { author?: { date?: string }; committer?: { date?: string } };
+    }>;
+    if (data.length === 0) break;
+    commits.push(
+      ...data.map((c) => ({ sha: c.sha, fecha: c.commit.author?.date ?? c.commit.committer?.date ?? "" })),
+    );
+    if (data.length < 100) break;
+    page += 1;
+  }
+  return commits;
+}
+
+const MAX_PUNTOS_HISTORIAL = 30;
+
+/**
+ * Muestrea `items` uniformemente a lo largo de su longitud, hasta `maxPuntos` elementos (incluye
+ * siempre el primero y el último). Si `items.length <= maxPuntos`, los devuelve todos tal cual.
+ * Pura, sin I/O — usada para no pedir el contenido de CADA commit de un historial largo.
+ */
+export function muestrearUniforme<T>(items: T[], maxPuntos: number): T[] {
+  if (items.length <= maxPuntos) return items;
+  if (maxPuntos <= 1) return items.slice(0, 1);
+  const indicesVistos = new Set<number>();
+  const resultado: T[] = [];
+  for (let i = 0; i < maxPuntos; i++) {
+    const idx = Math.round((i * (items.length - 1)) / (maxPuntos - 1));
+    if (!indicesVistos.has(idx)) {
+      indicesVistos.add(idx);
+      resultado.push(items[idx]);
+    }
+  }
+  return resultado;
+}
+
+export interface PuntoHistorialArchivo {
+  sha: string;
+  fecha: string;
+  contenidoMarkdown: string;
+}
+
+/**
+ * Serie histórica del contenido de `path`, lista para el burndown: pide el historial de commits
+ * que lo tocaron, lo muestrea uniformemente a lo más `maxPuntos` (evita 1 request por commit en
+ * repos con historial largo — máx ~30 por defecto) y lee el contenido del archivo en cada punto
+ * muestreado. Devuelve en orden CRONOLÓGICO (más antiguo primero), listo para graficar.
+ */
+export async function obtenerHistorialArchivo(
+  token: string,
+  owner: string,
+  repo: string,
+  path: string,
+  fetchImpl: typeof fetch = fetch,
+  maxPuntos: number = MAX_PUNTOS_HISTORIAL,
+): Promise<PuntoHistorialArchivo[]> {
+  const commits = await historialCommitsArchivo(token, owner, repo, path, fetchImpl);
+  const cronologico = [...commits].reverse();
+  const muestreados = muestrearUniforme(cronologico, maxPuntos);
+  return Promise.all(
+    muestreados.map(async (c) => {
+      const archivo = await leerArchivo(token, owner, repo, path, fetchImpl, c.sha);
+      return { sha: c.sha, fecha: c.fecha, contenidoMarkdown: archivo?.contenido ?? "" };
+    }),
+  );
 }

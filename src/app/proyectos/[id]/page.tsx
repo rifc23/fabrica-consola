@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-import { obtenerProyectos, leerArchivo, listarArchivosDirectorio } from "@/lib/github";
+import { obtenerProyectos, leerArchivo, listarArchivosDirectorio, obtenerHistorialArchivo } from "@/lib/github";
 import { calcularProgreso, extraerDecisiones } from "@/lib/backlog";
+import { calcularSerieBurndown } from "@/lib/burndown";
 import { derivarBrief, esperaEstimadaTicks } from "@/lib/brief";
 import { renderMarkdownSanitizado } from "@/lib/markdown";
 import { parametrizarPromptRoutine } from "@/lib/routine-prompt";
@@ -10,6 +11,7 @@ import NuevaTarea from "@/components/NuevaTarea";
 import EliminarProyecto from "@/components/EliminarProyecto";
 import DecisionCard from "@/components/DecisionCard";
 import CopiarBoton from "@/components/CopiarBoton";
+import Burndown from "@/components/Burndown";
 import styles from "./dashboard.module.css";
 
 export const dynamic = "force-dynamic";
@@ -40,16 +42,20 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
 
   const { owner, repo, htmlUrl, manifest } = proyecto;
 
-  const [backlogArchivo, tareasArchivo, nombresReportes] = await Promise.all([
+  const [backlogArchivo, tareasArchivo, nombresReportes, historialBacklog] = await Promise.all([
     leerArchivo(token, owner, repo, "docs/backlog.md"),
     leerArchivo(token, owner, repo, "docs/TAREAS-MANUALES.md"),
     listarArchivosDirectorio(token, owner, repo, "docs/reportes"),
+    // Historial de commits del backlog para el burndown — degrada a [] en vez de tumbar el
+    // dashboard si la API de historial falla (rate limit, etc.): es un "nice to have", no crítico.
+    obtenerHistorialArchivo(token, owner, repo, "docs/backlog.md").catch(() => []),
   ]);
 
   const backlogMd = backlogArchivo?.contenido ?? "";
   const progreso = calcularProgreso(backlogMd);
   const decisiones = extraerDecisiones(backlogMd);
   const brief = derivarBrief(backlogMd);
+  const serieBurndown = calcularSerieBurndown(historialBacklog);
 
   const nombreReporteReciente = nombresReportes
     .filter((n) => n.endsWith(".md"))
@@ -157,6 +163,14 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
           ))}
           {progreso.items.length === 0 && <li>Sin tareas en el backlog todavía.</li>}
         </ul>
+      </section>
+
+      <section className={styles.seccion} aria-labelledby="titulo-burndown">
+        <div className={styles.seccionCabecera}>
+          <h2 id="titulo-burndown">📉 Burndown del backlog</h2>
+          <BotonActualizar generadoEn={generadoEn} etiqueta="burndown" />
+        </div>
+        <Burndown serie={serieBurndown} />
       </section>
 
       <section className={styles.seccion} aria-labelledby="titulo-decisiones">
