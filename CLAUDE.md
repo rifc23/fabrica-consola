@@ -248,13 +248,20 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-18 20:15 UTC, octavo tick de
-  `routine-fabrica-consola`):** base `main` en `a3908c3` (fabrica-sync del tick 18:15: fix de la
-  sección `📥 Inbox` faltante en `docs/backlog.md` + esta misma ancla — ver fila anterior. Sin
-  cambios de producto desde el Motor A-pool completo: lock optimista, estado del pool en el
-  dashboard, pool como motor DEFAULT, routine madre v4 con despacho de emergencia, botón "Asignar
-  ahora", ciclo del pool a 1h — ver Decisiones Arquitectónicas). Gate en verde:
-  `npm run lint && npm run test:run && npm run build` → lint ✅, test:run **161/161** ✅,
-  build ✅ (Next.js 16.2.10 / Turbopack, Node v22.22.2). Este tick: sin ramas huérfanas (solo
-  `origin/main` en el remoto), trigger verificado sin discrepancias contra `list_triggers`, sin
-  trabajo P1/P2 nuevo delegable — mismo estado que `docs/reportes/CAMPANA-2026-07-18-FINAL.md`.
+- **Último estado bueno (verificado 2026-07-18 22:15 UTC, noveno tick de
+  `routine-fabrica-consola`):** base `main` en `893bcc4` (merge directo de la sesión interactiva:
+  "expansión del requerimiento antes de implementar" — regla nueva en
+  `docs/plantilla-routine-prompt.md` para que toda routine de proyecto expanda la intención del
+  dominio antes de delegar al `implementador`, ver Decisiones Arquitectónicas/Errores Conocidos).
+  Desde la ancla anterior (`a3908c3`, tick 18:15) se sumaron 3 merges directos de la sesión
+  interactiva sin fila propia en el Registro de trabajo hasta este tick: 2 fixes de creación de
+  proyectos (`1b84ae5` — `CLAUDE.md`/`docs/TAREAS-MANUALES.md` nacían con placeholders sin
+  rellenar + fix del filtro de "Último reporte"; `1daa877` — personalización extendida a los 7
+  agentes de `.claude/agents/`) y la decisión de expansión de requerimiento (`893bcc4`) —
+  corregido en `docs/backlog.md` § Registro de trabajo. Gate en verde:
+  `npm run lint && npm run test:run && npm run build` → lint ✅, test:run **168/168** ✅ (subieron
+  de 161 por los tests de los 2 fixes de personalización), build ✅ (Next.js 16.2.10 / Turbopack,
+  Node v22.22.2). Este tick: sin ramas huérfanas (solo `origin/main` en el remoto antes de crear
+  esta), sin trabajo a medias detectado en el anti-solape, sin trabajo P1/P2 nuevo delegable —
+  mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y Playwright
+  E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de proyecto).
