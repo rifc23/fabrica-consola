@@ -23,6 +23,7 @@ import {
   personalizarClaudeMd,
   personalizarTareasManuales,
   personalizarAgente,
+  descripcionRepoDesdeObjetivo,
   type FormularioProyectoValidado,
 } from "@/lib/formulario-proyecto";
 import {
@@ -75,7 +76,7 @@ async function ejecutarCreacion(
       templateRepo: TEMPLATE_REPO,
       owner: usuario.login,
       nombre: slug,
-      descripcion: body.objetivo.slice(0, 200),
+      descripcion: descripcionRepoDesdeObjetivo(body.objetivo),
       privado: body.visibilidad === "private",
     });
     owner = creado.owner;

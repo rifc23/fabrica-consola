@@ -11,6 +11,7 @@ import {
   personalizarClaudeMd,
   personalizarTareasManuales,
   personalizarAgente,
+  descripcionRepoDesdeObjetivo,
 } from "./formulario-proyecto";
 
 describe("slugificar", () => {
@@ -21,6 +22,31 @@ describe("slugificar", () => {
   it("recorta guiones al inicio/fin y usa un default si queda vacío", () => {
     expect(slugificar("   ")).toBe("proyecto");
     expect(slugificar("---")).toBe("proyecto");
+  });
+});
+
+describe("descripcionRepoDesdeObjetivo", () => {
+  it("reemplaza saltos de línea por espacios (bug 422 de GitHub 2026-07-19)", () => {
+    expect(descripcionRepoDesdeObjetivo("Línea uno\nLínea dos\r\nLínea tres")).toBe(
+      "Línea uno Línea dos Línea tres",
+    );
+  });
+
+  it("quita tabs y otros caracteres de control", () => {
+    expect(descripcionRepoDesdeObjetivo("Sumar\tRestar\x00\x7Frápido")).toBe("Sumar Restar rápido");
+  });
+
+  it("colapsa espacios múltiples resultantes y recorta extremos", () => {
+    expect(descripcionRepoDesdeObjetivo("  Hola   mundo  \n\n  ")).toBe("Hola mundo");
+  });
+
+  it("trunca a 200 caracteres igual que antes", () => {
+    const largo = "a".repeat(250);
+    expect(descripcionRepoDesdeObjetivo(largo)).toHaveLength(200);
+  });
+
+  it("deja intacto un objetivo de una sola línea sin caracteres de control", () => {
+    expect(descripcionRepoDesdeObjetivo("Sumar y restar rápido")).toBe("Sumar y restar rápido");
   });
 });
 
