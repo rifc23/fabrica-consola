@@ -271,19 +271,16 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-19 00:15 UTC, décimo tick de
-  `routine-fabrica-consola`):** base `main` en `21f0792` (merge de sincronización que combina el
-  cierre docs-only del tick 22:15 —`7e4764f`, auto-mergeado por `fabrica-sync`— con el fix directo
-  de la sesión interactiva `2b8e8dd`: `fabrica-sync.yml` usaba un email de autor sin cuenta de
-  GitHub real detrás y Vercel bloqueaba en silencio el deploy de los proyectos hijos, ver Errores
-  Conocidos). Desde la ancla anterior (`893bcc4`, tick 22:15) se sumó ese único merge directo sin
-  fila propia en el Registro de trabajo hasta este tick — corregido en `docs/backlog.md` §
-  Registro de trabajo (fila nueva del fix de email + fila del tick 22:15 corregida de "pendiente de
-  push" a "mergeado", ya que `7e4764f` confirma que sí se integró). Gate en verde:
-  `npm run lint && npm run test:run && npm run build` → lint ✅, test:run **168/168** ✅ (sin
-  cambio — el fix de email es YAML puro, sin cobertura de vitest), build ✅ (Next.js 16.2.10 /
+- **Último estado bueno (verificado 2026-07-19 02:15 UTC, undécimo tick de
+  `routine-fabrica-consola`):** base `main` en `9670efd` (merge de `fabrica-sync` que integra la
+  propia rama de documentación del tick anterior, `claude/rutina-2026-07-19-0015-auditoria` —
+  autoreferencial: el commit que fijaba la ancla anterior en `21f0792` pasó a formar parte de
+  `main` un paso después vía ese mismo push). Gate en verde: `npm run lint && npm run test:run &&
+  npm run build` → lint ✅, test:run **168/168** ✅ (sin cambio), build ✅ (Next.js 16.2.10 /
   Turbopack, Node v22.22.2). Este tick: sin ramas huérfanas (`git branch -r` solo devuelve
-  `origin/main`), sin trabajo a medias detectado en el anti-solape, Inbox `(vacío)` sin triaje, sin
-  trabajo P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario que ticks anteriores
-  (Refinado instantáneo y Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado
-  a un segundo tipo de proyecto).
+  `origin/main`), working tree limpio, sin trabajo a medias detectado en el anti-solape, Inbox
+  `(vacío)` sin triaje, sin trabajo P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario
+  que ticks anteriores (Refinado instantáneo y Playwright E2E estacionados, Motor B no es v1,
+  `tipo:"gem"` condicionado a un segundo tipo de proyecto). Corrección aplicada en
+  `docs/backlog.md` § Registro de trabajo: la fila del tick 00:15 UTC decía "pendiente de push"
+  pese a que ese mismo push ya se había auto-mergeado (`9670efd`) — actualizada a "mergeado".
