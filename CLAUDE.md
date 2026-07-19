@@ -271,16 +271,23 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-19 02:15 UTC, undécimo tick de
-  `routine-fabrica-consola`):** base `main` en `9670efd` (merge de `fabrica-sync` que integra la
-  propia rama de documentación del tick anterior, `claude/rutina-2026-07-19-0015-auditoria` —
-  autoreferencial: el commit que fijaba la ancla anterior en `21f0792` pasó a formar parte de
-  `main` un paso después vía ese mismo push). Gate en verde: `npm run lint && npm run test:run &&
-  npm run build` → lint ✅, test:run **168/168** ✅ (sin cambio), build ✅ (Next.js 16.2.10 /
-  Turbopack, Node v22.22.2). Este tick: sin ramas huérfanas (`git branch -r` solo devuelve
-  `origin/main`), working tree limpio, sin trabajo a medias detectado en el anti-solape, Inbox
-  `(vacío)` sin triaje, sin trabajo P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario
-  que ticks anteriores (Refinado instantáneo y Playwright E2E estacionados, Motor B no es v1,
-  `tipo:"gem"` condicionado a un segundo tipo de proyecto). Corrección aplicada en
-  `docs/backlog.md` § Registro de trabajo: la fila del tick 00:15 UTC decía "pendiente de push"
-  pese a que ese mismo push ya se había auto-mergeado (`9670efd`) — actualizada a "mergeado".
+- **Último estado bueno (verificado 2026-07-19 04:15 UTC, duodécimo tick de
+  `routine-fabrica-consola`):** base `main` en `a0366c1` (commit directo de la sesión interactiva
+  del usuario — `docs: plan del proxy central de IA (fabrica-ia-proxy) aprobado`, ver
+  `docs/plan-proxy-ia-central.md`; el propio documento aclara que no modifica CLAUDE.md/backlog/
+  código, solo agrega el plan — implementación es trabajo futuro con gobernanza manual, sin routine
+  automática, ver el documento y la fila nueva en `docs/backlog.md` § Registro de trabajo). Gate en
+  verde: `npm run lint && npm run test:run && npm run build` → lint ✅, test:run **168/168** ✅
+  (sin cambio), build ✅ (Next.js 16.2.10 / Turbopack, Node v22.22.2). Este tick: sin ramas
+  huérfanas (`git branch -r` solo devuelve `origin/main`), working tree limpio, sin trabajo a
+  medias detectado en el anti-solape (el último commit no coincidía con el patrón propio de la
+  routine — era doc de arquitectura de sesión interactiva —, así que se verificó igual que
+  cualquier commit ajeno reciente), Inbox `(vacío)` sin triaje, sin trabajo P1/P2 nuevo delegable —
+  mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y Playwright
+  E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de proyecto, y
+  ahora el proxy de IA — Paquetes 1 y 2 del plan — fuera del alcance autónomo de esta routine por
+  gobernanza explícita del usuario: infraestructura sensible mantenida a mano, sin CI-gate
+  reemplazando revisión humana todavía). Corrección aplicada en `docs/backlog.md` § Registro de
+  trabajo: (1) la fila del tick 02:15 UTC decía "pendiente de push", actualizada a "mergeado"
+  (`5f2f361`); (2) agregada la fila que faltaba para el commit `a0366c1` (plan del proxy de IA,
+  merge directo de sesión interactiva sin registro previo).
