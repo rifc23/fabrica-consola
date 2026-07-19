@@ -311,23 +311,18 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-19 12:15 UTC, decimosexto tick de
-  `routine-fabrica-consola`):** base `main` en `39bf9e4` (docs de la sesión interactiva del usuario:
-  `docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md`, ~10:52 UTC — ver hallazgo abajo — más el
-  merge de `fabrica-sync` del tick 10:15 UTC, `7ca19d2`/`e4f2a49`). Gate en verde: `npm run lint &&
-  npm run test:run && npm run build` → lint ✅, test:run **182/182** ✅ (sin cambio), build ✅
-  (Next.js 16.2.10 / Turbopack, Node v22.22.2). Este tick: `main` sin ramas/worktrees huérfanas
-  (`git branch -r` solo devuelve `origin/main`), working tree limpio; el commit más reciente
-  (`39bf9e4`, ~1h21min de antigüedad) es de la sesión interactiva del usuario, no un patrón propio
-  de esta routine → sin indicio de trabajo a medias, tick procedió con normalidad. Inbox `(vacío)`
-  sin triaje. **Hallazgo principal del tick:** `docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md`
-  (nuevo desde el tick anterior) documenta que `fire_trigger` no puede disparar NINGÚN trigger real
-  de la fábrica (todos creados vía UI/`http_api`, y un agente solo puede disparar triggers que él
-  mismo creó) — rompe el despacho instantáneo del PASO 4 (pool) y PASO 3 (dedicadas) de la routine
-  madre v4. Esta ancla y el § Decisiones Arquitectónicas / Errores Conocidos de arriba daban ese
-  despacho por funcional sin que nadie lo hubiera verificado tras el hallazgo — corregidos en este
-  tick (el `lock` sigue asignándose bien; el disparo instantáneo, no). Sin trabajo P1/P2 nuevo
+- **Último estado bueno (verificado 2026-07-19 14:15 UTC, decimoséptimo tick de
+  `routine-fabrica-consola`):** base `main` en `dfcc726` (merge de `fabrica-sync` del tick 12:15
+  UTC: `claude/rutina-2026-07-19-1215-auditoria`, solo docs/CLAUDE.md/manifest). Gate en verde:
+  `npm run lint && npm run test:run && npm run build` →
+  lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.10 / Turbopack, Node
+  v22.22.2). Este tick: `main` sin ramas/worktrees huérfanos (`git branch -r` solo devuelve
+  `origin/main`), working tree limpio; el commit más reciente (`dfcc726`, ~1h54min de antigüedad en
+  el momento del fetch) es el propio merge de `fabrica-sync` del tick anterior → sin indicio de
+  trabajo a medias, tick procedió con normalidad. Inbox `(vacío)` sin triaje. Único hallazgo: la
+  fila del tick 12:15 UTC en el Registro de trabajo de `docs/backlog.md` decía "pendiente de push"
+  pese a que `fabrica-sync` ya la había integrado en `dfcc726` — corregida. Sin trabajo P1/P2 nuevo
   delegable — mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y
   Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de
-  proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo, y ahora el mecanismo de reemplazo
-  de `fire_trigger` para el despacho instantáneo, que no es una tarea de código de este repo).
+  proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo, y el mecanismo de reemplazo de
+  `fire_trigger` para el despacho instantáneo, que sigue sin decisión del usuario).
