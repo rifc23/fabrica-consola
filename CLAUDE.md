@@ -98,9 +98,12 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
 - **Los usuarios de la consola NO tienen acceso a claude.ai/routines** (decisión del usuario,
   2026-07-17). Ninguna función de la consola puede depender de deep-links a claude.ai, de la UI
   de routines ni de que el usuario dispare nada a mano fuera de la consola. La reacción rápida al
-  feedback la da el DESPACHADOR de la routine madre (revisa Inboxes cada hora a los :50 y dispara
-  la routine del proyecto con fire_trigger si hay entradas pendientes — ≤1h de latencia) y, como
-  evolución, Motor B (dispatch instantáneo vía GitHub Actions, v3). Los deep-links a routines son
+  feedback la da el DESPACHADOR de la routine madre (revisa Inboxes cada hora a los :50 e
+  intenta disparar la routine del proyecto con `fire_trigger` si hay entradas pendientes — ≤1h de
+  latencia DISEÑADA; ver actualización 2026-07-19 más abajo sobre Motor A-pool: ese disparo está
+  roto hoy en la práctica, así que la latencia real hasta que se resuelva es "próximo tick normal
+  del proyecto", no ≤1h) y, como evolución, Motor B (dispatch instantáneo vía GitHub Actions, v3).
+  Los deep-links a routines son
   herramienta interna del dueño de la fábrica, solo en docs — nunca en la UI.
 - **Peldaño 4 para fabrica-consola: el gate de CI reemplaza la revisión humana en los merges**
   (decisión del usuario, 2026-07-18 — "quiero que sea autónoma"). `fabrica-sync.yml` mergea a
@@ -127,7 +130,20 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   el mínimo real de la plataforma de rutinas, confirmado con un 400 al intentar `*/5 * * * *`). La
   routine madre (v4) agrega un PASO 4 de **despacho de emergencia**: si un proyecto sin
   `trigger_id` tiene trabajo pendiente y ninguna trabajadora lo tiene bloqueado, la madre le asigna
-  el lock ella misma y dispara con `fire_trigger` de inmediato. El dashboard expone `EstadoPool`
+  el lock ella misma y dispara con `fire_trigger` de inmediato. **Actualización 2026-07-19 (~10:52
+  UTC) — el disparo (mitad `fire_trigger` del PASO 4, y por extensión el PASO 3 de despacho de
+  routines DEDICADAS) está roto en la práctica:** `fire_trigger` rechaza disparar cualquier trigger
+  que la sesión invocadora no haya creado ella misma vía `create_trigger` ("this routine was
+  created via 'http_api', not by an agent"); TODOS los triggers reales de la fábrica se crearon
+  desde la UI de routines (`http_api`, por la regla del Error Conocido de 2026-07-17 sobre permisos
+  de escritura), así que la madre no puede disparar estructuralmente NINGUNO. La mitad del PASO 4
+  que sí funciona es el commit del `lock` (vía API de GitHub, no depende de `fire_trigger`) — un
+  proyecto sin trabajadora asignada SÍ se asigna, pero NO se acelera; solo avanza en su próximo tick
+  normal del pool. Detalle completo en `docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md`; el
+  mecanismo de disparo instantáneo necesita reemplazarse por otra vía (decisión pendiente del
+  usuario, ver Decisiones estacionadas del backlog) — hasta entonces, tratar "≤1h de latencia" de
+  esta misma sección como el techo real solo cuando coincide con el tick normal del proyecto, no
+  como garantía del despacho de emergencia. El dashboard expone `EstadoPool`
   (quién tiene el lock y cuándo corre) y el botón **"🔧 Asignar ahora"** (`/api/asignar-proyecto`,
   helper puro `trabajadorasLibres`) para asignar manualmente un proyecto sin atender a la próxima
   trabajadora libre — no lo dispara al instante, solo lo deja listo para su próximo tick normal.
@@ -242,6 +258,30 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   primer Error Conocido de esta lista, ningún prompt de routine puede aplicar este tipo de fix por
   su cuenta — requiere sesión interactiva o merge humano.
 
+- **(2026-07-19, ~10:52 UTC) `fire_trigger` no puede disparar NINGÚN trigger existente de la
+  fábrica — rompe estructuralmente el despacho instantáneo del Motor A-pool.** Síntoma: en un tick
+  normal de `routine-madre-fabrica`, `list_triggers` funcionó con normalidad (devolvió los 9
+  triggers reales), pero `fire_trigger` sobre un trigger real (`rutina-trabajadora-1`, PASO 4 de
+  despacho de emergencia para el proyecto `stocktracker`) devolvió: `"this routine was created via
+  'http_api', not by an agent. Agents can only fire routines they created (via create_trigger)"`.
+  Causa: TODOS los triggers reales de la cuenta se crearon desde la UI de routines de claude.ai
+  (`http_api`) — por la regla ya vigente del Error Conocido de 2026-07-17 ("toda routine que deba
+  ESCRIBIR en un repo se crea desde la UI, no con `create_trigger`, o nace sin permisos"). Pero
+  `fire_trigger` solo permite disparar routines que la propia sesión-agente creó ella misma vía
+  `create_trigger` — y la madre, por diseño, nunca crea triggers propios. Resultado: la madre puede
+  seguir asignando el `lock` (commit vía API de GitHub, no usa `fire_trigger`) pero JAMÁS puede
+  acelerar el disparo de ninguna trabajadora del pool (PASO 4) ni de ninguna routine DEDICADA vía
+  Inbox (PASO 3) — ambos mecanismos de "despacho instantáneo" documentados en CLAUDE.md §
+  Decisiones Arquitectónicas (Motor A-pool) quedan reducidos a "esperar el próximo tick normal del
+  cron". Detalle completo: `docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md`. **Regla: ningún
+  documento de la fábrica (CLAUDE.md, `docs/routine-madre-prompt.md`, UI de la consola) debe
+  presentar el despacho vía `fire_trigger` de la madre como una garantía de latencia baja hasta que
+  el usuario decida un mecanismo de reemplazo — es una asignación de `lock`, no un disparo real.**
+  No corregido en `docs/routine-madre-prompt.md` por esta routine: ese archivo no es territorio de
+  `routine-fabrica-consola` (documenta el prompt de OTRA routine) y su fix requiere decidir un
+  mecanismo distinto, no solo anotar un hallazgo — queda para el usuario o la sesión que mantiene la
+  routine madre.
+
 ## Modelo de datos
 
 No hay base de datos. "Modelo de datos" = contrato de archivos leídos/escritos en los repos de
@@ -271,17 +311,23 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-19 10:15 UTC, decimoquinto tick de
-  `routine-fabrica-consola`):** base `main` en `16fc65e` (merge de `fabrica-sync` que publicó la
-  documentación del tick 08:15 UTC — `07400e5`/`16fc65e`, solo `docs/backlog.md` y este `CLAUDE.md`,
-  sin código nuevo). Gate en verde: `npm run lint && npm run test:run && npm run build` → lint ✅,
-  test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.10 / Turbopack, Node v22.22.2). Este
-  tick: `main` sin ramas/worktrees huérfanas (`git branch -r` solo devuelve `origin/main`), working
-  tree limpio, sin trabajo a medias detectado en el anti-solape (el commit más reciente, ~1h57min de
-  antigüedad, era el propio sync del tick anterior). Inbox `(vacío)` sin triaje, sin trabajo P1/P2
-  nuevo delegable — mismos bloqueos por decisión de usuario que ticks anteriores (Refinado
-  instantáneo y Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un
-  segundo tipo de proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo por gobernanza
-  explícita del usuario). Único hallazgo del tick: esta misma ancla y la fila del tick 08:15 UTC en
-  el Registro de trabajo seguían apuntando/marcadas contra `a66088a`/"pendiente de push" pese a que
-  `main` ya incluía el sync de ese tick en `16fc65e` — ambas corregidas.
+- **Último estado bueno (verificado 2026-07-19 12:15 UTC, decimosexto tick de
+  `routine-fabrica-consola`):** base `main` en `39bf9e4` (docs de la sesión interactiva del usuario:
+  `docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md`, ~10:52 UTC — ver hallazgo abajo — más el
+  merge de `fabrica-sync` del tick 10:15 UTC, `7ca19d2`/`e4f2a49`). Gate en verde: `npm run lint &&
+  npm run test:run && npm run build` → lint ✅, test:run **182/182** ✅ (sin cambio), build ✅
+  (Next.js 16.2.10 / Turbopack, Node v22.22.2). Este tick: `main` sin ramas/worktrees huérfanas
+  (`git branch -r` solo devuelve `origin/main`), working tree limpio; el commit más reciente
+  (`39bf9e4`, ~1h21min de antigüedad) es de la sesión interactiva del usuario, no un patrón propio
+  de esta routine → sin indicio de trabajo a medias, tick procedió con normalidad. Inbox `(vacío)`
+  sin triaje. **Hallazgo principal del tick:** `docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md`
+  (nuevo desde el tick anterior) documenta que `fire_trigger` no puede disparar NINGÚN trigger real
+  de la fábrica (todos creados vía UI/`http_api`, y un agente solo puede disparar triggers que él
+  mismo creó) — rompe el despacho instantáneo del PASO 4 (pool) y PASO 3 (dedicadas) de la routine
+  madre v4. Esta ancla y el § Decisiones Arquitectónicas / Errores Conocidos de arriba daban ese
+  despacho por funcional sin que nadie lo hubiera verificado tras el hallazgo — corregidos en este
+  tick (el `lock` sigue asignándose bien; el disparo instantáneo, no). Sin trabajo P1/P2 nuevo
+  delegable — mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y
+  Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de
+  proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo, y ahora el mecanismo de reemplazo
+  de `fire_trigger` para el despacho instantáneo, que no es una tarea de código de este repo).

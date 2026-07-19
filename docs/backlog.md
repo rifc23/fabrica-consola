@@ -454,6 +454,33 @@ Fuente única de tareas para los agentes (`implementador`, `arquitecto`, `audito
   decisión de usuario que ticks anteriores (Refinado instantáneo y Playwright E2E estacionados,
   Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de proyecto, proxy de IA Paquetes 1/2
   fuera del alcance autónomo por gobernanza explícita). Solo documentación.
+- 2026-07-19 (~10:52 UTC, sesión interactiva/routine madre): **hallazgo estructural — `fire_trigger`
+  no puede disparar ningún trigger real de la fábrica**, documentado en
+  `docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md` (`39bf9e4`, mergeado directo a `main`, no pasa
+  por `fabrica-sync`). Causa: todos los triggers reales se crean desde la UI de routines
+  (`http_api`), y `fire_trigger` solo permite a un agente disparar triggers que ÉL MISMO creó vía
+  `create_trigger` — la madre nunca instala routines, así que no puede disparar ninguna. Rompe el
+  despacho instantáneo del PASO 4 (pool) y PASO 3 (dedicadas) de `routine-madre-fabrica` v4: el
+  `lock` sí se asigna (usa la API de GitHub, no `fire_trigger`), pero el disparo acelerado no ocurre
+  — cada proyecto solo avanza en su tick normal de cron. Afecta directamente promesas documentadas en
+  este mismo backlog y en `CLAUDE.md` § Decisiones Arquitectónicas/Errores Conocidos (latencia "≤1h"
+  del despachador) — corregidas en este tick (ver fila nueva abajo y nueva Decisión estacionada). No
+  se modifica `docs/routine-madre-prompt.md` desde esta routine: no es su territorio (prompt de OTRA
+  routine) y el fix requiere decidir un mecanismo de reemplazo, no solo anotar el hallazgo.
+- 2026-07-19 (12:15 UTC): decimosexto disparo de `routine-fabrica-consola`. Anti-solape: último
+  commit de `main` (`39bf9e4`, ~1h21min de antigüedad) es de la sesión interactiva del usuario (no un
+  patrón propio de esta routine) sin working tree sucio ni ramas/worktrees huérfanas (`git branch -r`
+  solo devuelve `origin/main`) → tick procedió con normalidad. Inbox: `(vacío)` → sin triaje.
+  Auditoría de estado real: el hallazgo de `fire_trigger` de arriba, sin fila en el Registro de
+  trabajo ni reflejo en `CLAUDE.md` — agregado (ver bullet de arriba, fila nueva abajo, nueva
+  Decisión estacionada y correcciones en CLAUDE.md § Decisiones Arquitectónicas/Errores Conocidos).
+  También corregida la fila del tick 10:15 UTC, que decía "pendiente de push" pese a que
+  `fabrica-sync` ya la había integrado en `e4f2a49`. Entorno re-verificado con `npm ci` + gate real
+  en verde: lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.10/Turbopack, Node
+  v22.22.2). `TAREAS-MANUALES.md` revisado: sin tareas nuevas, solo la 🟡 3 sigue pendiente sin
+  bloquear. P0/P1 sin cambios (todo `[x]`); P2 revisado ítem por ítem: sin ítems nuevos delegables —
+  mismos bloqueos por decisión de usuario que ticks anteriores, más el mecanismo de reemplazo de
+  `fire_trigger` (nuevo, no es tarea de código de este repo).
 
 - (vacío)
 
@@ -709,6 +736,18 @@ se gestione a sí mismo como proyecto.
   `fabrica-consola-e2e-fixture`, sin topic `fabrica-agentes` para que no aparezca en el dropdown
   real) para este fin, o prefieres que el E2E use mocks de la API de GitHub/Vercel en vez de
   recursos reales?
+- **Reemplazo del despacho instantáneo vía `fire_trigger` (estacionada 2026-07-19, hallazgo de
+  `routine-madre-fabrica` ~10:52 UTC — no es tarea de código de ESTE repo, pero afecta la promesa de
+  latencia que este backlog y CLAUDE.md documentan para el Motor A-pool):**
+  `docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md` confirma que `fire_trigger` rechaza disparar
+  cualquier trigger que la sesión invocadora no haya creado ella misma — y como TODOS los triggers
+  reales de la fábrica se crean desde la UI (regla vigente desde 2026-07-17 para tener permisos de
+  escritura), la madre nunca puede disparar ninguno. El PASO 4 (pool) y el PASO 3 (dedicadas) quedan
+  reducidos a "asignar/no acelerar" — cada proyecto avanza solo en su tick normal de cron. ¿Qué
+  mecanismo de reemplazo prefieres para el despacho instantáneo (p. ej. Motor B adelantado desde P2,
+  algún webhook, o aceptar la latencia del tick normal como techo real y retirar la promesa de "≤1h"
+  de la UI/documentación)? Ver CLAUDE.md § Errores Conocidos y § Decisiones Arquitectónicas (Motor
+  A-pool) para el detalle ya corregido.
 
 ## Registro de trabajo
 
@@ -741,4 +780,6 @@ se gestione a sí mismo como proyecto.
 | 2026-07-19 (~00:25 UTC) | Fix de producción: el formulario "Nuevo proyecto" ocultaba el `<form>` sin retorno tras un error de creación (atascaba al usuario, y recargar borraba lo escrito). Botón "Volver al formulario" en `ProgresoCreacion` + persistencia del borrador en `localStorage` (`src/lib/borrador-nuevo-proyecto.ts`, 9 tests). Mergeado directo a `main` por la sesión interactiva (no pasa por `fabrica-sync`). Fila agregada en el tick 06:15 UTC porque no tenía registro en esta tabla. | main (merge directo) | 01325e4/df8c9db | lint ✅ test:run 182/182 ✅ build ✅ (verificado por este tick sobre el HEAD real) | Completado — en producción |
 | 2026-07-19 | Tick 06:15 UTC: decimotercer disparo — Inbox `(vacío)`, sin triaje. Anti-solape: local 67 commits detrás de origin/main, fast-forward limpio; último commit (`df8c9db`, ~1h49min de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con normalidad. Auditoría de estado real: los 2 merges directos de arriba (sanitización de `description` + no perder el formulario) sin fila en este Registro — agregadas. Entorno re-verificado con `npm ci` + gate real en verde: lint ✅, test:run **182/182** ✅ (subieron de 168), build ✅ (Next.js 16.2.10/Turbopack). P0/P1 sin cambios (todo `[x]`); P2 revisado ítem por ítem: sin ítems nuevos delegables (mismos bloqueos por decisión de usuario que ticks anteriores). Solo documentación. | claude/rutina-2026-07-19-0615-auditoria | (solo docs) | lint ✅ test:run 182/182 ✅ build ✅ | Mergeado a main por fabrica-sync (`a66088a`) — confirmado en el tick 08:15 UTC |
 | 2026-07-19 | Tick 08:15 UTC: decimocuarto disparo — Inbox `(vacío)`, sin triaje; sin ramas/worktrees huérfanos; único hallazgo la ancla de rollback de `CLAUDE.md` un commit desactualizada (apuntaba a `df8c9db`, `main` ya en `a66088a` tras el sync del tick anterior) — corregida; sin P1/P2 nuevo delegable (mismos bloqueos por decisión de usuario que ticks anteriores). Solo documentación. | claude/rutina-2026-07-19-0815-auditoria | (solo docs) | lint ✅ test:run 182/182 ✅ build ✅ | Mergeado a main por fabrica-sync (`16fc65e`) — confirmado en el tick 10:15 UTC |
-| 2026-07-19 | Tick 10:15 UTC: decimoquinto disparo — Inbox `(vacío)`, sin triaje; sin ramas/worktrees huérfanos; único hallazgo la fila del tick 08:15 marcada "pendiente de push" pese a ya estar mergeada (`16fc65e`) — corregida, junto con la ancla de rollback de `CLAUDE.md`; sin P1/P2 nuevo delegable (mismos bloqueos por decisión de usuario que ticks anteriores). Solo documentación. | claude/rutina-2026-07-19-1015-auditoria | (solo docs) | lint ✅ test:run 182/182 ✅ build ✅ | Pendiente de push (solo-estado, auto-mergeable por fabrica-sync) |
+| 2026-07-19 | Tick 10:15 UTC: decimoquinto disparo — Inbox `(vacío)`, sin triaje; sin ramas/worktrees huérfanos; único hallazgo la fila del tick 08:15 marcada "pendiente de push" pese a ya estar mergeada (`16fc65e`) — corregida, junto con la ancla de rollback de `CLAUDE.md`; sin P1/P2 nuevo delegable (mismos bloqueos por decisión de usuario que ticks anteriores). Solo documentación. | claude/rutina-2026-07-19-1015-auditoria | (solo docs) | lint ✅ test:run 182/182 ✅ build ✅ | Mergeado a main por fabrica-sync (`e4f2a49`) — confirmado en el tick 12:15 UTC |
+| 2026-07-19 (~10:52 UTC) | Hallazgo estructural (sesión interactiva/routine madre, sin reporte de esta routine): `fire_trigger` no puede disparar ningún trigger real de la fábrica (todos creados vía UI/`http_api`; un agente solo dispara triggers que él mismo creó vía `create_trigger`) — rompe el despacho instantáneo del PASO 4 (pool) y PASO 3 (dedicadas) de `routine-madre-fabrica` v4; el `lock` sigue asignándose bien. Detalle en `docs/reportes/EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md`. Mergeado directo a `main` (no pasa por `fabrica-sync`). Fila agregada en el tick 12:15 UTC porque no tenía registro en esta tabla. | main (merge directo) | 39bf9e4 | N/A (solo doc, sin código) | Documentado — mecanismo de reemplazo pendiente de decisión del usuario (ver Decisiones estacionadas) |
+| 2026-07-19 | Tick 12:15 UTC: decimosexto disparo — Inbox `(vacío)`, sin triaje. Anti-solape: último commit de `main` (`39bf9e4`, ~1h21min de antigüedad) es de la sesión interactiva del usuario, no un patrón propio de esta routine, sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con normalidad. Auditoría de estado real: el hallazgo de `fire_trigger` (fila de arriba) sin registro en `CLAUDE.md`/este Registro — corregido (Decisiones Arquitectónicas del Motor A-pool, nuevo Error Conocido, ancla de rollback, nueva Decisión estacionada); también corregida la fila del tick 10:15 marcada "pendiente de push". Entorno re-verificado con `npm ci` + gate real en verde: lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.10/Turbopack, Node v22.22.2). P0/P1 sin cambios (todo `[x]`); P2 revisado ítem por ítem: sin ítems nuevos delegables (mismos bloqueos por decisión de usuario, más el mecanismo de reemplazo de `fire_trigger`, que no es tarea de código de este repo). Solo documentación. | claude/rutina-2026-07-19-1215-auditoria | (solo docs) | lint ✅ test:run 182/182 ✅ build ✅ | Pendiente de push (solo-estado, auto-mergeable por fabrica-sync) |
