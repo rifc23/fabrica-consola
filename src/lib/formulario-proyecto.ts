@@ -48,6 +48,21 @@ export function slugificar(nombre: string): string {
   return slug || "proyecto";
 }
 
+/**
+ * `objetivo` (textarea, admite saltos de línea) → `description` de un repo de GitHub (debe ser
+ * una sola línea, sin caracteres de control). Sin esto, `POST .../generate` devuelve 422
+ * "Description control characters are not allowed" apenas el objetivo trae un salto de línea,
+ * tab, u otro carácter de control — bug detectado 2026-07-19 al crear un proyecto real.
+ */
+export function descripcionRepoDesdeObjetivo(objetivo: string): string {
+  const sinControl = objetivo
+    // eslint-disable-next-line no-control-regex -- justamente lo que hay que quitar
+    .replace(/[\x00-\x1F\x7F]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+  return sinControl.slice(0, 200);
+}
+
 const CADENCIAS_VALIDAS: Cadencia[] = ["cada-2h", "cada-6h", "diaria", "manual"];
 
 /** Valida y normaliza el body del POST /api/crear-proyecto. Lanza Error con mensaje de usuario. */
