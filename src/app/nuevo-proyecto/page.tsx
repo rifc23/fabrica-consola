@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./nuevo-proyecto.module.css";
 import ProgresoCreacion, { type ProyectoCreado } from "@/components/ProgresoCreacion";
 import { featuresBlueprintGem, type Cadencia, type FeatureMVP, type FormularioProyecto } from "@/lib/formulario-proyecto";
+import { guardarBorrador, leerBorrador, borrarBorrador, type BorradorNuevoProyecto } from "@/lib/borrador-nuevo-proyecto";
 
 interface FeatureFormulario extends FeatureMVP {
   id: string;
@@ -31,29 +32,86 @@ function nuevaFeature(): FeatureFormulario {
   return { id: `f${contadorFeature}`, nombre: "", descripcion: "", criterios: "" };
 }
 
+/**
+ * Solo en el cliente (localStorage no existe en SSR) y solo una vez, al montar la página.
+ * Sincroniza `contadorFeature` con los ids del borrador para que una feature nueva agregada
+ * después de restaurar el borrador no reutilice un id ya presente (colisión de key en React).
+ */
+function borradorInicial(): BorradorNuevoProyecto | null {
+  if (typeof window === "undefined") return null;
+  const borrador = leerBorrador(window.localStorage);
+  const maxId = Math.max(0, ...(borrador?.features ?? []).map((f) => Number(f.id.replace(/^f/, "")) || 0));
+  contadorFeature = Math.max(contadorFeature, maxId);
+  return borrador;
+}
+
 export default function NuevoProyectoPage() {
   const router = useRouter();
+  const [borrador] = useState(borradorInicial);
 
-  const [nombre, setNombre] = useState("");
-  const [objetivo, setObjetivo] = useState("");
-  const [esGem, setEsGem] = useState(false);
-  const [rolGem, setRolGem] = useState("");
-  const [features, setFeatures] = useState<FeatureFormulario[]>([nuevaFeature()]);
-  const [queNoEsV1, setQueNoEsV1] = useState("");
-  const [stackSeleccionado, setStackSeleccionado] = useState(OPCIONES_STACK[0]);
-  const [stackOtro, setStackOtro] = useState("");
-  const [presupuesto, setPresupuesto] = useState<"Capa gratuita estricta" | "Puedo pagar servicios si se justifica">(
-    "Capa gratuita estricta",
+  const [nombre, setNombre] = useState(borrador?.nombre ?? "");
+  const [objetivo, setObjetivo] = useState(borrador?.objetivo ?? "");
+  const [esGem, setEsGem] = useState(borrador?.esGem ?? false);
+  const [rolGem, setRolGem] = useState(borrador?.rolGem ?? "");
+  const [features, setFeatures] = useState<FeatureFormulario[]>(
+    () => borrador?.features ?? [nuevaFeature()],
   );
-  const [decisiones, setDecisiones] = useState(DECISIONES_DEFECTO);
-  const [decisionOtra, setDecisionOtra] = useState("");
-  const [visibilidad, setVisibilidad] = useState<"private" | "public">("private");
-  const [cadencia, setCadencia] = useState<Cadencia>("cada-2h");
-  const [notificacionesTelegram, setNotificacionesTelegram] = useState("");
+  const [queNoEsV1, setQueNoEsV1] = useState(borrador?.queNoEsV1 ?? "");
+  const [stackSeleccionado, setStackSeleccionado] = useState(borrador?.stackSeleccionado ?? OPCIONES_STACK[0]);
+  const [stackOtro, setStackOtro] = useState(borrador?.stackOtro ?? "");
+  const [presupuesto, setPresupuesto] = useState<"Capa gratuita estricta" | "Puedo pagar servicios si se justifica">(
+    borrador?.presupuesto ?? "Capa gratuita estricta",
+  );
+  const [decisiones, setDecisiones] = useState(borrador?.decisiones ?? DECISIONES_DEFECTO);
+  const [decisionOtra, setDecisionOtra] = useState(borrador?.decisionOtra ?? "");
+  const [visibilidad, setVisibilidad] = useState<"private" | "public">(borrador?.visibilidad ?? "private");
+  const [cadencia, setCadencia] = useState<Cadencia>((borrador?.cadencia as Cadencia) ?? "cada-2h");
+  const [notificacionesTelegram, setNotificacionesTelegram] = useState(borrador?.notificacionesTelegram ?? "");
 
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [payload, setPayload] = useState<FormularioProyecto | null>(null);
+
+  // Persiste el borrador en cada cambio — así un refresh accidental o un envío fallido no borra
+  // lo que el usuario ya escribió (bug reportado 2026-07-19).
+  const primerRenderRef = useRef(true);
+  useEffect(() => {
+    if (primerRenderRef.current) {
+      primerRenderRef.current = false;
+      return;
+    }
+    guardarBorrador(window.localStorage, {
+      nombre,
+      objetivo,
+      esGem,
+      rolGem,
+      features,
+      queNoEsV1,
+      stackSeleccionado,
+      stackOtro,
+      presupuesto,
+      decisiones,
+      decisionOtra,
+      visibilidad,
+      cadencia,
+      notificacionesTelegram,
+    });
+  }, [
+    nombre,
+    objetivo,
+    esGem,
+    rolGem,
+    features,
+    queNoEsV1,
+    stackSeleccionado,
+    stackOtro,
+    presupuesto,
+    decisiones,
+    decisionOtra,
+    visibilidad,
+    cadencia,
+    notificacionesTelegram,
+  ]);
 
   function actualizarFeature(id: string, cambios: Partial<FeatureMVP>) {
     setFeatures((prev) => prev.map((f) => (f.id === id ? { ...f, ...cambios } : f)));
@@ -118,7 +176,13 @@ export default function NuevoProyectoPage() {
     setEnviando(true);
   }
 
+  function manejarVolver() {
+    setEnviando(false);
+    setPayload(null);
+  }
+
   function manejarExito(proyecto: ProyectoCreado) {
+    borrarBorrador(window.localStorage);
     const params = new URLSearchParams({
       creado: "1",
       degradado: proyecto.degradadoVercel ? "1" : "0",
@@ -329,7 +393,9 @@ export default function NuevoProyectoPage() {
         </form>
       )}
 
-      {enviando && payload && <ProgresoCreacion payload={payload} onExito={manejarExito} />}
+      {enviando && payload && (
+        <ProgresoCreacion payload={payload} onExito={manejarExito} onVolver={manejarVolver} />
+      )}
     </div>
   );
 }

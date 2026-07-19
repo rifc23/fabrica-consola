@@ -56,7 +56,6 @@ export function slugificar(nombre: string): string {
  */
 export function descripcionRepoDesdeObjetivo(objetivo: string): string {
   const sinControl = objetivo
-    // eslint-disable-next-line no-control-regex -- justamente lo que hay que quitar
     .replace(/[\x00-\x1F\x7F]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
