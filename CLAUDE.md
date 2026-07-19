@@ -219,6 +219,29 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   verificado el resultado en el diff real del commit** (grep/leer el archivo tras el cambio, no
   solo confiar en la intención de la instrucción que se le dio al agente/subagente).
 
+- **(2026-07-18, ~19:47 UTC) `fabrica-sync.yml` commiteaba con un email de autor sin cuenta de
+  GitHub real detrás — Vercel bloqueaba el deploy automático de los proyectos hijos EN SILENCIO.**
+  Síntoma: detectado por el usuario en `calculadora` (el primer proyecto real creado desde el
+  formulario) — el código llegaba a `main` correctamente (los merges de `fabrica-sync` sí
+  aparecían en el historial), pero el sitio en producción nunca se actualizaba, mostrando siempre
+  el placeholder "🏭 en construcción" del template. No es el mismo bug que "No Next.js version
+  detected" (ese era de build; este es de que el deploy ni siquiera se disparaba). Causa: el
+  workflow hacía `git config user.email "fabrica-sync@users.noreply.github.com"` — un email
+  inventado, sin ninguna cuenta de GitHub detrás. Vercel exige que el email del autor del commit se
+  pueda vincular a un colaborador real del repo para disparar el deploy automático por push, y
+  rechazaba estos commits sin dejar ningún error visible en GitHub Actions ni en la consola (el
+  workflow reportaba éxito). Solución: usar el email noreply REAL de GitHub del dueño de la fábrica
+  (formato `<user-id>+<username>@users.noreply.github.com`, visible en
+  github.com/settings/emails o vía `api.github.com/users/<username>`) — ese sí está vinculado a la
+  cuenta y Vercel lo reconoce. Aplicado en `.github/workflows/fabrica-sync.yml` (`2b8e8dd`,
+  integrado en `main` vía `21f0792`) y en el mismo workflow del template
+  (`fabrica-agentes-template`, commit `979bc75`), para que los proyectos nuevos nazcan sin este
+  bug. **Regla: cualquier workflow que commitee en nombre de la fábrica (no solo `fabrica-sync`)
+  debe usar el email noreply real de una cuenta de GitHub existente — nunca inventar uno, aunque
+  el formato `...@users.noreply.github.com` parezca genérico.** Toca `.github/**`: por la regla del
+  primer Error Conocido de esta lista, ningún prompt de routine puede aplicar este tipo de fix por
+  su cuenta — requiere sesión interactiva o merge humano.
+
 ## Modelo de datos
 
 No hay base de datos. "Modelo de datos" = contrato de archivos leídos/escritos en los repos de
@@ -248,20 +271,19 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-18 22:15 UTC, noveno tick de
-  `routine-fabrica-consola`):** base `main` en `893bcc4` (merge directo de la sesión interactiva:
-  "expansión del requerimiento antes de implementar" — regla nueva en
-  `docs/plantilla-routine-prompt.md` para que toda routine de proyecto expanda la intención del
-  dominio antes de delegar al `implementador`, ver Decisiones Arquitectónicas/Errores Conocidos).
-  Desde la ancla anterior (`a3908c3`, tick 18:15) se sumaron 3 merges directos de la sesión
-  interactiva sin fila propia en el Registro de trabajo hasta este tick: 2 fixes de creación de
-  proyectos (`1b84ae5` — `CLAUDE.md`/`docs/TAREAS-MANUALES.md` nacían con placeholders sin
-  rellenar + fix del filtro de "Último reporte"; `1daa877` — personalización extendida a los 7
-  agentes de `.claude/agents/`) y la decisión de expansión de requerimiento (`893bcc4`) —
-  corregido en `docs/backlog.md` § Registro de trabajo. Gate en verde:
-  `npm run lint && npm run test:run && npm run build` → lint ✅, test:run **168/168** ✅ (subieron
-  de 161 por los tests de los 2 fixes de personalización), build ✅ (Next.js 16.2.10 / Turbopack,
-  Node v22.22.2). Este tick: sin ramas huérfanas (solo `origin/main` en el remoto antes de crear
-  esta), sin trabajo a medias detectado en el anti-solape, sin trabajo P1/P2 nuevo delegable —
-  mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y Playwright
-  E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de proyecto).
+- **Último estado bueno (verificado 2026-07-19 00:15 UTC, décimo tick de
+  `routine-fabrica-consola`):** base `main` en `21f0792` (merge de sincronización que combina el
+  cierre docs-only del tick 22:15 —`7e4764f`, auto-mergeado por `fabrica-sync`— con el fix directo
+  de la sesión interactiva `2b8e8dd`: `fabrica-sync.yml` usaba un email de autor sin cuenta de
+  GitHub real detrás y Vercel bloqueaba en silencio el deploy de los proyectos hijos, ver Errores
+  Conocidos). Desde la ancla anterior (`893bcc4`, tick 22:15) se sumó ese único merge directo sin
+  fila propia en el Registro de trabajo hasta este tick — corregido en `docs/backlog.md` §
+  Registro de trabajo (fila nueva del fix de email + fila del tick 22:15 corregida de "pendiente de
+  push" a "mergeado", ya que `7e4764f` confirma que sí se integró). Gate en verde:
+  `npm run lint && npm run test:run && npm run build` → lint ✅, test:run **168/168** ✅ (sin
+  cambio — el fix de email es YAML puro, sin cobertura de vitest), build ✅ (Next.js 16.2.10 /
+  Turbopack, Node v22.22.2). Este tick: sin ramas huérfanas (`git branch -r` solo devuelve
+  `origin/main`), sin trabajo a medias detectado en el anti-solape, Inbox `(vacío)` sin triaje, sin
+  trabajo P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario que ticks anteriores
+  (Refinado instantáneo y Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado
+  a un segundo tipo de proyecto).
