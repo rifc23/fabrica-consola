@@ -311,18 +311,20 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-19 18:15 UTC, decimonoveno tick de
-  `routine-fabrica-consola`):** base `main` en `54d13da` (merge de `fabrica-sync` del tick 16:15
-  UTC: `claude/rutina-2026-07-19-1615-auditoria`, solo docs/CLAUDE.md/manifest). Gate en verde:
+- **Último estado bueno (verificado 2026-07-19 20:15 UTC, vigésimo tick de
+  `routine-fabrica-consola`):** base `main` en `be06ae1` (merge de `fabrica-sync` del tick 18:15
+  UTC: `claude/rutina-2026-07-19-1815-auditoria`, solo docs/CLAUDE.md/manifest). Gate en verde:
   `npm run lint && npm run test:run && npm run build` →
   lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.10 / Turbopack, Node
-  v22.22.2). Este tick: anti-solape con `git fetch` (último commit `54d13da`, ~1h56min de
+  v22.22.2). Este tick: anti-solape con `git fetch` (último commit `be06ae1`, ~1h57min de
   antigüedad en el momento del fetch, es el propio merge de `fabrica-sync` del tick anterior) sin
   working tree sucio ni ramas/worktrees huérfanos (`git branch -r` solo devuelve `origin/main`) →
-  tick procedió con normalidad. Inbox `(vacío)` sin triaje. Único hallazgo: la fila del tick 16:15
+  tick procedió con normalidad. Inbox `(vacío)` sin triaje. Único hallazgo: la fila del tick 18:15
   UTC en el Registro de trabajo de `docs/backlog.md` decía "pendiente de push" pese a que
-  `fabrica-sync` ya la había integrado en `54d13da` — corregida. Sin trabajo P1/P2 nuevo
+  `fabrica-sync` ya la había integrado en `be06ae1` — corregida. Sin trabajo P1/P2 nuevo
   delegable — mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y
   Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de
   proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo, y el mecanismo de reemplazo de
-  `fire_trigger` para el despacho instantáneo, que sigue sin decisión del usuario).
+  `fire_trigger` para el despacho instantáneo, que sigue sin decisión del usuario). Noveno tick
+  consecutivo (desde 2026-07-18 12:15 UTC) sin trabajo nuevo delegable — la cola sigue vacía de
+  ítems accionables sin decisión del usuario.
