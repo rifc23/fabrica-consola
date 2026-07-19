@@ -271,23 +271,23 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-19 04:15 UTC, duodécimo tick de
-  `routine-fabrica-consola`):** base `main` en `a0366c1` (commit directo de la sesión interactiva
-  del usuario — `docs: plan del proxy central de IA (fabrica-ia-proxy) aprobado`, ver
-  `docs/plan-proxy-ia-central.md`; el propio documento aclara que no modifica CLAUDE.md/backlog/
-  código, solo agrega el plan — implementación es trabajo futuro con gobernanza manual, sin routine
-  automática, ver el documento y la fila nueva en `docs/backlog.md` § Registro de trabajo). Gate en
-  verde: `npm run lint && npm run test:run && npm run build` → lint ✅, test:run **168/168** ✅
-  (sin cambio), build ✅ (Next.js 16.2.10 / Turbopack, Node v22.22.2). Este tick: sin ramas
-  huérfanas (`git branch -r` solo devuelve `origin/main`), working tree limpio, sin trabajo a
-  medias detectado en el anti-solape (el último commit no coincidía con el patrón propio de la
-  routine — era doc de arquitectura de sesión interactiva —, así que se verificó igual que
-  cualquier commit ajeno reciente), Inbox `(vacío)` sin triaje, sin trabajo P1/P2 nuevo delegable —
-  mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y Playwright
-  E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de proyecto, y
-  ahora el proxy de IA — Paquetes 1 y 2 del plan — fuera del alcance autónomo de esta routine por
-  gobernanza explícita del usuario: infraestructura sensible mantenida a mano, sin CI-gate
-  reemplazando revisión humana todavía). Corrección aplicada en `docs/backlog.md` § Registro de
-  trabajo: (1) la fila del tick 02:15 UTC decía "pendiente de push", actualizada a "mergeado"
-  (`5f2f361`); (2) agregada la fila que faltaba para el commit `a0366c1` (plan del proxy de IA,
-  merge directo de sesión interactiva sin registro previo).
+- **Último estado bueno (verificado 2026-07-19 06:15 UTC, decimotercer tick de
+  `routine-fabrica-consola`):** base `main` en `df8c9db` (dos merges directos de la sesión
+  interactiva del usuario tras `a0366c1`: `40717a4` — fix de sanitización de caracteres de control
+  en la `description` del repo al crear un proyecto (GitHub devolvía 422); `df8c9db` — fix "no
+  perder el formulario de nuevo proyecto si la creación falla" (botón "Volver al formulario" +
+  borrador persistido en `localStorage`); ver filas nuevas en `docs/backlog.md` § Registro de
+  trabajo y § Estado general). Gate en verde: `npm run lint && npm run test:run && npm run build` →
+  lint ✅, test:run **182/182** ✅ (subieron de 168 por los tests de ambos fixes), build ✅
+  (Next.js 16.2.10 / Turbopack). Este tick: local estaba 67 commits detrás de `origin/main`
+  (fast-forward limpio), sin ramas huérfanas (`git branch -r` solo devuelve `origin/main`), working
+  tree limpio, sin trabajo a medias detectado en el anti-solape (el commit más reciente, ~1h49min
+  de antigüedad, no coincidía con el patrón propio de la routine — dos merges directos de sesión
+  interactiva), Inbox `(vacío)` sin triaje, sin trabajo P1/P2 nuevo delegable — mismos bloqueos por
+  decisión de usuario que ticks anteriores (Refinado instantáneo y Playwright E2E estacionados,
+  Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de proyecto, proxy de IA Paquetes 1
+  y 2 fuera del alcance autónomo por gobernanza explícita del usuario). Corrección aplicada en
+  `docs/backlog.md` § Registro de trabajo: (1) la fila del tick 04:15 UTC decía "pendiente de
+  push", actualizada a "mergeado" (`11c250c`); (2) agregadas las 2 filas que faltaban para los
+  merges directos de sanitización de `description` y no perder el formulario (sin registro previo,
+  mismo patrón de "hecho sin verificar" de ticks anteriores).
