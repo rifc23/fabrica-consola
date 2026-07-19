@@ -271,9 +271,9 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-19 08:15 UTC, decimocuarto tick de
-  `routine-fabrica-consola`):** base `main` en `a66088a` (merge de `fabrica-sync` que publicó la
-  documentación del tick 06:15 UTC — `c9a79b2`/`a66088a`, solo `docs/backlog.md` y este `CLAUDE.md`,
+- **Último estado bueno (verificado 2026-07-19 10:15 UTC, decimoquinto tick de
+  `routine-fabrica-consola`):** base `main` en `16fc65e` (merge de `fabrica-sync` que publicó la
+  documentación del tick 08:15 UTC — `07400e5`/`16fc65e`, solo `docs/backlog.md` y este `CLAUDE.md`,
   sin código nuevo). Gate en verde: `npm run lint && npm run test:run && npm run build` → lint ✅,
   test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.10 / Turbopack, Node v22.22.2). Este
   tick: `main` sin ramas/worktrees huérfanas (`git branch -r` solo devuelve `origin/main`), working
@@ -282,5 +282,6 @@ proyectos vía GitHub Contents API:
   nuevo delegable — mismos bloqueos por decisión de usuario que ticks anteriores (Refinado
   instantáneo y Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un
   segundo tipo de proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo por gobernanza
-  explícita del usuario). Único hallazgo del tick: esta misma ancla seguía apuntando a `df8c9db`
-  (un commit detrás) pese a que `main` ya incluía el sync del tick 06:15 — corregida arriba.
+  explícita del usuario). Único hallazgo del tick: esta misma ancla y la fila del tick 08:15 UTC en
+  el Registro de trabajo seguían apuntando/marcadas contra `a66088a`/"pendiente de push" pese a que
+  `main` ya incluía el sync de ese tick en `16fc65e` — ambas corregidas.
