@@ -51,13 +51,14 @@ const ICONOS: Record<EstadoPaso, string> = {
 interface Props {
   payload: FormularioProyecto;
   onExito: (proyecto: ProyectoCreado) => void;
+  onVolver: () => void;
 }
 
 /**
  * Consume el stream NDJSON de /api/crear-proyecto y muestra el estado REAL de cada paso — nunca
  * un fallo silencioso: cada paso con error queda visible con su detalle y qué alcanzó a crearse.
  */
-export default function ProgresoCreacion({ payload, onExito }: Props) {
+export default function ProgresoCreacion({ payload, onExito, onVolver }: Props) {
   const pasosDef = pasosPara(payload.stack);
   const [pasos, setPasos] = useState<Record<PasoId, InfoPaso>>(() =>
     Object.fromEntries(pasosDef.map((p) => [p.id, { estado: "pendiente" as EstadoPaso }])) as Record<PasoId, InfoPaso>,
@@ -155,7 +156,10 @@ export default function ProgresoCreacion({ payload, onExito }: Props) {
         <div className={styles.error} role="alert">
           <strong>No se pudo terminar la creación.</strong>
           <p>{errorFinal}</p>
-          <p>Revisa qué paso quedó en ❌ arriba — lo que ya se creó (repo, manifest…) queda en GitHub; reintenta desde el formulario.</p>
+          <p>Revisa qué paso quedó en ❌ arriba — lo que ya se creó (repo, manifest…) queda en GitHub.</p>
+          <button type="button" onClick={onVolver}>
+            ← Volver al formulario (tus datos siguen ahí)
+          </button>
         </div>
       )}
       {!terminado && <p className={styles.espera}>Esto toma unos segundos…</p>}
