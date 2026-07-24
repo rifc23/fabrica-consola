@@ -27,11 +27,14 @@ export const CRON_DESPACHADOR_MADRE = "50 * * * *";
  * sufijo numérico del nombre de la rutina (`rutina-trabajadora-1` → índice 1) — si se agrega una
  * tercera rutina, se agrega aquí también. MANTENER EN SYNC con los triggers reales (verificar con
  * RemoteTrigger/list_triggers si se sospecha desalineación — esta constante no se autoactualiza).
+ * Verificación 2026-07-24 (tick 20:15 UTC): se corrigió `CRON_TRABAJADORAS_POOL` contra
+ * `list_triggers` real — los valores documentados se habían desviado de los triggers reales desde
+ * ~2026-07-24T04:58 UTC (cambio hecho fuera de este repo, causa desconocida).
  */
 export const CRON_DESPACHADORA_POOL = "5 * * * *";
 export const CRON_TRABAJADORAS_POOL: Record<number, string> = {
-  1: "10 * * * *",
-  2: "40 * * * *",
+  1: "15 */2 * * *",
+  2: "15 * * * *",
 };
 
 /** Cron fijo de la rutina trabajadora del pool cuyo nombre es `nombreRutina` (busca su índice

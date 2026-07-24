@@ -311,27 +311,31 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno de `main` (verificado 2026-07-24 18:15 UTC, trigésimo sexto tick de
-  `routine-fabrica-consola`):** `main` en `b177025` (merge directo de la sesión interactiva del
-  usuario: panel colapsable con `docs/SPECS.md` en el dashboard, `84a6b87`/`b177025` — ver fila
-  nueva en `docs/backlog.md` § Registro de trabajo). Gate en verde sobre ese HEAD: lint ✅,
-  test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11 / Turbopack, Node v22.22.2;
-  `npm audit` sigue en 3 vulnerabilidades altas de `postcss`/`sharp` pineadas por Next, sin acción
-  disponible — ver P2). Anti-solape: `git fetch` (último commit `b177025`, ~35 min de antigüedad,
-  patrón de sesión interactiva, no de esta routine) sin working tree sucio ni ramas/worktrees
-  huérfanos → tick procedió con normalidad. Inbox `(vacío)` sin triaje.
-  **Corrección al registro del tick 16:15 UTC:** ese tick declaró el bump de seguridad de Next.js
-  (`f59f229`, `next` `16.2.10`→`16.2.11`) "no auto-mergeable por `fabrica-sync`, pendiente de merge
-  manual (peldaño 3)" sin verificarlo contra `.github/workflows/fabrica-sync.yml` — el workflow no
-  tiene ninguna excepción para `package.json`/`package-lock.json`, el peldaño 4 mergea cualquier
-  diff de código tras el gate en CI. `fabrica-sync` SÍ lo auto-mergeó (commit `9d44feb`, "peldaño 4
-  — gate completo en verde en CI"), confirmado en `main`. `postcss`/`sharp` siguen apareciendo en
-  `npm audit` (pineados por el propio `next@16.2.11`, no se resuelven bumpeando de nuestro lado —
-  **`npm audit fix --force` NUNCA se corre en este repo**, downgradea `next` a `9.3.3` y sube a 92
-  vulnerabilidades, ver P2). **Segundo hallazgo del tick:** el panel colapsable de specs originales
-  (`84a6b87`/`b177025`, sesión interactiva, pedido del usuario 2026-07-19) había llegado a `main`
-  sin fila en el Registro de trabajo ni mención aquí — corregido. Sin trabajo P1/P2 nuevo
-  delegable — mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y
-  Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de
-  proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo, y el mecanismo de reemplazo de
-  `fire_trigger` para el despacho instantáneo, que sigue sin decisión del usuario).
+- **Último estado bueno (verificado 2026-07-24 20:15 UTC, trigésimo séptimo tick de
+  `routine-fabrica-consola`):** `main` sigue en `04ab8a1` (sin merge nuevo de `fabrica-sync`
+  todavía para este tick) — el trabajo de este tick vive en `claude/rutina-2026-07-24-2015-cron-pool-sync`
+  (`b4f528a` hallazgo+pregunta estacionada, `f579703` fix de `src/lib/cron.ts` vía subagente
+  `implementador`, `0e57922` merge de integración), pendiente de que `fabrica-sync` la mergee
+  (toca `src/lib/cron.ts`+`src/lib/cron.test.ts` además de docs — pasa por el gate completo en CI,
+  peldaño 4). Gate en verde localmente sobre esa rama: lint ✅, test:run **182/182** ✅ (mismo
+  conteo — el fix corrige valores existentes, no agrega tests), build ✅ (Next.js 16.2.11 /
+  Turbopack, Node v22.22.2). Anti-solape: `git fetch` (último commit `04ab8a1`, ~2h de antigüedad)
+  sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con normalidad. Inbox
+  `(vacío)` sin triaje.
+  **Hallazgo del tick — desincronización real de infraestructura, no solo un registro:**
+  auditoría cruzada de `list_triggers` contra `src/lib/cron.ts` (más allá de solo verificar el
+  trigger propio de esta routine, que sí coincidía) encontró que `CRON_TRABAJADORAS_POOL` llevaba
+  ~15h desactualizado — `rutina-trabajadora-1` corre hoy cada 2h (`"15 */2 * * *"`, no `"10 * * * *"`
+  como decía el código) y `rutina-trabajadora-2` cada hora (`"15 * * * *"`, no `"40 * * * *"`);
+  ambos triggers fueron modificados fuera de este repo el 2026-07-24 ~04:58-04:59 UTC (causa
+  desconocida). Consecuencia real, no cosmética: `EstadoPool` del dashboard mostraba un countdown
+  incorrecto para cualquier proyecto del Motor A-pool, no solo fabrica-consola. Corregido este
+  mismo tick (ver commit `f579703` arriba). Además, `rutina-trabajadora-1` volviendo a cadencia de
+  2h contradice la decisión del usuario 2026-07-18 de bajar el ciclo del pool a 1h para ambas
+  trabajadoras — se estacionó como pregunta nueva en `docs/backlog.md` § Decisiones estacionadas
+  (¿intencional o revertir a `"15 * * * *"`?), sin tocar el trigger real (fuera del alcance de esta
+  routine). Sin trabajo P1/P2 adicional delegable — mismos bloqueos por decisión de usuario que
+  ticks anteriores (Refinado instantáneo y Playwright E2E estacionados, Motor B no es v1,
+  `tipo:"gem"` condicionado a un segundo tipo de proyecto, proxy de IA Paquetes 1 y 2 fuera del
+  alcance autónomo, el mecanismo de reemplazo de `fire_trigger`, y ahora la cadencia real de
+  `rutina-trabajadora-1`, todos sin decisión del usuario).
