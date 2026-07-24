@@ -40,13 +40,17 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
 
   const { owner, repo, htmlUrl, manifest } = proyecto;
 
-  const [backlogArchivo, tareasArchivo, nombresReportes, historialBacklog] = await Promise.all([
+  const [backlogArchivo, tareasArchivo, nombresReportes, historialBacklog, specsArchivo] = await Promise.all([
     leerArchivo(token, owner, repo, "docs/backlog.md"),
     leerArchivo(token, owner, repo, "docs/TAREAS-MANUALES.md"),
     listarArchivosDirectorio(token, owner, repo, "docs/reportes"),
     // Historial de commits del backlog para el burndown — degrada a [] en vez de tumbar el
     // dashboard si la API de historial falla (rate limit, etc.): es un "nice to have", no crítico.
     obtenerHistorialArchivo(token, owner, repo, "docs/backlog.md").catch(() => []),
+    // docs/SPECS.md: el formulario con el que se creó el proyecto (§1 del diseño), sin cambios
+    // desde entonces — se muestra colapsado al comienzo del dashboard (pedido del usuario
+    // 2026-07-19: verlo de un vistazo sin que ocupe espacio permanente en la pantalla).
+    leerArchivo(token, owner, repo, "docs/SPECS.md"),
   ]);
 
   const backlogMd = backlogArchivo?.contenido ?? "";
@@ -134,6 +138,18 @@ export default async function DashboardProyecto({ params, searchParams }: Props)
         </div>
         <BotonActualizar generadoEn={generadoEn} autoRefresh etiqueta="dashboard" />
       </div>
+
+      <details className={styles.detallesInstalacion}>
+        <summary className={styles.tituloColapsable}>📋 Specs originales (con las que se creó el proyecto)</summary>
+        {specsArchivo ? (
+          <div
+            className={styles.markdown}
+            dangerouslySetInnerHTML={{ __html: renderMarkdownSanitizado(specsArchivo.contenido) }}
+          />
+        ) : (
+          <p>Sin docs/SPECS.md en este repo.</p>
+        )}
+      </details>
 
       <section className={styles.seccion} aria-labelledby="titulo-progreso">
         <h2 id="titulo-progreso">📊 Progreso</h2>
