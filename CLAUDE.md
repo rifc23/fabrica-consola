@@ -311,19 +311,32 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-24 14:15 UTC, trigésimo cuarto tick de
-  `routine-fabrica-consola`):** base `main` en `25d08b4` (merge de `fabrica-sync` del tick 12:15
-  UTC del 2026-07-24: `claude/rutina-2026-07-24-1215-auditoria`, solo docs/CLAUDE.md/manifest).
-  Gate en verde: `npm run lint && npm run test:run && npm run build` →
-  lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.10 / Turbopack, Node
-  v22.22.2). Este tick: anti-solape con `git fetch` (último commit `25d08b4`, ~1h55min de
-  antigüedad, patrón propio de `fabrica-sync`) sin working tree sucio ni ramas/worktrees huérfanos
-  (`git branch -r` solo devuelve `origin/main`) → tick procedió con normalidad. Inbox `(vacío)` sin
-  triaje. Único hallazgo: la fila del tick 12:15 UTC (2026-07-24) en el Registro de trabajo de
-  `docs/backlog.md` decía "pendiente de push" pese a que `fabrica-sync` ya la había integrado en
-  `25d08b4` — corregida. Sin trabajo P1/P2 nuevo delegable — mismos bloqueos por decisión de
-  usuario que ticks anteriores (Refinado instantáneo y Playwright E2E estacionados, Motor B no es
-  v1, `tipo:"gem"` condicionado a un segundo tipo de proyecto, proxy de IA Paquetes 1 y 2 fuera del
-  alcance autónomo, y el mecanismo de reemplazo de `fire_trigger` para el despacho instantáneo, que
-  sigue sin decisión del usuario). Vigésimo tercer tick consecutivo (desde 2026-07-18 12:15 UTC)
-  sin trabajo nuevo delegable — la cola sigue vacía de ítems accionables sin decisión del usuario.
+- **Último estado bueno de `main` (verificado 2026-07-24 16:15 UTC, trigésimo quinto tick de
+  `routine-fabrica-consola`):** `main` en `eb1990a` (merge de `fabrica-sync` del tick 14:15 UTC del
+  2026-07-24: `claude/rutina-2026-07-24-1415-auditoria`, solo docs/CLAUDE.md/manifest). Gate en
+  verde sobre ese HEAD: lint ✅, test:run **182/182** ✅, build ✅ (Next.js 16.2.10 / Turbopack,
+  Node v22.22.2). Anti-solape: `git fetch` (último commit `eb1990a`, ~1h56min de antigüedad, patrón
+  propio de `fabrica-sync`) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con
+  normalidad. Corregida la fila del tick 14:15 UTC en `docs/backlog.md` (decía "pendiente de push"
+  pese a ya estar integrada en `eb1990a`). Inbox `(vacío)` sin triaje.
+  **Este tick rompe la racha de 23 ticks sin trabajo delegable — hallazgo de seguridad real:**
+  `npm audit` reveló 3 vulnerabilidades ALTAS: 9 CVEs propios de `next@16.2.10` (bypass de
+  middleware/proxy en App Router con Turbopack, DoS en Server Actions, SSRF en Server Actions y
+  rewrites, confusión de caché de response bodies ×2, payload sin límite en Edge runtime, DoS en
+  Image Optimization vía SVG, exposición no autenticada de Server Functions) más `postcss` y
+  `sharp` transitivas. Delegado a un subagente `implementador` en worktree: bump de **solo patch**
+  `next` `16.2.10` → `16.2.11` (elimina las 9 CVEs propias de Next). `postcss` (8.4.31) y `sharp`
+  (0.34.5) **siguen apareciendo en `npm audit` tras el bump** — son dependencias que el propio
+  `next@16.2.11` pinea en SU `package.json` (no se resuelven bumpeando next de nuestro lado).
+  **Advertencia probada y revertida por el subagente: `npm audit fix --force` intenta "arreglar"
+  esto haciendo un DOWNGRADE de `next` a `9.3.3` (2019), que dispara el conteo a 92 vulnerabilidades
+  (26 altas, 1 crítica) — NUNCA correr ese comando en este repo.** Diff verificado por el
+  orquestador (solo `package.json`+`package-lock.json`, 2+80 líneas) y gate completo corrido de
+  nuevo por el orquestador sobre el resultado en `claude/rutina-2026-07-24-1615-security-patch`
+  (`f59f229`): lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11/Turbopack).
+  Toca `package.json`/`package-lock.json` (código) → **NO auto-mergeable por `fabrica-sync`,
+  pendiente de merge manual del usuario** (peldaño 3). Sin más trabajo P1/P2 nuevo delegable —
+  mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y Playwright
+  E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de proyecto,
+  proxy de IA Paquetes 1 y 2 fuera del alcance autónomo, y el mecanismo de reemplazo de
+  `fire_trigger` para el despacho instantáneo, que sigue sin decisión del usuario).
