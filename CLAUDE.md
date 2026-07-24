@@ -311,31 +311,35 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-24 20:15 UTC, trigésimo séptimo tick de
-  `routine-fabrica-consola`):** `main` sigue en `04ab8a1` (sin merge nuevo de `fabrica-sync`
-  todavía para este tick) — el trabajo de este tick vive en `claude/rutina-2026-07-24-2015-cron-pool-sync`
-  (`b4f528a` hallazgo+pregunta estacionada, `f579703` fix de `src/lib/cron.ts` vía subagente
-  `implementador`, `0e57922` merge de integración), pendiente de que `fabrica-sync` la mergee
-  (toca `src/lib/cron.ts`+`src/lib/cron.test.ts` además de docs — pasa por el gate completo en CI,
-  peldaño 4). Gate en verde localmente sobre esa rama: lint ✅, test:run **182/182** ✅ (mismo
-  conteo — el fix corrige valores existentes, no agrega tests), build ✅ (Next.js 16.2.11 /
-  Turbopack, Node v22.22.2). Anti-solape: `git fetch` (último commit `04ab8a1`, ~2h de antigüedad)
-  sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con normalidad. Inbox
-  `(vacío)` sin triaje.
-  **Hallazgo del tick — desincronización real de infraestructura, no solo un registro:**
-  auditoría cruzada de `list_triggers` contra `src/lib/cron.ts` (más allá de solo verificar el
-  trigger propio de esta routine, que sí coincidía) encontró que `CRON_TRABAJADORAS_POOL` llevaba
-  ~15h desactualizado — `rutina-trabajadora-1` corre hoy cada 2h (`"15 */2 * * *"`, no `"10 * * * *"`
-  como decía el código) y `rutina-trabajadora-2` cada hora (`"15 * * * *"`, no `"40 * * * *"`);
-  ambos triggers fueron modificados fuera de este repo el 2026-07-24 ~04:58-04:59 UTC (causa
-  desconocida). Consecuencia real, no cosmética: `EstadoPool` del dashboard mostraba un countdown
-  incorrecto para cualquier proyecto del Motor A-pool, no solo fabrica-consola. Corregido este
-  mismo tick (ver commit `f579703` arriba). Además, `rutina-trabajadora-1` volviendo a cadencia de
-  2h contradice la decisión del usuario 2026-07-18 de bajar el ciclo del pool a 1h para ambas
-  trabajadoras — se estacionó como pregunta nueva en `docs/backlog.md` § Decisiones estacionadas
-  (¿intencional o revertir a `"15 * * * *"`?), sin tocar el trigger real (fuera del alcance de esta
-  routine). Sin trabajo P1/P2 adicional delegable — mismos bloqueos por decisión de usuario que
-  ticks anteriores (Refinado instantáneo y Playwright E2E estacionados, Motor B no es v1,
-  `tipo:"gem"` condicionado a un segundo tipo de proyecto, proxy de IA Paquetes 1 y 2 fuera del
-  alcance autónomo, el mecanismo de reemplazo de `fire_trigger`, y ahora la cadencia real de
-  `rutina-trabajadora-1`, todos sin decisión del usuario).
+- **Último estado bueno (verificado 2026-07-24 22:15 UTC, trigésimo octavo tick de
+  `routine-fabrica-consola`):** `main` en `8bc1fda` (`fabrica-sync` ya mergeó el trabajo del tick
+  20:15 UTC — `git log 04ab8a1..8bc1fda` confirma que solo llegó ese trabajo esperado, sin ramas
+  huérfanas). El trabajo de ESTE tick es solo documentación, en
+  `claude/rutina-2026-07-24-2215-audit-deps-security` — sin cambios de código: un intento de fix de
+  seguridad se investigó y se revirtió sin commit (ver hallazgo abajo). Gate real en verde sobre
+  `main`: lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11/Turbopack, Node
+  v22.22.2). Anti-solape: `git fetch` (último commit `8bc1fda`, ~1h50min de antigüedad) sin working
+  tree sucio ni ramas/worktrees huérfanos → tick procedió con normalidad. Inbox `(vacío)` sin
+  triaje.
+  **Hallazgo del tick — `npm audit` subió de 3 a 12 vulnerabilidades altas:** 9 nuevas de
+  `brace-expansion@1.1.16` (GHSA-mh99-v99m-4gvg, DoS por expansión no acotada), arrastradas por
+  TODA la cadena de tooling de lint (`eslint`→`@eslint/config-array`/`@eslint/eslintrc`→
+  `minimatch@3.1.5`, más `eslint-config-next` y sus plugins) — dependencia de DESARROLLO
+  únicamente, no llega al runtime desplegado. Delegado a un subagente `implementador` en worktree
+  para aplicar el patch real (`brace-expansion@5.0.8`); con repro-primero encontró que la premisa
+  ("es solo un patch") era falsa para esta rama del árbol: `brace-expansion` publica 5 líneas
+  mayores paralelas sin interoperar, la rama que usa `eslint@9.39.5` (única `9.x` disponible) sigue
+  atada a la API vieja de `brace-expansion@1.x`, y forzar `5.0.8` ahí rompe `npm run lint` de
+  verdad (`TypeError: expand is not a function`, probado). Un override acotado deja el gate verde
+  pero no baja el conteo de `npm audit` (el advisory se dispara por paquete, no por instancia). El
+  único fix real es un bump MAYOR de `eslint` a `10.8.0` (breaking change) — la tarea delegada lo
+  prohibió explícitamente por el riesgo, así que el subagente revirtió TODO sin commit en vez de
+  dejar un fix parcial o roto (working tree limpio verificado). Nuevo ítem P2 + pregunta
+  estacionada para el usuario en `docs/backlog.md` (¿autorizar el bump mayor de `eslint`, o aceptar
+  el riesgo residual dev-only?). `postcss`/`sharp` (las 3 vulnerabilidades altas previas, pineadas
+  por Next.js) sin cambio — sigue sin acción posible de nuestro lado. Sin trabajo P1/P2 adicional
+  delegable — mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y
+  Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de
+  proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo, el mecanismo de reemplazo de
+  `fire_trigger`, la cadencia real de `rutina-trabajadora-1`, y ahora el bump mayor de `eslint`,
+  todos sin decisión del usuario).
