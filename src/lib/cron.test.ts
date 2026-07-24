@@ -128,8 +128,8 @@ describe("generarCadenciaEscalonada", () => {
 
 describe("cronDeTrabajadoraPool", () => {
   it("devuelve el cron fijo de una trabajadora conocida", () => {
-    expect(cronDeTrabajadoraPool("rutina-trabajadora-1")).toBe("10 * * * *");
-    expect(cronDeTrabajadoraPool("rutina-trabajadora-2")).toBe("40 * * * *");
+    expect(cronDeTrabajadoraPool("rutina-trabajadora-1")).toBe("15 */2 * * *");
+    expect(cronDeTrabajadoraPool("rutina-trabajadora-2")).toBe("15 * * * *");
   });
 
   it("devuelve null si el nombre no sigue el patrón esperado", () => {
