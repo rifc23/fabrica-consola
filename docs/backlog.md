@@ -1024,6 +1024,22 @@ se gestione a sí mismo como proyecto.
   altas, 1 crítica) — probado y revertido en este mismo tick, NO REPETIR ese comando en este repo.
   Sin acción disponible de nuestro lado hasta que Next.js publique un release que actualice sus
   propias versiones internas de postcss/sharp — revisar en el próximo bump de Next.
+- [ ] 🔄 **`CRON_TRABAJADORAS_POOL`/`CRON_DESPACHADORA_POOL` en `src/lib/cron.ts` desincronizados de
+  los triggers reales del Motor A-pool — hallazgo del tick 20:15 UTC, 2026-07-24.** `list_triggers`
+  muestra `rutina-trabajadora-1` con `cron_expression: "15 */2 * * *"` (cada 2h) y
+  `rutina-trabajadora-2` con `"15 */1 * * *"` (cada hora) — ambas con `updated_at` en
+  `2026-07-24T04:58–04:59 UTC` (~15h antes de este tick, cambio real hecho por fuera de este
+  código, no atribuible a ningún commit de este repo). El código sigue con los valores del
+  2026-07-18 (`{1: "10 * * * *", 2: "40 * * * *"}`, `CRON_DESPACHADORA_POOL = "5 * * * *"` — este
+  último SÍ coincide con el real). Consecuencia verificada: `EstadoPool` del dashboard calcula el
+  countdown de ambas trabajadoras con una cadencia que ya no es la real desde hace ~15h — dato
+  visible incorrecto para CUALQUIER proyecto en el pool, no solo fabrica-consola. Además,
+  `rutina-trabajadora-1` volvió a `*/2` (cada 2h), lo que contradice la decisión del usuario
+  2026-07-18 de "reducir el ciclo del pool de 2h a 1h" para AMBAS trabajadoras — no hay forma de
+  saber desde este repo si ese cambio fue intencional o un error, así que se estaciona como
+  pregunta (ver Decisiones estacionadas). Acción tomada este tick: actualizar la CONSTANTE del
+  código para que refleje la cadencia REAL vigente hoy (deja de mentirle al dashboard), sin tocar
+  ningún trigger real — eso es decisión de producto/riesgo fuera de este repo.
 - [x] `eslint.config.*` usa `globalIgnores(".next/**")` (anclado a raíz, no `**/.next/**`): los
   builds hechos dentro de worktrees de subagentes (`.claude/worktrees/agent-*/.next/`) no quedan
   ignorados y contaminan `npm run lint` corrido desde el checkout principal si esos worktrees
@@ -1065,6 +1081,15 @@ se gestione a sí mismo como proyecto.
   algún webhook, o aceptar la latencia del tick normal como techo real y retirar la promesa de "≤1h"
   de la UI/documentación)? Ver CLAUDE.md § Errores Conocidos y § Decisiones Arquitectónicas (Motor
   A-pool) para el detalle ya corregido.
+- **`rutina-trabajadora-1` volvió a cadencia de 2h — ¿intencional? (estacionada 2026-07-24, ~20:15
+  UTC, hallazgo de este tick):** `list_triggers` confirma que `rutina-trabajadora-1` corre hoy con
+  `cron_expression: "15 */2 * * *"` (cada 2h), revirtiendo la decisión del usuario del 2026-07-18 de
+  bajar el ciclo del pool a 1h para AMBAS trabajadoras (`rutina-trabajadora-2` sí sigue en
+  `"15 */1 * * *"`, cada hora). `updated_at` de ambos triggers marca `2026-07-24T04:58–04:59 UTC`,
+  fuera de cualquier commit de este repo. ¿Fue deliberado (ej. bajar la carga de esa trabajadora en
+  particular) o quieres revertirlo a `15 * * * *` (cada hora, como la trabajadora-2)? Mientras no
+  haya respuesta, este tick solo actualizó la CONSTANTE de `src/lib/cron.ts` para que el dashboard
+  muestre el countdown real (cada 2h para la trabajadora-1) — no tocó el trigger en sí.
 
 ## Registro de trabajo
 
