@@ -311,20 +311,27 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-20 16:15 UTC, trigésimo tick de
-  `routine-fabrica-consola`):** base `main` en `9a5345b` (merge de `fabrica-sync` del tick 14:15
-  UTC del 2026-07-20: `claude/rutina-2026-07-20-1415-auditoria`, solo docs/CLAUDE.md/manifest).
+- **Último estado bueno (verificado 2026-07-24 08:15 UTC, trigésimo primer tick de
+  `routine-fabrica-consola`):** base `main` en `2807634` (merge de `fabrica-sync` del tick 16:15
+  UTC del 2026-07-20: `claude/rutina-2026-07-20-1615-auditoria`, solo docs/CLAUDE.md/manifest).
   Gate en verde: `npm run lint && npm run test:run && npm run build` →
   lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.10 / Turbopack, Node
-  v22.22.2). Este tick: anti-solape con `git fetch` (último commit `9a5345b`, ~1h57min de
-  antigüedad en el momento del fetch, es el propio merge de `fabrica-sync` del tick anterior) sin
+  v22.22.2). Este tick: anti-solape con `git fetch` (`main` sin commits nuevos desde `2807634`) sin
   working tree sucio ni ramas/worktrees huérfanos (`git branch -r` solo devuelve `origin/main`) →
-  tick procedió con normalidad. Inbox `(vacío)` sin triaje. Único hallazgo: la fila del tick 14:15
-  UTC en el Registro de trabajo de `docs/backlog.md` decía "pendiente de push" pese a que
-  `fabrica-sync` ya la había integrado en `9a5345b` — corregida. Sin trabajo P1/P2 nuevo
+  tick procedió con normalidad. Inbox `(vacío)` sin triaje. Corregido: la fila del tick 16:15 UTC
+  (2026-07-20) en el Registro de trabajo de `docs/backlog.md` decía "pendiente de push" pese a que
+  `fabrica-sync` ya la había integrado en `2807634`. **Hallazgo operativo nuevo (no de código de
+  este repo):** entre ese tick (2026-07-20 16:15 UTC) y este (2026-07-24 08:15 UTC) pasaron ~88h
+  sin un solo commit en `main` ni un reporte en `docs/reportes/`, pese a la cadencia `15 */2 * * *`
+  (debieron ocurrir ~44 disparos) y sin ningún `*-SALTADA.md` que explique un salto intencional;
+  `list_triggers` confirma el trigger `enabled: true`, sin `suspension_reason`. Causa raíz no
+  determinable desde este repo (infraestructura de la plataforma de routines) — documentado en
+  `docs/backlog.md` § Estado general/Registro de trabajo y notificado al usuario fuera de banda; no
+  se puede descartar que afecte también a `rutina-despachadora`/`rutina-trabajadoras`/
+  `routine-madre-fabrica`, que este repo no puede auditar. Sin trabajo P1/P2 nuevo
   delegable — mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y
   Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de
   proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo, y el mecanismo de reemplazo de
-  `fire_trigger` para el despacho instantáneo, que sigue sin decisión del usuario). Décimo noveno
-  tick consecutivo (desde 2026-07-18 12:15 UTC) sin trabajo nuevo delegable — la cola sigue vacía
+  `fire_trigger` para el despacho instantáneo, que sigue sin decisión del usuario). Vigésimo tick
+  consecutivo (desde 2026-07-18 12:15 UTC) sin trabajo nuevo delegable — la cola sigue vacía
   de ítems accionables sin decisión del usuario.
