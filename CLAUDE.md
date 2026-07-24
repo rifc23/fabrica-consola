@@ -311,24 +311,22 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-24 10:15 UTC, trigésimo segundo tick de
-  `routine-fabrica-consola`):** base `main` en `906a023` (merge de `fabrica-sync` del tick 08:15
-  UTC del 2026-07-24: `claude/rutina-2026-07-24-0815-auditoria`, solo docs/CLAUDE.md/manifest).
+- **Último estado bueno (verificado 2026-07-24 12:15 UTC, trigésimo tercer tick de
+  `routine-fabrica-consola`):** base `main` en `426d99b` (merge de `fabrica-sync` del tick 10:15
+  UTC del 2026-07-24: `claude/rutina-2026-07-24-1015-auditoria`, solo docs/CLAUDE.md/manifest).
   Gate en verde: `npm run lint && npm run test:run && npm run build` →
   lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.10 / Turbopack, Node
-  v22.22.2). Este tick: anti-solape con `git fetch` (último commit `906a023`, ~1h54min de
+  v22.22.2). Este tick: anti-solape con `git fetch` (último commit `426d99b`, ~1h56min de
   antigüedad, patrón propio de `fabrica-sync`) sin working tree sucio ni ramas/worktrees huérfanos
   (`git branch -r` solo devuelve `origin/main`) → tick procedió con normalidad. Inbox `(vacío)` sin
-  triaje. Corregido: la fila del tick 08:15 UTC (2026-07-24) en el Registro de trabajo de
+  triaje. Corregido: (1) la fila del tick 10:15 UTC (2026-07-24) en el Registro de trabajo de
   `docs/backlog.md` decía "pendiente de push" pese a que `fabrica-sync` ya la había integrado en
-  `906a023`. **Sobre el gap operativo del tick anterior (~88h sin disparos entre 2026-07-20 16:15
-  UTC y 2026-07-24 08:15 UTC, documentado en la ancla anterior):** este tick disparó normalmente
-  ~2h después, como espera la cadencia `15 */2 * * *` — el gap no se repitió; sigue sin causa raíz
-  determinada desde este repo, se mantiene como hallazgo puntual documentado en
-  `docs/backlog.md` § Estado general, no como problema recurrente confirmado. Sin trabajo P1/P2
-  nuevo delegable — mismos bloqueos por decisión de usuario que ticks anteriores (Refinado
-  instantáneo y Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un
-  segundo tipo de proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo, y el mecanismo
-  de reemplazo de `fire_trigger` para el despacho instantáneo, que sigue sin decisión del usuario).
-  Vigésimo primer tick consecutivo (desde 2026-07-18 12:15 UTC) sin trabajo nuevo delegable — la
-  cola sigue vacía de ítems accionables sin decisión del usuario.
+  `426d99b`; (2) una línea huérfana `- (vacío)` al final de `docs/backlog.md` § Estado general,
+  arrastrada sin detectar desde el commit `68f23dd` (tick 18:15 UTC del 2026-07-18, ~24 ticks) —
+  sin efecto en el parsing del Inbox ni en el conteo de checkboxes del Brief, pero incorrecta como
+  documentación; eliminada. Sin trabajo P1/P2 nuevo delegable — mismos bloqueos por decisión de
+  usuario que ticks anteriores (Refinado instantáneo y Playwright E2E estacionados, Motor B no es
+  v1, `tipo:"gem"` condicionado a un segundo tipo de proyecto, proxy de IA Paquetes 1 y 2 fuera del
+  alcance autónomo, y el mecanismo de reemplazo de `fire_trigger` para el despacho instantáneo, que
+  sigue sin decisión del usuario). Vigésimo segundo tick consecutivo (desde 2026-07-18 12:15 UTC)
+  sin trabajo nuevo delegable — la cola sigue vacía de ítems accionables sin decisión del usuario.
