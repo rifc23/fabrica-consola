@@ -311,20 +311,20 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-25 18:15 UTC, cuadragésimo séptimo tick de
-  `routine-fabrica-consola`):** `main` en `dd9d709` (`fabrica-sync` ya mergeó el trabajo doc-only
-  del tick 16:15 UTC del 2026-07-25). Anti-solape: `git fetch` (último commit `dd9d709`, ~1h56min
+- **Último estado bueno (verificado 2026-07-25 20:15 UTC, cuadragésimo octavo tick de
+  `routine-fabrica-consola`):** `main` en `6577a5a` (`fabrica-sync` ya mergeó el trabajo doc-only
+  del tick 18:15 UTC del 2026-07-25). Anti-solape: `git fetch` (último commit `6577a5a`, ~1h55min
   de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con
   normalidad. Inbox `(vacío)` sin triaje. Auditoría de estado real: la fila del Registro de trabajo
-  de `docs/backlog.md` del tick 16:15 UTC seguía "pendiente de push" pese a estar ya mergeada
-  (`dd9d709`) — corregida. `list_triggers` verificado sin discrepancias en ninguno de los 5
-  triggers reales (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at` 20:15
+  de `docs/backlog.md` del tick 18:15 UTC seguía "pendiente de push" pese a estar ya mergeada
+  (`6577a5a`) — corregida. `list_triggers` verificado sin discrepancias en ninguno de los 5
+  triggers reales (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at` 22:15
   UTC; `rutina-despachadora`, `rutina-trabajadora-1/2`, `routine-madre-fabrica` también sin
   discrepancias). Sin PRs abiertos en el repo. Gate real en verde sobre `main`: lint ✅, test:run
   **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11/Turbopack, Node v22.22.2). `npm audit
   --audit-level=high` sigue en 12 vulnerabilidades altas, sin cambio desde el tick anterior. Sin
   trabajo P0/P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario que el tick anterior.
-  Trigésimo tercer tick consecutivo con solo housekeeping documental. Las cinco Decisiones
+  Trigésimo cuarto tick consecutivo con solo housekeeping documental. Las cinco Decisiones
   estacionadas siguen sin respuesta del usuario (diseño visual/nombre desde 2026-07-17, Playwright
   E2E desde 2026-07-18, reemplazo de `fire_trigger` desde 2026-07-19, cadencia de
   `rutina-trabajadora-1` y bump mayor de `eslint` desde 2026-07-24). Solo documentación.
