@@ -311,17 +311,18 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-24 22:15 UTC, trigésimo octavo tick de
-  `routine-fabrica-consola`):** `main` en `8bc1fda` (`fabrica-sync` ya mergeó el trabajo del tick
-  20:15 UTC — `git log 04ab8a1..8bc1fda` confirma que solo llegó ese trabajo esperado, sin ramas
-  huérfanas). El trabajo de ESTE tick es solo documentación, en
-  `claude/rutina-2026-07-24-2215-audit-deps-security` — sin cambios de código: un intento de fix de
-  seguridad se investigó y se revirtió sin commit (ver hallazgo abajo). Gate real en verde sobre
-  `main`: lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11/Turbopack, Node
-  v22.22.2). Anti-solape: `git fetch` (último commit `8bc1fda`, ~1h50min de antigüedad) sin working
-  tree sucio ni ramas/worktrees huérfanos → tick procedió con normalidad. Inbox `(vacío)` sin
-  triaje.
-  **Hallazgo del tick — `npm audit` subió de 3 a 12 vulnerabilidades altas:** 9 nuevas de
+- **Último estado bueno (verificado 2026-07-25 00:15 UTC, trigésimo noveno tick de
+  `routine-fabrica-consola`):** `main` en `45ec0f1` (`fabrica-sync` ya mergeó el trabajo doc-only
+  del tick 22:15 UTC del 2026-07-24). Anti-solape: `git fetch` (último commit `45ec0f1`,
+  ~1h48min de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con
+  normalidad. Inbox `(vacío)` sin triaje. Auditoría de estado real: dos filas del Registro de
+  trabajo de `docs/backlog.md` (ticks 18:15 y 22:15 UTC del 2026-07-24) seguían "pendiente" pese a
+  estar ya mergeadas (`04ab8a1`, `45ec0f1`) — corregidas. Gate real en verde sobre `main`: lint ✅,
+  test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11/Turbopack, Node v22.22.2).
+  `npm audit --audit-level=high` sigue en 12 vulnerabilidades altas, sin cambio desde el tick
+  anterior. Sin trabajo P0/P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario que el
+  tick anterior. Solo documentación.
+  **Hallazgo del tick 22:15 UTC (2026-07-24) — `npm audit` subió de 3 a 12 vulnerabilidades altas:** 9 nuevas de
   `brace-expansion@1.1.16` (GHSA-mh99-v99m-4gvg, DoS por expansión no acotada), arrastradas por
   TODA la cadena de tooling de lint (`eslint`→`@eslint/config-array`/`@eslint/eslintrc`→
   `minimatch@3.1.5`, más `eslint-config-next` y sus plugins) — dependencia de DESARROLLO
