@@ -311,19 +311,19 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-25 10:15 UTC, cuadragésimo cuarto tick de
-  `routine-fabrica-consola`):** `main` en `6dab8a3` (`fabrica-sync` ya mergeó el trabajo doc-only
-  del tick 08:15 UTC del 2026-07-25). Anti-solape: `git fetch` (último commit `6dab8a3`,
-  ~1h56min de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con
-  normalidad. Inbox `(vacío)` sin triaje. Auditoría de estado real: la fila del Registro de
-  trabajo de `docs/backlog.md` del tick 08:15 UTC seguía "pendiente de push" pese a estar ya
-  mergeada (`6dab8a3`) — corregida. `list_triggers` verificado sin discrepancias en ninguno de los
-  5 triggers reales (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at` 12:15
+- **Último estado bueno (verificado 2026-07-25 14:15 UTC, cuadragésimo quinto tick de
+  `routine-fabrica-consola`):** `main` en `f8cc702` (`fabrica-sync` ya mergeó el trabajo doc-only
+  del tick 10:15 UTC del 2026-07-25). Anti-solape: `git fetch` (último commit `f8cc702`, ~4h de
+  antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con normalidad.
+  Inbox `(vacío)` sin triaje. Auditoría de estado real: la fila del Registro de trabajo de
+  `docs/backlog.md` del tick 10:15 UTC seguía "pendiente de push" pese a estar ya mergeada
+  (`f8cc702`) — corregida. `list_triggers` verificado sin discrepancias en ninguno de los 5
+  triggers reales (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at` 16:15
   UTC; `rutina-despachadora`, `rutina-trabajadora-1/2`, `routine-madre-fabrica` también sin
   discrepancias). Gate real en verde sobre `main`: lint ✅, test:run **182/182** ✅ (sin cambio),
   build ✅ (Next.js 16.2.11/Turbopack, Node v22.22.2). `npm audit --audit-level=high` sigue en 12
   vulnerabilidades altas, sin cambio desde el tick anterior. Sin trabajo P0/P1/P2 nuevo delegable —
-  mismos bloqueos por decisión de usuario que el tick anterior. Trigésimo tick consecutivo
+  mismos bloqueos por decisión de usuario que el tick anterior. Trigésimo primer tick consecutivo
   con solo housekeeping documental. Solo documentación.
   **Hallazgo del tick 22:15 UTC (2026-07-24) — `npm audit` subió de 3 a 12 vulnerabilidades altas:** 9 nuevas de
   `brace-expansion@1.1.16` (GHSA-mh99-v99m-4gvg, DoS por expansión no acotada), arrastradas por
