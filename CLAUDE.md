@@ -311,39 +311,22 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-25 10:15 UTC, cuadragésimo cuarto tick de
-  `routine-fabrica-consola`):** `main` en `6dab8a3` (`fabrica-sync` ya mergeó el trabajo doc-only
-  del tick 08:15 UTC del 2026-07-25). Anti-solape: `git fetch` (último commit `6dab8a3`,
-  ~1h56min de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con
+- **Último estado bueno (verificado 2026-07-25 12:15 UTC, cuadragésimo quinto tick de
+  `routine-fabrica-consola`):** `main` en `f8cc702` (`fabrica-sync` ya mergeó el trabajo doc-only
+  del tick 10:15 UTC del 2026-07-25). Anti-solape: `git fetch` (último commit `f8cc702`,
+  ~1h57min de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con
   normalidad. Inbox `(vacío)` sin triaje. Auditoría de estado real: la fila del Registro de
-  trabajo de `docs/backlog.md` del tick 08:15 UTC seguía "pendiente de push" pese a estar ya
-  mergeada (`6dab8a3`) — corregida. `list_triggers` verificado sin discrepancias en ninguno de los
-  5 triggers reales (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at` 12:15
-  UTC; `rutina-despachadora`, `rutina-trabajadora-1/2`, `routine-madre-fabrica` también sin
-  discrepancias). Gate real en verde sobre `main`: lint ✅, test:run **182/182** ✅ (sin cambio),
-  build ✅ (Next.js 16.2.11/Turbopack, Node v22.22.2). `npm audit --audit-level=high` sigue en 12
-  vulnerabilidades altas, sin cambio desde el tick anterior. Sin trabajo P0/P1/P2 nuevo delegable —
-  mismos bloqueos por decisión de usuario que el tick anterior. Trigésimo tick consecutivo
-  con solo housekeeping documental. Solo documentación.
-  **Hallazgo del tick 22:15 UTC (2026-07-24) — `npm audit` subió de 3 a 12 vulnerabilidades altas:** 9 nuevas de
-  `brace-expansion@1.1.16` (GHSA-mh99-v99m-4gvg, DoS por expansión no acotada), arrastradas por
-  TODA la cadena de tooling de lint (`eslint`→`@eslint/config-array`/`@eslint/eslintrc`→
-  `minimatch@3.1.5`, más `eslint-config-next` y sus plugins) — dependencia de DESARROLLO
-  únicamente, no llega al runtime desplegado. Delegado a un subagente `implementador` en worktree
-  para aplicar el patch real (`brace-expansion@5.0.8`); con repro-primero encontró que la premisa
-  ("es solo un patch") era falsa para esta rama del árbol: `brace-expansion` publica 5 líneas
-  mayores paralelas sin interoperar, la rama que usa `eslint@9.39.5` (única `9.x` disponible) sigue
-  atada a la API vieja de `brace-expansion@1.x`, y forzar `5.0.8` ahí rompe `npm run lint` de
-  verdad (`TypeError: expand is not a function`, probado). Un override acotado deja el gate verde
-  pero no baja el conteo de `npm audit` (el advisory se dispara por paquete, no por instancia). El
-  único fix real es un bump MAYOR de `eslint` a `10.8.0` (breaking change) — la tarea delegada lo
-  prohibió explícitamente por el riesgo, así que el subagente revirtió TODO sin commit en vez de
-  dejar un fix parcial o roto (working tree limpio verificado). Nuevo ítem P2 + pregunta
-  estacionada para el usuario en `docs/backlog.md` (¿autorizar el bump mayor de `eslint`, o aceptar
-  el riesgo residual dev-only?). `postcss`/`sharp` (las 3 vulnerabilidades altas previas, pineadas
-  por Next.js) sin cambio — sigue sin acción posible de nuestro lado. Sin trabajo P1/P2 adicional
-  delegable — mismos bloqueos por decisión de usuario que ticks anteriores (Refinado instantáneo y
-  Playwright E2E estacionados, Motor B no es v1, `tipo:"gem"` condicionado a un segundo tipo de
-  proyecto, proxy de IA Paquetes 1 y 2 fuera del alcance autónomo, el mecanismo de reemplazo de
-  `fire_trigger`, la cadencia real de `rutina-trabajadora-1`, y ahora el bump mayor de `eslint`,
-  todos sin decisión del usuario).
+  trabajo de `docs/backlog.md` del tick 10:15 UTC seguía "pendiente de push" pese a estar ya
+  mergeada (`f8cc702`) — corregida. `list_triggers` verificado sin discrepancias en ninguno de los
+  5 triggers reales (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at` 14:15
+  UTC; `rutina-despachadora`, `rutina-trabajadora-1/2` — esta última sigue en cadencia de 2h, sin
+  respuesta a la pregunta estacionada —, `routine-madre-fabrica` también sin discrepancias). Gate
+  real en verde sobre `main`: lint ✅, test:run **182/182** ✅ (sin cambio), build ✅ (Next.js
+  16.2.11/Turbopack, Node v22.22.2). `npm audit --audit-level=high` sigue en 12 vulnerabilidades
+  altas (3 `postcss`/`sharp` pineadas por Next, 9 `brace-expansion` por la cadena de `eslint`), sin
+  cambio desde el tick 22:15 UTC del 2026-07-24. Sin trabajo P0/P1/P2 nuevo delegable — mismos
+  bloqueos por decisión de usuario que el tick anterior (ver `docs/backlog.md` § Decisiones
+  estacionadas [USUARIO] para el detalle de las 5 preguntas pendientes: diseño visual, nombre del
+  producto, Playwright E2E con recursos reales, reemplazo de `fire_trigger`, cadencia de
+  `rutina-trabajadora-1`, bump mayor de `eslint`). Trigésimo primer tick consecutivo con solo
+  housekeeping documental. Solo documentación.
