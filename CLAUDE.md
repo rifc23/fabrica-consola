@@ -311,26 +311,32 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-26 02:15 UTC, quincuagésimo primer tick de
-  `routine-fabrica-consola`):** `main` en `2926fb8` (`fabrica-sync` ya mergeó el trabajo doc-only
-  del tick 00:15 UTC del 2026-07-26). Anti-solape: `git fetch` (último commit `2926fb8`, ~1h55min
+- **Último estado bueno (verificado 2026-07-26 04:15 UTC, quincuagésimo segundo tick de
+  `routine-fabrica-consola`):** `main` en `750fadf` (`fabrica-sync` ya mergeó el trabajo doc-only
+  del tick 02:15 UTC del 2026-07-26). Anti-solape: `git fetch` (último commit `750fadf`, ~1h56min
   de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con
   normalidad. Inbox `(vacío)` sin triaje. Auditoría de estado real: la fila del Registro de trabajo
-  de `docs/backlog.md` del tick 00:15 UTC seguía "pendiente de push" pese a estar ya mergeada
-  (`2926fb8`) — corregida. `list_triggers` verificado sin discrepancias en ninguno de los 5
+  de `docs/backlog.md` del tick 02:15 UTC seguía "pendiente de push" pese a estar ya mergeada
+  (`750fadf`) — corregida. `list_triggers` verificado sin discrepancias en ninguno de los 5
   triggers reales (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at`
-  2026-07-26T04:15Z; `rutina-despachadora`, `rutina-trabajadora-1/2`, `routine-madre-fabrica`
+  2026-07-26T06:15Z; `rutina-despachadora`, `rutina-trabajadora-1/2`, `routine-madre-fabrica`
   también sin discrepancias). Sin PRs abiertos en el repo. Gate real en verde sobre `main`: lint ✅,
-  test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11/Turbopack, Node v22.22.2). `npm
-  audit --audit-level=high` sigue en 12 vulnerabilidades altas, sin cambio desde el tick anterior.
-  Sin trabajo P0/P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario que el tick
-  anterior. Trigésimo séptimo tick consecutivo con solo housekeeping documental — la campaña sigue
-  cerrada formalmente desde `CAMPANA-2026-07-18-FINAL.md` (tick 16:15 UTC, 2026-07-18); estos ticks
-  son mantenimiento sobre una campaña ya cerrada, no una reapertura. Las cinco Decisiones
-  estacionadas siguen sin respuesta del usuario (diseño visual/nombre desde 2026-07-17, Playwright
-  E2E desde 2026-07-18, reemplazo de `fire_trigger` desde 2026-07-19, cadencia de
-  `rutina-trabajadora-1` y bump mayor de `eslint` desde 2026-07-24) — la más antigua lleva ya 9 días
-  sin respuesta. Solo documentación.
+  test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11/Turbopack, Node v22.22.2).
+  **Hallazgo nuevo:** `npm audit --audit-level=high` devuelve `400 Bad Request` en este entorno —
+  npm está retirando el endpoint `quick` de auditoría (confirmado por el header `npm-notice` de la
+  respuesta: "This endpoint is being retired. Use the bulk advisory endpoint instead"), no es un
+  problema de `package-lock.json` de este repo (`npm ci` corrió limpio). No se pudo confirmar si
+  las 12 vulnerabilidades altas conocidas (3 `postcss`/`sharp`, 9 `brace-expansion`) cambiaron desde
+  el tick 22:15 UTC del 2026-07-24 — sin dato nuevo, el conteo documentado no se actualiza este
+  tick; reintentar en el próximo disparo y, si persiste, considerar migrar a la herramienta que
+  reemplace el endpoint retirado. Sin trabajo P0/P1/P2 nuevo delegable — mismos bloqueos por
+  decisión de usuario que el tick anterior. Trigésimo octavo tick consecutivo con solo housekeeping
+  documental — la campaña sigue cerrada formalmente desde `CAMPANA-2026-07-18-FINAL.md` (tick
+  16:15 UTC, 2026-07-18); estos ticks son mantenimiento sobre una campaña ya cerrada, no una
+  reapertura. Las cinco Decisiones estacionadas siguen sin respuesta del usuario (diseño
+  visual/nombre desde 2026-07-17, Playwright E2E desde 2026-07-18, reemplazo de `fire_trigger`
+  desde 2026-07-19, cadencia de `rutina-trabajadora-1` y bump mayor de `eslint` desde 2026-07-24) —
+  la más antigua lleva ya 9 días sin respuesta. Solo documentación.
   **Hallazgo del tick 22:15 UTC (2026-07-24) — `npm audit` subió de 3 a 12 vulnerabilidades altas:** 9 nuevas de
   `brace-expansion@1.1.16` (GHSA-mh99-v99m-4gvg, DoS por expansión no acotada), arrastradas por
   TODA la cadena de tooling de lint (`eslint`→`@eslint/config-array`/`@eslint/eslintrc`→
