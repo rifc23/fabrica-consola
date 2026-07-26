@@ -334,35 +334,27 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-26 12:15 UTC, quincuagésimo sexto tick de
-  `routine-fabrica-consola`):** `main` en `4e6d21b` (`fabrica-sync` ya mergeó el trabajo doc-only
-  del tick 10:15 UTC del 2026-07-26). Anti-solape: `git fetch` (último commit `4e6d21b`, ~1h50min
+- **Último estado bueno (verificado 2026-07-26 14:15 UTC, quincuagésimo séptimo tick de
+  `routine-fabrica-consola`):** `main` en `f057f16` (`fabrica-sync` ya mergeó el trabajo doc-only
+  del tick 12:15 UTC del 2026-07-26). Anti-solape: `git fetch` (último commit `f057f16`, ~1h52min
   de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con
   normalidad. Inbox `(vacío)` sin triaje. La fila del Registro de trabajo de `docs/backlog.md` del
-  tick 10:15 UTC seguía "pendiente de push" pese a estar ya mergeada — corregida. `list_triggers`
+  tick 12:15 UTC seguía "pendiente de push" pese a estar ya mergeada — corregida. `list_triggers`
   verificado sin discrepancias en ninguno de los 5 triggers reales (`routine-fabrica-consola`
-  enabled, cron `15 */2 * * *`, `next_run_at` 2026-07-26T14:15Z; `rutina-despachadora`,
+  enabled, cron `15 */2 * * *`, `next_run_at` 2026-07-26T16:15Z; `rutina-despachadora`,
   `rutina-trabajadora-1/2`, `routine-madre-fabrica` también sin discrepancias). Sin PRs abiertos.
   Gate real en verde sobre `main`: lint ✅, test:run **182/182** ✅ (sin cambio), build ✅
   (Next.js 16.2.11/Turbopack, Node v22.22.2). `npm audit --audit-level=high` sigue en **12**
-  vulnerabilidades altas, sin cambio. **Primera aplicación de la regla propuesta en el tick
-  anterior:** auditados los últimos ~30 runs de `fabrica-sync.yml` (`actions_list`, hasta el
-  2026-07-20) — todos exitosos salvo el fallo ya conocido y ya resuelto de
-  `claude/rutina-2026-07-25-1215-auditoria` (run `30157816749`); **sin fallos nuevos sin
-  reintentar**. Nota metodológica sin impacto en el resultado: el primer `git merge-base
-  --is-ancestor` de este tick corrió sobre un clon shallow (sin `--unshallow` todavía) y reportó
-  ~25 ramas `claude/rutina-*` de 2026-07-18/19 como "no mergeadas" — falso positivo del propio
-  clon superficial (el historial se corta antes de esos commits), detectado y corregido antes de
-  documentar nada; repetido tras `git fetch --unshallow` el resultado coincide exactamente con el
-  del tick anterior (solo `claude/rutina-2026-07-25-1215-auditoria` y las 5 ramas ajenas a esta
-  routine, ambos ya sin acción pendiente) — ningún hallazgo nuevo, solo confirmación. Sin trabajo
-  P0/P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario que el tick anterior (las
-  **seis** Decisiones estacionadas — diseño visual/nombre, Playwright E2E, reemplazo de
-  `fire_trigger`, cadencia de `rutina-trabajadora-1`, bump mayor de `eslint` — siguen sin
-  respuesta, la más antigua desde hace 9 días). Cuadragésimo segundo tick consecutivo con solo
-  housekeeping documental — la campaña sigue cerrada formalmente desde
-  `CAMPANA-2026-07-18-FINAL.md` (tick 16:15 UTC, 2026-07-18); estos ticks son mantenimiento sobre
-  una campaña ya cerrada, no una reapertura. Solo documentación.
+  vulnerabilidades altas, sin cambio. Auditados los últimos 30 runs de `fabrica-sync.yml`
+  (`actions_list`, de 78 totales, hasta el 2026-07-25T12:20 UTC) — todos exitosos salvo el fallo ya
+  conocido y ya resuelto de `claude/rutina-2026-07-25-1215-auditoria` (run `30157816749`); **sin
+  fallos nuevos sin reintentar**. Sin trabajo P0/P1/P2 nuevo delegable — mismos bloqueos por
+  decisión de usuario que el tick anterior (las **seis** Decisiones estacionadas — diseño
+  visual/nombre, Playwright E2E, reemplazo de `fire_trigger`, cadencia de `rutina-trabajadora-1`,
+  bump mayor de `eslint` — siguen sin respuesta, la más antigua desde hace 9 días). Cuadragésimo
+  tercer tick consecutivo con solo housekeeping documental — la campaña sigue cerrada formalmente
+  desde `CAMPANA-2026-07-18-FINAL.md` (tick 16:15 UTC, 2026-07-18); estos ticks son mantenimiento
+  sobre una campaña ya cerrada, no una reapertura. Solo documentación.
   **Hallazgo del tick 22:15 UTC (2026-07-24) — `npm audit` subió de 3 a 12 vulnerabilidades altas:** 9 nuevas de
   `brace-expansion@1.1.16` (GHSA-mh99-v99m-4gvg, DoS por expansión no acotada), arrastradas por
   TODA la cadena de tooling de lint (`eslint`→`@eslint/config-array`/`@eslint/eslintrc`→
