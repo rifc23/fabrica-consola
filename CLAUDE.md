@@ -334,30 +334,27 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-26 20:15 UTC, sexagésimo tick de
-  `routine-fabrica-consola`):** `main` en `2597c80` (`fabrica-sync` ya mergeó el trabajo doc-only
-  del tick 18:15 UTC del 2026-07-26, run `30214494651` exitoso). Anti-solape: `git fetch` (último
-  commit `2597c80`, ~1h55min de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos →
-  tick procedió con normalidad. Inbox `(vacío)` sin triaje. La fila del Registro de trabajo de
-  `docs/backlog.md` del tick 18:15 UTC seguía "pendiente de push" pese a estar ya mergeada (run
-  `30214494651` exitoso) — corregida. `list_triggers` verificado sin discrepancias en ninguno de
-  los 5 triggers reales (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at`
-  2026-07-26T22:15Z; `rutina-despachadora`, `rutina-trabajadora-1/2`, `routine-madre-fabrica`
-  también sin discrepancias). Sin PRs abiertos. Gate real en verde sobre `main`: lint ✅, test:run
-  **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11/Turbopack, Node v22.22.2). `npm audit
-  --audit-level=high` sigue en **12** vulnerabilidades altas, sin cambio. Auditados los últimos 15
-  runs de `fabrica-sync.yml` (`actions_list`, hasta el 2026-07-25T16:19 UTC) — todos exitosos;
-  **sin fallos nuevos sin reintentar**. Auditoría de ramas repetida sobre historia completa
-  (`git fetch --unshallow` + `git merge-base --is-ancestor` sobre las 76 ramas remotas): el primer
-  pase (sobre el clon aún shallow de este tick) reportó 10 ramas `feat/*`/`fix/*`/`docs/*` viejas
-  como "no mergeadas" — falso positivo metodológico ya documentado en ticks previos; repetido tras
-  `--unshallow`, las 10 confirmaron estar MERGED. Resultado final idéntico al de los ticks
-  anteriores — sin ramas nuevas sin mergear más allá de las ya documentadas
-  (`claude/rutina-2026-07-25-1215-auditoria` y las 5 ramas ajenas a esta routine). Sin trabajo
-  P0/P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario que el tick anterior (las
-  **seis** Decisiones estacionadas — diseño visual/nombre, Playwright E2E, reemplazo de
-  `fire_trigger`, cadencia de `rutina-trabajadora-1`, bump mayor de `eslint` — siguen sin
-  respuesta, la más antigua desde hace 9 días). Cuadragésimo sexto tick consecutivo con solo
+- **Último estado bueno (verificado 2026-07-26 22:15 UTC, sexagésimo primer tick de
+  `routine-fabrica-consola`):** `main` en `47cf981` (`fabrica-sync` ya mergeó el trabajo doc-only
+  del tick 20:15 UTC del 2026-07-26). Anti-solape: `git fetch` (último commit `47cf981`,
+  ~1h55min de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con
+  normalidad. Inbox `(vacío)` sin triaje. La fila del Registro de trabajo de `docs/backlog.md` del
+  tick 20:15 UTC seguía "pendiente de push" pese a estar ya mergeada — corregida. `list_triggers`
+  verificado sin discrepancias en ninguno de los 5 triggers reales (`routine-fabrica-consola`
+  enabled, cron `15 */2 * * *`, `next_run_at` 2026-07-27T00:15Z; `rutina-despachadora`,
+  `rutina-trabajadora-1/2`, `routine-madre-fabrica` también sin discrepancias). Sin PRs abiertos.
+  Gate real en verde sobre `main`: lint ✅, test:run **182/182** ✅ (sin cambio), build ✅
+  (Next.js 16.2.11/Turbopack). `npm audit --audit-level=high` sigue en **12** vulnerabilidades
+  altas, sin cambio. Auditados los últimos 20 runs de `fabrica-sync.yml` (`actions_list`, hasta el
+  2026-07-25T08:19 UTC) — todos exitosos; **sin fallos nuevos sin reintentar**. Auditoría de ramas:
+  `git branch -a` (fetch de una sola rama) solo devuelve `origin/main` — sin re-ejecutar el
+  `--unshallow` completo, ya que el tick de las 20:15 UTC lo hizo hace menos de 2h con resultado
+  idéntico al de ticks previos (única rama de esta routine sin mergear sigue siendo
+  `claude/rutina-2026-07-25-1215-auditoria`, ya documentada, más las 5 ramas ajenas conocidas — sin
+  novedad). Sin trabajo P0/P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario que el
+  tick anterior (las **seis** Decisiones estacionadas — diseño visual/nombre, Playwright E2E,
+  reemplazo de `fire_trigger`, cadencia de `rutina-trabajadora-1`, bump mayor de `eslint` — siguen
+  sin respuesta, la más antigua desde hace 9 días). Cuadragésimo séptimo tick consecutivo con solo
   housekeeping documental — la campaña sigue cerrada formalmente desde
   `CAMPANA-2026-07-18-FINAL.md` (tick 16:15 UTC, 2026-07-18); estos ticks son mantenimiento sobre
   una campaña ya cerrada, no una reapertura. Solo documentación.
