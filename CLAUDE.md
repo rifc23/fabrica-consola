@@ -282,6 +282,29 @@ gradualmente → observar → demoler el viejo. Nunca ambos pasos en el mismo de
   mecanismo distinto, no solo anotar un hallazgo — queda para el usuario o la sesión que mantiene la
   routine madre.
 
+- **(descubierto 2026-07-26, ~10:15 UTC, sobre un fallo real de 2026-07-25 ~12:20 UTC) Un run de
+  `fabrica-sync` puede FALLAR silenciosamente y ningún tick posterior lo nota, porque ningún
+  prompt de routine audita las corridas del workflow en GitHub Actions — solo el estado de `main`
+  y de las ramas.** Síntoma: la rama `claude/rutina-2026-07-25-1215-auditoria` (tick 12:15 UTC del
+  2026-07-25) se pusheó a tiempo, pero su run de `fabrica-sync` terminó en `conclusion: failure`
+  (run `30157816749`, https://github.com/rifc23/fabrica-consola/actions/runs/30157816749) — el
+  único fallo de toda la serie de ese día, con todos los runs anteriores y posteriores en éxito —
+  y **nadie lo reintentó**: los 10 ticks siguientes (14:15 UTC del 25 al 08:15 UTC del 26)
+  reportaron housekeeping normal sin detectarlo, porque el diagnóstico de cada tick se basa en
+  `git log`/`git branch`/`list_triggers`, nunca en `actions_list` de GitHub. Consecuencia: el
+  reporte `docs/reportes/2026-07-25-1215-rutina.md` de ese tick nunca llegó a `main` (recuperado
+  manualmente en el tick 10:15 UTC del 2026-07-26 solo por su valor histórico; las correcciones de
+  backlog/CLAUDE.md de esa misma rama ya estaban superadas por 10 ticks posteriores y no se
+  replicaron). Causa raíz exacta sin determinar — los logs del job ya habían expirado (404) para
+  cuando se investigó, un día y medio después. **Regla: cada tick de `routine-fabrica-consola`
+  agrega a su auditoría de estado real una revisión de los últimos runs de `fabrica-sync.yml`
+  (`actions_list` método `list_workflow_runs`, filtrando por rama propia y por la rama del tick
+  inmediatamente anterior) — un run en `failure` sin reintento posterior se reintenta con
+  `workflow_dispatch` (input `rama`) SI la rama sigue siendo mergeable sin conflicto contra el
+  `main` actual, o si ya quedó obsoleta por ticks posteriores, se documenta la pérdida y se
+  recupera solo lo que siga teniendo valor (ej. el archivo de reporte) sin replicar contenido ya
+  superado.**
+
 ## Modelo de datos
 
 No hay base de datos. "Modelo de datos" = contrato de archivos leídos/escritos en los repos de
@@ -311,29 +334,35 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-26 08:15 UTC, quincuagésimo cuarto tick de
-  `routine-fabrica-consola`):** `main` en `d5b2cab` (`fabrica-sync` ya mergeó el trabajo doc-only
-  del tick 06:15 UTC del 2026-07-26). Anti-solape: `git fetch` (último commit `d5b2cab`, ~1h55min
+- **Último estado bueno (verificado 2026-07-26 10:15 UTC, quincuagésimo quinto tick de
+  `routine-fabrica-consola`):** `main` en `16469af` (`fabrica-sync` ya mergeó el trabajo doc-only
+  del tick 08:15 UTC del 2026-07-26). Anti-solape: `git fetch` (último commit `16469af`, ~1h55min
   de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick procedió con
-  normalidad. Inbox `(vacío)` sin triaje. Auditoría de estado real: la fila del Registro de trabajo
-  de `docs/backlog.md` del tick 06:15 UTC seguía "pendiente de push" pese a estar ya mergeada
-  (`d5b2cab`) — corregida. `list_triggers` verificado sin discrepancias en ninguno de los 5
-  triggers reales (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at`
-  2026-07-26T10:15Z; `rutina-despachadora`, `rutina-trabajadora-1/2`, `routine-madre-fabrica`
-  también sin discrepancias). Sin PRs abiertos en el repo. Gate real en verde sobre `main`: lint ✅,
-  test:run **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11/Turbopack, Node v22.22.2).
-  **Hallazgo de este tick:** el endpoint de `npm audit --audit-level=high` (retirado desde el tick
-  04:15 UTC del mismo día, `400 Bad Request` en los dos ticks anteriores) volvió a responder con
-  normalidad — conteo re-confirmado en **12 vulnerabilidades altas** (3 `postcss`/`sharp` pineadas
-  por Next.js, 9 `brace-expansion` por la cadena de `eslint`), sin cambio real desde el tick 22:15
-  UTC del 2026-07-24; el retiro del endpoint fue algo temporal del lado de npm, no requirió ninguna
-  acción de este repo. Sin trabajo P0/P1/P2 nuevo delegable — mismos bloqueos por decisión de
-  usuario que el tick anterior (las **seis** Decisiones estacionadas — diseño visual/nombre,
-  Playwright E2E, reemplazo de `fire_trigger`, cadencia de `rutina-trabajadora-1`, bump mayor de
-  `eslint` — siguen sin respuesta, la más antigua desde hace 9 días). Cuadragésimo tick consecutivo
-  con solo housekeeping documental — la campaña sigue cerrada formalmente desde
-  `CAMPANA-2026-07-18-FINAL.md` (tick 16:15 UTC, 2026-07-18); estos ticks son mantenimiento sobre
-  una campaña ya cerrada, no una reapertura. Solo documentación.
+  normalidad. Inbox `(vacío)` sin triaje. La fila del Registro de trabajo de `docs/backlog.md` del
+  tick 08:15 UTC seguía "pendiente de push" pese a estar ya mergeada — corregida. `list_triggers`
+  verificado sin discrepancias en ninguno de los 5 triggers reales (`routine-fabrica-consola`
+  enabled, cron `15 */2 * * *`, `next_run_at` 2026-07-26T12:15Z; `rutina-despachadora`,
+  `rutina-trabajadora-1/2`, `routine-madre-fabrica` también sin discrepancias). Sin PRs abiertos.
+  Gate real en verde sobre `main`: lint ✅, test:run **182/182** ✅ (sin cambio), build ✅
+  (Next.js 16.2.11/Turbopack, Node v22.22.2). `npm audit --audit-level=high` sigue en **12**
+  vulnerabilidades altas, sin cambio. **Hallazgo real de este tick:** una auditoría extendida del
+  repo (pasado de shallow a completo con `git fetch --unshallow`, luego `git merge-base
+  --is-ancestor` sobre TODAS las ramas remotas — algo que ningún tick anterior había hecho de
+  forma exhaustiva) encontró que el run de `fabrica-sync` de la rama
+  `claude/rutina-2026-07-25-1215-auditoria` (tick 12:15 UTC del 2026-07-25) **falló** y nunca se
+  reintentó en 10 ticks siguientes — ver el nuevo Error Conocido de esta misma sección para el
+  detalle completo y la regla nueva (auditar runs de `fabrica-sync` en cada tick). Recuperado solo
+  el archivo de reporte perdido (`docs/reportes/2026-07-25-1215-rutina.md`); el resto del contenido
+  de esa rama ya estaba superado por ticks posteriores. También se auditaron 5 ramas ajenas a esta
+  routine (diagnósticos de `routine-madre-fabrica`, 2026-07-18/19, nombres fuera del patrón
+  `claude/**`/`fabrica/**`) — su contenido ya está resumido en este documento y en
+  `EXPERIMENTO-ROUTINE-MADRE-FALLIDO.md`, sin acción necesaria. Sin trabajo P0/P1/P2 nuevo
+  delegable — mismos bloqueos por decisión de usuario que el tick anterior (las **seis** Decisiones
+  estacionadas — diseño visual/nombre, Playwright E2E, reemplazo de `fire_trigger`, cadencia de
+  `rutina-trabajadora-1`, bump mayor de `eslint` — siguen sin respuesta, la más antigua desde hace
+  9 días). Cuadragésimo primer tick consecutivo con solo housekeeping documental — la campaña sigue
+  cerrada formalmente desde `CAMPANA-2026-07-18-FINAL.md` (tick 16:15 UTC, 2026-07-18); estos ticks
+  son mantenimiento sobre una campaña ya cerrada, no una reapertura. Solo documentación.
   **Hallazgo del tick 22:15 UTC (2026-07-24) — `npm audit` subió de 3 a 12 vulnerabilidades altas:** 9 nuevas de
   `brace-expansion@1.1.16` (GHSA-mh99-v99m-4gvg, DoS por expansión no acotada), arrastradas por
   TODA la cadena de tooling de lint (`eslint`→`@eslint/config-array`/`@eslint/eslintrc`→
