@@ -334,36 +334,33 @@ proyectos vía GitHub Contents API:
 
 ## Ancla de rollback (actualizar al cerrar cada sesión/campaña)
 
-- **Último estado bueno (verificado 2026-07-27 00:15 UTC, sexagésimo segundo tick de
-  `routine-fabrica-consola`):** `main` en `4861398` (`fabrica-sync` ya mergeó el trabajo doc-only
-  del tick 22:15 UTC del 2026-07-26, run `30222909781` exitoso). Anti-solape: `git fetch` (último
-  commit `4861398`, ~2h de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos → tick
-  procedió con normalidad. Inbox `(vacío)` sin triaje. La fila del Registro de trabajo de
-  `docs/backlog.md` del tick 22:15 UTC seguía "pendiente de push" pese a estar ya mergeada —
+- **Último estado bueno (verificado 2026-07-27 02:15 UTC, sexagésimo tercer tick de
+  `routine-fabrica-consola`):** `main` en `bb8dc83` (`fabrica-sync` ya mergeó el trabajo doc-only
+  del tick 00:15 UTC del 2026-07-27, run `30227264560` exitoso). Anti-solape: `git fetch` (último
+  commit `bb8dc83`, ~1h54min de antigüedad) sin working tree sucio ni ramas/worktrees huérfanos →
+  tick procedió con normalidad. Inbox `(vacío)` sin triaje. La fila del Registro de trabajo de
+  `docs/backlog.md` del tick 00:15 UTC seguía "pendiente de push" pese a estar ya mergeada —
   corregida. `list_triggers` verificado sin discrepancias en ninguno de los 5 triggers reales
-  (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at` 2026-07-27T02:15Z;
+  (`routine-fabrica-consola` enabled, cron `15 */2 * * *`, `next_run_at` 2026-07-27T04:15Z;
   `rutina-despachadora`, `rutina-trabajadora-1/2`, `routine-madre-fabrica` también sin
   discrepancias). Sin PRs abiertos. Gate real en verde sobre `main`: lint ✅, test:run
   **182/182** ✅ (sin cambio), build ✅ (Next.js 16.2.11/Turbopack). `npm audit --audit-level=high`
-  sigue en **12** vulnerabilidades altas, sin cambio. Auditados los últimos 15 runs de
-  `fabrica-sync.yml` (`actions_list`, hasta el 2026-07-25T20:19 UTC) — todos exitosos; **sin
-  fallos nuevos sin reintentar**. Auditoría de ramas repetida sobre historia completa (`git fetch
-  --unshallow` + `git merge-base --is-ancestor` sobre las 76 ramas remotas): hallazgo inicial
-  investigado y resuelto como falso positivo — dos ramas nunca vistas en ticks previos
-  (`fix/personalizar-agentes-nuevo-proyecto`, `fix/personalizar-cimientos-nuevo-proyecto`, ambas
-  de 2026-07-18) aparecieron en `git branch -r` porque el primer fetch de este tick fue shallow;
-  tras `--unshallow`, `git merge-base --is-ancestor` confirmó que ambas ya están mergeadas en
-  `main` desde el 2026-07-18 (mismo patrón de falso positivo de clon shallow ya documentado en
-  ticks previos) — sin ramas huérfanas reales. Resultado final idéntico a los ticks anteriores:
-  única rama de esta routine sin mergear sigue siendo `claude/rutina-2026-07-25-1215-auditoria`
-  (ya documentada, contenido de valor ya recuperado) más las 5 ramas ajenas conocidas — sin
-  novedad. Sin trabajo P0/P1/P2 nuevo delegable — mismos bloqueos por decisión de usuario que el
-  tick anterior (las **seis** Decisiones estacionadas — diseño visual/nombre, Playwright E2E,
-  reemplazo de `fire_trigger`, cadencia de `rutina-trabajadora-1`, bump mayor de `eslint` — siguen
-  sin respuesta, la más antigua desde hace 10 días). Cuadragésimo octavo tick consecutivo con solo
-  housekeeping documental — la campaña sigue cerrada formalmente desde
-  `CAMPANA-2026-07-18-FINAL.md` (tick 16:15 UTC, 2026-07-18); estos ticks son mantenimiento sobre
-  una campaña ya cerrada, no una reapertura. Solo documentación.
+  sigue en **12** vulnerabilidades altas, sin cambio. Auditados los últimos 20 runs de
+  `fabrica-sync.yml` (`actions_list`, hasta el 2026-07-25T12:20 UTC) — todos exitosos salvo el
+  fallo ya conocido y resuelto de `claude/rutina-2026-07-25-1215-auditoria` (run `30157816749`);
+  **sin fallos nuevos sin reintentar**. Auditoría de ramas repetida sobre historia completa
+  (`git fetch --unshallow` + `git merge-base --is-ancestor` sobre las 79 ramas remotas): resultado
+  IDÉNTICO al de los ticks anteriores — única rama de esta routine sin mergear sigue siendo
+  `claude/rutina-2026-07-25-1215-auditoria` (ya documentada, contenido de valor ya recuperado) más
+  las mismas 5 ramas ajenas conocidas — sin ramas nuevas sin mergear pese al conteo de ramas
+  remotas subir de 76 a 79 (mismo patrón de conteo inestable por profundidad de fetch ya
+  documentado, sin ninguna rama huérfana real). Sin trabajo P0/P1/P2 nuevo delegable — mismos
+  bloqueos por decisión de usuario que el tick anterior (las **seis** Decisiones estacionadas —
+  diseño visual/nombre, Playwright E2E, reemplazo de `fire_trigger`, cadencia de
+  `rutina-trabajadora-1`, bump mayor de `eslint` — siguen sin respuesta, la más antigua desde hace
+  10 días). Sexagésimo tercer tick consecutivo con solo housekeeping documental — la campaña sigue
+  cerrada formalmente desde `CAMPANA-2026-07-18-FINAL.md` (tick 16:15 UTC, 2026-07-18); estos
+  ticks son mantenimiento sobre una campaña ya cerrada, no una reapertura. Solo documentación.
   **Hallazgo del tick 22:15 UTC (2026-07-24) — `npm audit` subió de 3 a 12 vulnerabilidades altas:** 9 nuevas de
   `brace-expansion@1.1.16` (GHSA-mh99-v99m-4gvg, DoS por expansión no acotada), arrastradas por
   TODA la cadena de tooling de lint (`eslint`→`@eslint/config-array`/`@eslint/eslintrc`→
